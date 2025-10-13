@@ -5,7 +5,13 @@
  * common use cases, especially the meta-factory for creating new factories.
  */
 
+import Handlebars from "handlebars";
 import type { FactoryDefinition } from "./types.ts";
+
+// Load the Handlebars template for factory generation
+const factoryTemplateUrl = new URL("./factories/factory.ts.hbs", import.meta.url);
+const factoryTemplateSource = await Deno.readTextFile(factoryTemplateUrl);
+const factoryTemplate = Handlebars.compile(factoryTemplateSource);
 
 /**
  * Meta-factory: A factory that creates other factories
@@ -68,35 +74,38 @@ export const defineFactoryFactory: FactoryDefinition = {
       },
     },
   ],
-  generate: ({ name, description, template, outputPath, paramDescriptions }) => {
-    // Import statement
-    const imports = `import { defineFactory } from "@codefactory/core";`;
-    
-    // Build param descriptions object
-    let paramsCode = "";
-    if (paramDescriptions && typeof paramDescriptions === "object") {
-      const entries = Object.entries(paramDescriptions as Record<string, string>)
-        .map(([key, desc]) => `      ${key}: {\n        description: "${desc}",\n        required: true,\n      }`)
-        .join(",\n");
-      paramsCode = `    params: {\n${entries}\n    },`;
-    }
-    
-    // Build outputPath line
-    const outputPathCode = outputPath 
-      ? `    outputPath: "${outputPath}",`
-      : "";
-    
-    // Generate the factory definition code
-    const content = `${imports}
+  generate: (params) => {
+    const { name, description, template, outputPath, paramDescriptions } = params as {
+      name: string;
+      description: string;
+      template: string;
+      outputPath?: string;
+      paramDescriptions?: Record<string, string>;
+    };
 
-export const ${name}Factory = defineFactory({
-  name: "${name}",
-  description: "${description}",
-  template: \`${template}\`,
-${outputPathCode}
-${paramsCode}
-});
-`;
+    // Convert paramDescriptions to Handlebars-friendly format
+    const hbsParams = paramDescriptions && typeof paramDescriptions === "object"
+      ? Object.entries(paramDescriptions).reduce((acc, [key, desc]) => {
+          acc[key] = { description: desc, required: true };
+          return acc;
+        }, {} as Record<string, { description: string; required: boolean }>)
+      : undefined;
+
+    // Generate factory name in PascalCase + "Factory" suffix
+    const factoryConstName = name
+      .split("_")
+      .map((word: string) => word.charAt(0).toUpperCase() + word.slice(1))
+      .join("") + "Factory";
+
+    // Render the Handlebars template
+    const content = factoryTemplate({
+      name,
+      description,
+      template,
+      outputPath,
+      params: hbsParams,
+      factoryConstName,
+    });
 
     return {
       content,
