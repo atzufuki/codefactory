@@ -7,6 +7,6 @@
  * @module
  */
 
-export { Factory } from "./src/factory.ts";
-export { FactoryRegistry } from "./src/registry.ts";
-export type { FactoryDefinition, FactoryParams, FactoryResult } from "./src/types.ts";
+export { Factory } from "./factory.ts";
+export { FactoryRegistry } from "./registry.ts";
+export type { FactoryDefinition, FactoryParams, FactoryResult } from "./types.ts";

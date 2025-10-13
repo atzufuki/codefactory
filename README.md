@@ -136,6 +136,30 @@ console.log(result?.content);
 - **Reliability**: Reduced chance of errors or hallucinations
 - **Efficiency**: Call a function instead of generating tokens
 
+## Project Structure
+
+This is a Deno workspace with multiple packages:
+
+- **`src/codefactory/`** - Core library for defining and managing factories
+- **`src/demo/`** - Example project demonstrating factory usage
+
+```bash
+# Run the demo
+deno task demo
+
+# Run in watch mode
+deno task dev
+
+# Type check all packages
+deno task check
+
+# Run tests
+deno task test
+
+# Format code
+deno task fmt
+```
+
 ## Project Status
 
 🚧 **Early Development** - This is a conceptual prototype. Core ideas:

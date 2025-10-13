@@ -1,27 +1,14 @@
 {
-  "name": "@codefactory/core",
-  "version": "0.1.0",
-  "exports": "./mod.ts",
+  "workspace": [
+    "./src/codefactory",
+    "./src/demo"
+  ],
   "tasks": {
-    "dev": "deno run --watch mod.ts",
-    "check": "deno check mod.ts",
-    "test": "deno test --allow-read --allow-write"
-  },
-  "compilerOptions": {
-    "strict": true,
-    "lib": ["deno.window"]
-  },
-  "fmt": {
-    "useTabs": false,
-    "lineWidth": 100,
-    "indentWidth": 2,
-    "semiColons": true,
-    "singleQuote": false,
-    "proseWrap": "preserve"
-  },
-  "lint": {
-    "rules": {
-      "tags": ["recommended"]
-    }
+    "dev": "cd src/demo && deno run --watch main.ts",
+    "demo": "cd src/demo && deno run main.ts",
+    "check": "deno check src/codefactory/mod.ts && deno check src/demo/main.ts",
+    "test": "deno test --allow-read --allow-write",
+    "fmt": "deno fmt",
+    "lint": "deno lint"
   }
 }
