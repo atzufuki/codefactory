@@ -1,7 +1,8 @@
 {
   "workspace": [
     "./src/codefactory",
-    "./src/demo"
+    "./src/demo",
+    "./src/create"
   ],
   "tasks": {
     "dev": "cd src/demo && deno run --watch main.ts",

@@ -1,0 +1,15 @@
+{
+  "name": "my-codefactory-project",
+  "version": "0.1.0",
+  "exports": "./src/main.ts",
+  "tasks": {
+    "dev": "deno run --watch src/main.ts",
+    "start": "deno run src/main.ts"
+  },
+  "imports": {
+    "@codefactory/core": "jsr:@codefactory/core@^0.1"
+  },
+  "compilerOptions": {
+    "lib": ["deno.window"]
+  }
+}

@@ -141,7 +141,8 @@ console.log(result?.content);
 This is a Deno workspace with multiple packages:
 
 - **`src/codefactory/`** - Core library for defining and managing factories
-- **`src/demo/`** - Example project demonstrating factory usage
+- **`src/demo/`** - Example project demonstrating factory usage  
+- **`src/create/`** - Project scaffolding CLI (like create-react-app)
 
 ```bash
 # Run the demo
@@ -158,6 +159,9 @@ deno task test
 
 # Format code
 deno task fmt
+
+# Create a new project
+deno run --allow-read --allow-write src/create/mod.ts my-project
 ```
 
 ## Project Status
