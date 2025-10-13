@@ -1,0 +1,19 @@
+# Template directory - ignore everything except specific tracked files
+src/create/template/*
+!src/create/template/deno.json
+!src/create/template/.gitignore
+!src/create/template/README.md
+!src/create/template/factories/
+src/create/template/factories/*
+!src/create/template/factories/index.ts
+!src/create/template/factories/examples.ts
+!src/create/template/src/
+src/create/template/src/*
+!src/create/template/src/main.ts
+!src/create/template/.github/
+src/create/template/.github/*
+!src/create/template/.github/copilot-instructions.md
+!src/create/template/.github/prompts/
+src/create/template/.github/prompts/*
+!src/create/template/.github/prompts/codefactory.list.prompt.md
+!src/create/template/.github/prompts/codefactory.produce.prompt.md

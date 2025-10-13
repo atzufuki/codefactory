@@ -21,6 +21,11 @@
         "dependencies": [
           "jsr:@std/path@^1.1.2"
         ]
+      },
+      "src/create/template": {
+        "dependencies": [
+          "jsr:@codefactory/core@0.1"
+        ]
       }
     }
   }

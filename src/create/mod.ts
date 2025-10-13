@@ -29,6 +29,9 @@ if (import.meta.main) {
     "factories/index.ts",
     "factories/examples.ts",
     "src/main.ts",
+    ".github/copilot-instructions.md",
+    ".github/prompts/codefactory.list.prompt.md",
+    ".github/prompts/codefactory.produce.prompt.md",
   ];
 
   // Copy all template files

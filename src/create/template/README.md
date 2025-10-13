@@ -64,16 +64,72 @@ export class {{componentName}} {
 });
 ```
 
-### 3. Use Factories
+### 3. Use Factories with AI
 
-Factories can be used:
-- **Programmatically** in your code
-- **By AI** - AI discovers and calls them based on your natural language requests
+This project is configured for **GitHub Copilot** integration. Copilot can automatically use your factories!
+
+**Available Commands** (in Copilot Chat):
+- `/codefactory.list` - Show all available factories
+- `/codefactory.produce <factory_name>` - Produce code using a factory
+
+**How to use (multiple ways):**
+
+1. **Natural language** (easiest):
+   ```
+   You: "Create a TypeScript function called validateEmail that takes a string and returns boolean"
+   Copilot: Automatically uses typescript_function factory with correct parameters
+   ```
+
+2. **Explicit command**:
+   ```
+   You: "/codefactory.produce typescript_function with name validateEmail, params email: string, returns boolean"
+   Copilot: Executes factory with specified parameters
+   ```
+
+3. **Interactive**:
+   ```
+   You: "I need an API endpoint for users"
+   Copilot: "I'll use api_endpoint factory. What HTTP method? (GET/POST/PUT/DELETE)"
+   You: "GET"
+   Copilot: Produces the endpoint
+   ```
+
+**Creating new factories:**
+```
+You: "I need a factory for React components with props"
+Copilot: Uses /codefactory.produce define_factory to create it
+```
+
+💡 **Tip**: Just describe what you want in natural language. Copilot will figure out which factory to use and what parameters it needs!
+
+The AI automatically:
+- ✅ Discovers your factories
+- ✅ Chooses the right factory for the task
+- ✅ Validates parameters
+- ✅ Generates consistent code
+
+### 4. Use Factories Programmatically
+
+You can also use factories directly in code:
+
+```typescript
+import { registry } from "./factories/index.ts";
+
+const factory = registry.get("typescript_function");
+const result = await factory.execute({
+  functionName: "validateEmail",
+  params: "email: string",
+  returnType: "boolean",
+});
+
+console.log(result.code);
+```
 
 ## Learn More
 
 - [CodeFactory Documentation](https://github.com/atzufuki/codefactory)
 - [Factory Examples](./factories/examples.ts)
+- [GitHub Copilot Instructions](./.github/copilot-instructions.md)
 
 ## Philosophy
 
