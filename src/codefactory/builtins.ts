@@ -70,7 +70,7 @@ export const defineFactoryFactory: FactoryDefinition = {
 
     return {
       content,
-      filePath: `factories/${name}.ts`,
+      filePath: `factories/${name}.hbs`,
       metadata: {
         factoryName: name,
         isMetaFactory: true,

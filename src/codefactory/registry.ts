@@ -4,9 +4,10 @@
 
 import { Factory } from "./factory.ts";
 import type { FactoryDefinition } from "./types.ts";
+import { TemplateLoader } from "./template-loader.ts";
 
 export interface AutoRegisterOptions {
-  /** Glob pattern to match files (default: "*.ts") */
+  /** Glob pattern to match files (default: "*.{ts,hbs,template}") */
   pattern?: string;
   /** Files to exclude (default: ["index.ts"]) */
   exclude?: string[];
@@ -84,7 +85,7 @@ export class FactoryRegistry {
     options: AutoRegisterOptions = {}
   ): Promise<void> {
     const {
-      pattern = "*.ts",
+      pattern = "*.{ts,hbs,template}",
       exclude = ["index.ts"],
       recursive = false,
     } = options;
@@ -99,6 +100,31 @@ export class FactoryRegistry {
       recursive,
     });
 
+    for (const factory of factories) {
+      this.register(factory);
+    }
+  }
+
+  /**
+   * Register built-in factories from the codefactory library
+   * 
+   * This loads templates from src/codefactory/factories/ directory.
+   * 
+   * @example
+   * const registry = new FactoryRegistry();
+   * await registry.registerBuiltIns();
+   */
+  async registerBuiltIns(): Promise<void> {
+    const builtInsUrl = new URL("./factories/", import.meta.url);
+    const builtInsPath = builtInsUrl.protocol === "file:"
+      ? builtInsUrl.pathname.replace(/^\/([A-Z]:)/, "$1") // Fix Windows paths
+      : builtInsUrl.pathname;
+    
+    const factories = await TemplateLoader.loadDirectory(builtInsPath, {
+      extensions: [".hbs", ".template"],
+      recursive: false,
+    });
+    
     for (const factory of factories) {
       this.register(factory);
     }
@@ -147,12 +173,19 @@ export class FactoryRegistry {
   }
 
   /**
-   * Load all factory exports from a TypeScript file
+   * Load all factory exports from a TypeScript file or template file
    */
   private async loadFactoriesFromFile(
     filePath: string
   ): Promise<FactoryDefinition[]> {
     try {
+      // Check if it's a template file (.hbs or .template)
+      if (filePath.endsWith('.hbs') || filePath.endsWith('.template')) {
+        const factory = await TemplateLoader.loadFactory(filePath);
+        return [factory];
+      }
+      
+      // Otherwise, load as TypeScript module
       const fileUrl = new URL(`file://${filePath}`);
       const module = await import(fileUrl.href);
       const factories: FactoryDefinition[] = [];
@@ -201,8 +234,24 @@ export class FactoryRegistry {
 
   /**
    * Check if filename matches pattern
+   * Supports simple glob patterns and brace expansion like *.{ts,hbs}
    */
   private matchesPattern(filename: string, pattern: string): boolean {
+    // Expand brace patterns like *.{ts,hbs} to [*.ts, *.hbs]
+    if (pattern.includes('{') && pattern.includes('}')) {
+      const braceStart = pattern.indexOf('{');
+      const braceEnd = pattern.indexOf('}');
+      const prefix = pattern.substring(0, braceStart);
+      const suffix = pattern.substring(braceEnd + 1);
+      const options = pattern.substring(braceStart + 1, braceEnd).split(',');
+      
+      return options.some(opt => {
+        const expandedPattern = prefix + opt + suffix;
+        return this.matchesPattern(filename, expandedPattern);
+      });
+    }
+    
+    // Simple glob pattern matching
     const regex = new RegExp("^" + pattern.replace(/\*/g, ".*") + "$");
     return regex.test(filename);
   }

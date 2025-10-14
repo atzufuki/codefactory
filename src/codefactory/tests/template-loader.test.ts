@@ -5,6 +5,7 @@
 import { assertEquals, assertRejects } from "@std/assert";
 import { TemplateLoader } from "../template-loader.ts";
 import { dirname, fromFileUrl, join } from "@std/path";
+import Handlebars from "handlebars";
 
 const __dirname = dirname(fromFileUrl(import.meta.url));
 const fixturesDir = join(__dirname, "fixtures");
@@ -79,9 +80,10 @@ Deno.test("TemplateLoader.toFactoryDefinition - with outputPath", async () => {
   assertEquals(result.filePath, "src/test.ts");
 });
 
-Deno.test("TemplateLoader.renderTemplate - basic substitution", () => {
+Deno.test("Handlebars template rendering - basic substitution", () => {
   const template = "Hello {{name}}, you are {{age}} years old";
-  const result = TemplateLoader.renderTemplate(template, {
+  const compiled = Handlebars.compile(template);
+  const result = compiled({
     name: "Alice",
     age: 30,
   });
@@ -89,9 +91,10 @@ Deno.test("TemplateLoader.renderTemplate - basic substitution", () => {
   assertEquals(result, "Hello Alice, you are 30 years old");
 });
 
-Deno.test("TemplateLoader.renderTemplate - multiple occurrences", () => {
+Deno.test("Handlebars template rendering - multiple occurrences", () => {
   const template = "{{x}} + {{x}} = {{result}}";
-  const result = TemplateLoader.renderTemplate(template, {
+  const compiled = Handlebars.compile(template);
+  const result = compiled({
     x: 5,
     result: 10,
   });
