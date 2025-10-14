@@ -6,6 +6,7 @@
 
 import { parseFrontmatter } from "./frontmatter.ts";
 import type { FactoryDefinition, ParamDefinition } from "./types.ts";
+import Handlebars from "handlebars";
 
 /**
  * Frontmatter metadata for a factory template
@@ -76,37 +77,26 @@ export class TemplateLoader {
     frontmatter: TemplateFrontmatter,
     template: string
   ): FactoryDefinition {
+    // Compile the Handlebars template once
+    const compiledTemplate = Handlebars.compile(template);
+    
     return {
       name: frontmatter.name,
       description: frontmatter.description,
       params: frontmatter.params || {},
       examples: frontmatter.examples || [],
       generate: (params) => {
-        const content = this.renderTemplate(template, params);
+        // Render using Handlebars for full syntax support
+        const content = compiledTemplate(params);
+        
         return {
           content,
           filePath: frontmatter.outputPath
-            ? this.renderTemplate(frontmatter.outputPath, params)
+            ? Handlebars.compile(frontmatter.outputPath)(params)
             : undefined,
         };
       },
     };
-  }
-
-  /**
-   * Simple template renderer using {{variable}} syntax
-   * 
-   * @param template - Template string with {{variable}} placeholders
-   * @param params - Parameters to substitute
-   * @returns Rendered template
-   */
-  static renderTemplate(template: string, params: Record<string, unknown>): string {
-    let result = template;
-    for (const [key, value] of Object.entries(params)) {
-      const stringValue = String(value);
-      result = result.replaceAll(`{{${key}}}`, stringValue);
-    }
-    return result;
   }
 
   /**

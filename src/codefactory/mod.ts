@@ -11,7 +11,6 @@ export { Factory } from "./factory.ts";
 export { FactoryRegistry } from "./registry.ts";
 export type { AutoRegisterOptions } from "./registry.ts";
 export { defineFactory } from "./builder.ts";
-export { builtInFactories, defineFactoryFactory } from "./builtins.ts";
 export { TemplateLoader } from "./template-loader.ts";
 export { parseFrontmatter, hasFrontmatter, extractFrontmatter } from "./frontmatter.ts";
 export { ManifestManager } from "./manifest.ts";

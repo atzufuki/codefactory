@@ -340,16 +340,9 @@ Bootstrap entire project structures deterministically.
 This is a Deno workspace with multiple packages:
 
 - **`src/codefactory/`** - Core library for defining and managing factories
-- **`src/demo/`** - Example project demonstrating factory usage  
 - **`src/create/`** - Project scaffolding CLI (like create-react-app)
 
 ```bash
-# Run the demo
-deno task demo
-
-# Run in watch mode
-deno task dev
-
 # Type check all packages
 deno task check
 

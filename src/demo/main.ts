@@ -5,15 +5,15 @@
  * and how AI can discover and use them.
  */
 
-import { builtInFactories, defineFactory, FactoryRegistry } from "@codefactory/core";
+import { defineFactory, FactoryRegistry } from "@codefactory/core";
 
 // Create a registry for this demo project
 const registry = new FactoryRegistry();
 
 // Register built-in factories (including the meta-factory!)
 console.log("🔧 Registering built-in factories...\n");
-for (const factory of builtInFactories) {
-  registry.register(factory);
+await registry.registerBuiltIns();
+for (const factory of registry.list()) {
   console.log(`  ✓ Registered: ${factory.name}`);
 }
 
