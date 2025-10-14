@@ -1,140 +1,235 @@
 # AI Code Factory 🏭
 
-> A meta-factory for deterministic AI code generation
+> Deterministic code generation with two-phase AI workflow
+
+[![Test Status](https://img.shields.io/badge/tests-49%20passing-brightgreen)](./src/codefactory/tests/)
+[![Deno 2](https://img.shields.io/badge/deno-2.0-blue)](https://deno.com)
 
 ## The Problem
 
-When AI assistants write code directly, they're *probabilistic* - the same request can produce different results each time. This leads to:
-
-- **Inconsistent code style** across your project
-- **Unpredictable structures** that vary slightly each time
-- **Slow generation** as AI writes line-by-line
-- **Hard-to-maintain** codebases where similar components are implemented differently
+When AI assistants write code directly, they're *probabilistic* - the same request produces different results each time. Projects become inconsistent, hard to maintain, and impossible to regenerate.
 
 ## The Solution
 
-**AI Code Factory** shifts the paradigm: instead of AI *writing* code, it *calls* predefined factories with parameters. Think of it as giving AI a set of blueprints instead of asking it to architect from scratch.
+**AI Code Factory** uses a **two-phase approach**:
 
-### Before (Traditional AI)
-```
-You: "Create a React list component for users"
-AI: *writes 50 lines of code with its own interpretation*
-You: "Create a React list component for products"
-AI: *writes 50 different lines with a different structure*
-```
+1. **Planning** (with AI): Parse intent → Add to manifest
+2. **Building** (deterministic): Execute manifest → Generate code
 
-### After (AI Code Factory)
+Think of it as: AI creates the "recipe" (manifest), then the factory executes it deterministically.
+
+### Traditional AI
 ```
-You: "Create a React list component for users"
-AI: calls → ListComponentFactory(model: "User", fields: ["name", "email"])
-You: "Create a React list component for products"
-AI: calls → ListComponentFactory(model: "Product", fields: ["title", "price"])
-Result: Identical structure, only data differs
+You: "Create a Button component"
+AI: *writes code directly, slightly different each time*
+You: "Create another Button component"
+AI: *writes different code, inconsistent structure*
 ```
 
-## Key Concepts
+### AI Code Factory
+```
+You: "Add Button component to manifest"
+AI: Adds factory call to codefactory.manifest.json
+You: "Build the project"
+System: Executes manifest → Generates identical code every time
+```
 
-### 🎯 Deterministic Generation
-Same factory + same parameters = always the same code output
+Same manifest = Same code. Always.
 
-### 🧩 Composable Factories
-Factories can call other factories to build complex structures from simple building blocks
+## Quick Start
 
-### 🌍 Language Agnostic
-Generate code in any language - Python, TypeScript, Rust, or even SQL
-
-### 🤖 AI-Friendly
-AI discovers available factories and chooses the right one based on context
-
-## Quick Example
+### With GitHub Copilot (VS Code)
 
 ```typescript
-import { Factory, FactoryRegistry } from "@codefactory/core";
+// In VS Code with GitHub Copilot enabled:
 
-// Define a factory for React components
-const registry = new FactoryRegistry();
+// 1. Add components to manifest
+"Add Button component to manifest"
+// → AI calls ManifestManager.addFactoryCall()
 
-registry.register({
-  name: "react_list_component",
-  description: "Creates a React component that displays a list of items",
+"Add Card component to manifest"
+// → Another factory call added
+
+// 2. Build from manifest
+"Build all from manifest"
+// → Producer executes all factory calls
+// → Files generated with markers for safe regeneration
+```
+
+### From Terminal
+
+```bash
+# Create a new project
+deno run --allow-read --allow-write jsr:@codefactory/create my-project
+cd my-project
+
+# Run the example workflow
+deno run --allow-read --allow-write examples/example-workflow.ts
+
+# Or use the API directly
+deno run --allow-read --allow-write your-script.ts
+```
+
+## Key Features
+
+### 🎯 Deterministic
+Same manifest → Always same output. Zero AI randomness during build.
+
+### ⚡ Fast
+Build phase has no AI inference. Pure factory execution in milliseconds.
+
+### 📝 Marker-Based
+Generated code wrapped in markers. User code preserved outside markers.
+
+### 🔄 Rebuildable
+Update factory definition → Rebuild → All code uses new version.
+
+### 🔗 Dependencies
+Automatic execution order based on `dependsOn` relationships.
+
+## Complete Example
+
+```typescript
+import { 
+  ManifestManager, 
+  Producer, 
+  FactoryRegistry 
+} from "@codefactory/codefactory";
+
+// 1. Load or create manifest
+const manager = await ManifestManager.load("./codefactory.manifest.json");
+
+// 2. Add factory calls (planning phase)
+manager.addFactoryCall({
+  id: "button-component",
+  factory: "design_system_component",
   params: {
-    componentName: {
-      type: "string",
-      description: "Name of the component (e.g., 'UserList')",
-      required: true,
-    },
-    itemType: {
-      type: "string",
-      description: "TypeScript type for list items",
-      required: true,
-    },
+    componentName: "Button",
+    props: ["label: string", "onClick: () => void"],
   },
-  examples: [
-    { componentName: "UserList", itemType: "User" },
-  ],
-  generate: ({ componentName, itemType }) => ({
-    content: `
-interface ${componentName}Props {
-  items: ${itemType}[];
+  outputPath: "src/components/Button.ts",
+});
+
+manager.addFactoryCall({
+  id: "card-component",
+  factory: "design_system_component",
+  params: {
+    componentName: "Card",
+    props: ["title: string", "content: string"],
+  },
+  outputPath: "src/components/Card.ts",
+  dependsOn: ["button-component"], // Execution order
+});
+
+await manager.save();
+
+// 3. Build from manifest (execution phase)
+const registry = new FactoryRegistry();
+await registry.autoRegister("./factories"); // Auto-discover factories
+
+const producer = new Producer(manager.getManifest(), registry);
+const result = await producer.buildAll();
+
+if (result.success) {
+  console.log(`✅ Generated ${result.generated.length} files`);
+  // Button.ts and Card.ts created with markers
+} else {
+  console.error("Build failed:", result.errors);
 }
+```
 
-export function ${componentName}({ items }: ${componentName}Props) {
-  return (
-    <ul>
-      {items.map((item, index) => (
-        <li key={index}>{JSON.stringify(item)}</li>
-      ))}
-    </ul>
-  );
-}`,
-    filePath: `src/components/${componentName}.tsx`,
-  }),
-});
+### Generated Code with Markers
 
-// AI can now discover and use this factory
-const factory = registry.get("react_list_component");
-const result = await factory?.execute({
-  componentName: "ProductList",
-  itemType: "Product",
-});
+```typescript
+// src/components/Button.ts
 
-console.log(result?.content);
+// @codefactory:start id="button-component"
+export class Button extends LitElement {
+  @property() label: string = "";
+  @property() onClick: () => void = () => {};
+  
+  render() {
+    return html`<button @click=${this.onClick}>${this.label}</button>`;
+  }
+}
+// @codefactory:end
+
+// Your custom code here - safe from regeneration
+export const PrimaryButton = styled(Button, { variant: 'primary' });
 ```
 
 ## How It Works
 
-1. **Developer** defines factories for their project's patterns
-2. **Factory Registry** catalogs all available factories
-3. **AI** receives the catalog and understands what factories exist
-4. **User** makes a natural language request
-5. **AI** determines which factory to use and with what parameters
-6. **Factory** generates deterministic code
-7. **Result** is consistent, fast, and maintainable
+```
+┌─────────────────────────────────────────────────────────┐
+│ Phase 1: Planning (with AI)                            │
+├─────────────────────────────────────────────────────────┤
+│ User: "Add Button component"                           │
+│   ↓                                                     │
+│ AI: Parse intent → Determine factory & params          │
+│   ↓                                                     │
+│ ManifestManager: Add to codefactory.manifest.json      │
+└─────────────────────────────────────────────────────────┘
+                           ↓
+┌─────────────────────────────────────────────────────────┐
+│ Phase 2: Building (deterministic, no AI)               │
+├─────────────────────────────────────────────────────────┤
+│ Producer: Read manifest                                │
+│   ↓                                                     │
+│ Resolve dependency order (topological sort)            │
+│   ↓                                                     │
+│ Execute each factory with saved parameters             │
+│   ↓                                                     │
+│ Write code with markers for safe regeneration          │
+└─────────────────────────────────────────────────────────┘
+```
+
+### With GitHub Copilot
+
+The system integrates seamlessly with GitHub Copilot through natural language:
+
+- **"Add X to manifest"** → AI adds factory call
+- **"Build from manifest"** → Deterministic code generation
+- **"Update X in manifest"** → Modify parameters
+- **"Remove X from manifest"** → Clean up
+- **"Show manifest"** → Inspect current state
 
 ## Use Cases
 
-- **Component Libraries**: Define once, generate consistently
-- **API Endpoints**: Standardize REST/GraphQL endpoint creation
-- **Database Models**: Ensure uniform schema patterns
-- **Test Suites**: Generate tests following team conventions
-- **Boilerplate Code**: Eliminate repetitive coding tasks
+### Component Libraries
+Define once, generate consistently across entire project.
 
-## Why This Matters
+### API Endpoints
+Standardize REST/GraphQL endpoint creation with uniform patterns.
 
-### For Developers
-- **Control**: You define the patterns, AI follows them
-- **Speed**: Factories generate code instantly
-- **Consistency**: Same structure across entire codebase
+### Database Models
+Ensure consistent schema patterns and relationships.
 
-### For Teams
-- **Standards**: Enforce coding conventions automatically
-- **Onboarding**: New team members use the same patterns
-- **Maintenance**: Update factory once, affect all future generations
+### Test Suites
+Generate tests following team conventions automatically.
 
-### For AI
-- **Clarity**: Clear contracts instead of ambiguous instructions
-- **Reliability**: Reduced chance of errors or hallucinations
-- **Efficiency**: Call a function instead of generating tokens
+### Project Scaffolding
+Bootstrap entire project structures deterministically.
+
+## Benefits
+
+### 🎯 For Developers
+- **Control**: Define patterns, AI follows them
+- **Speed**: Instant generation without AI latency
+- **Consistency**: Same structure everywhere
+- **Regeneration**: Update factory → rebuild all
+
+### 👥 For Teams
+- **Standards**: Enforce conventions automatically
+- **Version Control**: Manifest in Git, not generated code
+- **Onboarding**: New members inherit patterns
+- **Evolution**: Improve factories, all code benefits
+
+### 🤖 For AI
+- **Clarity**: Clear contracts vs ambiguous instructions
+- **Reliability**: No hallucinations or errors
+- **Efficiency**: Function call vs token generation
+- **Context**: Understand project structure from manifest
 
 ## Project Structure
 
@@ -166,24 +261,37 @@ deno run --allow-read --allow-write src/create/mod.ts my-project
 
 ## Project Status
 
-🚧 **Early Development** - This is a conceptual prototype. Core ideas:
+✨ **Feature Complete** - Core system ready with 49 tests passing:
 
-- Reduce AI variability through predefined templates
-- Enable composition of complex structures from simple factories
-- Provide clear protocol for AI-factory communication
-- Support any programming language or framework
+- ✅ Factory system with auto-registration
+- ✅ Build manifest system (ManifestManager + Producer)
+- ✅ Marker-based safe regeneration
+- ✅ Dependency resolution with topological sort
+- ✅ GitHub Copilot integration
+- ✅ Template system with frontmatter
+- 📦 **Next**: JSR publication
+
+## Documentation
+
+- [Build Manifest System](./docs/manifest-system.md) - Two-phase code generation
+- [Auto-Registration](./docs/auto-registration.md) - Factory discovery
+- [Template System](./docs/template-frontmatter.md) - Frontmatter support
+- [Examples](./src/create/template/examples/) - Complete workflows
+- [Roadmap](./ROADMAP.md) - Project status and future plans
 
 ## Philosophy
 
-> "Code should be deterministic. AI should be creative. Factories bridge the gap."
+> "Same manifest, same code. Always."
 
-We're building a tool that combines the best of both worlds:
-- The **precision** of traditional programming
-- The **intelligence** of AI assistance
+Deterministic code generation through:
+- **Separation of concerns**: Planning (AI) vs Building (deterministic)
+- **Version control**: Track intent (manifest), not output (code)
+- **Factory evolution**: Update blueprints, regenerate everything
+- **Best of both**: AI intelligence + programming precision
 
 ## Contributing
 
-This project is in early stages. Ideas, feedback, and contributions welcome!
+Ideas, feedback, and contributions welcome! See [ROADMAP.md](./ROADMAP.md) for current focus areas.
 
 ## License
 

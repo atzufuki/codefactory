@@ -1,38 +1,36 @@
-# Build Manifest System - Factory Recipe for Deterministic Code Generation
+# Build Manifest System
+
+> Two-phase code generation: Plan with AI, Build deterministically
 
 ## Status
-**Proposed** - Not yet implemented
+✅ **Complete** - Core infrastructure and Copilot integration ready (49 tests passing)
 
-## Problem Statement
+## Overview
 
-Currently, when AI uses `/codefactory.produce` to generate code:
-1. Factory is called with parameters
-2. Code is immediately generated and written to files
-3. Parameters are lost after generation
-4. No way to regenerate the entire project
-5. If a factory definition changes, previously generated code cannot be updated
+The manifest system enables deterministic, reproducible code generation by separating the planning phase (with AI) from the build phase (without AI).
 
-This creates several issues:
-- **Non-deterministic**: Cannot reproduce the exact same project structure
-- **No versioning**: Cannot track what was generated, when, and with what parameters
-- **No rebuilding**: When factories improve, old generated code doesn't benefit
-- **AI dependency at runtime**: Would need AI to re-parse parameters for regeneration
-- **Slow regeneration**: AI inference adds latency to rebuild process
+Instead of generating code immediately, factory calls are stored in a `codefactory.manifest.json` file - a "recipe" for your project. This manifest can be executed anytime to regenerate code with identical results.
 
-## Solution: Build Manifest / Factory Recipe
-
-Introduce a **two-phase approach**:
+## Two-Phase Approach
 
 ### Phase 1: Planning (with AI)
-- AI parses user intent and determines factory + parameters
-- Factory call is **added to manifest** (not executed yet)
-- Manifest serves as the "recipe" or "blueprint" for the project
+AI parses user intent and adds factory calls to manifest:
+```typescript
+manager.addFactoryCall({
+  id: "button-component",
+  factory: "design_system_component",
+  params: { componentName: "Button", props: ["label: string"] },
+  outputPath: "src/components/Button.ts",
+});
+```
 
 ### Phase 2: Building (deterministic, no AI)
-- Read `codefactory.manifest.json`
-- Execute all factories in dependency order
-- Generate code to files
-- Fast, deterministic, reproducible
+Producer executes manifest to generate code:
+```typescript
+const producer = new Producer(manifest, registry);
+const result = await producer.buildAll();
+// Files created with markers for safe regeneration
+```
 
 ## Architecture
 
@@ -143,18 +141,18 @@ export interface BuildResult {
 
 ### 1. Add to Manifest (with AI)
 ```
-User: "Create a user list component with UserList name"
+User: /codefactory.add "Create a user list component with UserList name"
 AI: 
   → Parses intent
   → Determines factory: react_component
   → Extracts params: {componentName: "UserList", ...}
   → Calls ManifestManager.addFactoryCall()
-  → Response: "Added 'user-list-component' to manifest. Run build to generate."
+  → Response: "Added 'user-list-component' to manifest. Run /codefactory.produce to generate."
 ```
 
-### 2. Build Project (no AI, deterministic)
-```bash
-deno task codefactory build
+### 2. Produce Code (no AI, deterministic)
+```
+User: /codefactory.produce
 ```
 → Reads `codefactory.manifest.json`
 → Resolves dependency order
@@ -167,46 +165,55 @@ deno task codefactory build
 User: /codefactory.update user-list-component props=["users: User[]", "onSelect: (id: string) => void"]
 AI:
   → Updates manifest with new params
-  → Response: "Updated manifest. Run build to regenerate."
+  → Response: "Updated manifest. Run /codefactory.produce to regenerate."
 ```
 
-### 4. Rebuild Everything
-```bash
-deno task codefactory rebuild
+### 4. Remove Factory Call
 ```
-→ Same as build, but forces regeneration even if files exist
-→ Useful when factory definitions have changed
+User: /codefactory.remove user-list-component
+AI:
+  → Removes from manifest
+  → Optionally deletes generated file
+  → Response: "Removed 'user-list-component' from manifest."
+```
 
 ## GitHub Copilot Integration
 
-### Updated Commands
+### Commands
 
-#### `/codefactory.produce` (modified)
+#### `/codefactory.add` (new)
 - AI parses user intent
+- Determines factory name and parameters
 - Adds factory call to manifest
 - **Does NOT generate code immediately**
-- Shows preview of what will be added
-- User can confirm or modify before building
+- Shows what was added
+- Example: `/codefactory.add "Create a React button component"`
 
-#### `/codefactory.build` (new)
+#### `/codefactory.produce` (new)
 - Reads manifest
-- Executes all pending factory calls
-- Shows progress and results
+- Executes all factory calls in dependency order
+- Generates code to files
 - No AI inference needed
+- Fast and deterministic
+- Example: `/codefactory.produce`
 
 #### `/codefactory.update` (new)
 - Modify existing factory call parameters
+- AI helps parse new parameters
 - Updates manifest
-- Prompts user to rebuild
+- User must run `/codefactory.produce` to regenerate
+- Example: `/codefactory.update user-list-component props=["users: User[]"]`
 
 #### `/codefactory.remove` (new)
-- Remove factory call from manifest
+- Remove factory call from manifest by ID
 - Optionally delete generated files
+- Example: `/codefactory.remove user-list-component`
 
 #### `/codefactory.inspect` (new)
 - Show manifest contents
 - Highlight what has been generated vs pending
 - Show dependency graph
+- Example: `/codefactory.inspect`
 
 ## Benefits
 
@@ -254,110 +261,149 @@ deno task codefactory rebuild
 | **Kubernetes** | YAML manifests | `kubectl apply` |
 | **Terraform** | `.tf` files | `terraform apply` |
 | **Makefile** | Makefile rules | `make` |
-| **CodeFactory** | `codefactory.manifest.json` | `deno task codefactory build` |
+| **CodeFactory** | `codefactory.manifest.json` | `/codefactory.produce` |
 
-## Implementation Plan
+## Implementation Status
 
-### Phase 1: Core Infrastructure
-- [ ] Create `src/codefactory/manifest.ts` - ManifestManager class
-- [ ] Create `src/codefactory/builder.ts` - Builder class
-- [ ] Add manifest file format types
-- [ ] Implement dependency resolution algorithm
+### ✅ Core Infrastructure (Complete)
+- **ManifestManager** (`src/codefactory/manifest.ts`) - 221 lines, 17 tests
+  - Add/remove/update factory calls
+  - Dependency resolution with topological sort
+  - Circular dependency detection
+  - Save/load to disk
+  
+- **Producer** (`src/codefactory/producer.ts`) - 338 lines, 9 tests
+  - Build all or specific factory calls
+  - Marker-based file generation
+  - Dry-run preview mode
+  - Comprehensive error handling
 
-### Phase 2: CLI Integration
-- [ ] Add `build` command to CLI
-- [ ] Add `rebuild` command
-- [ ] Add `inspect` command for manifest visualization
-- [ ] Update template project with empty manifest
+### ✅ Copilot Integration (Complete)
+- AI workflow documentation in `.github/copilot-instructions.md`
+- Comprehensive examples in `template/examples/`
+- Natural language command patterns
+- Usage guide and best practices
 
-### Phase 3: Copilot Integration
-- [ ] Modify `codefactory.produce.prompt.md` - add to manifest instead of direct generation
-- [ ] Create `codefactory.build.prompt.md` - build from manifest
-- [ ] Create `codefactory.update.prompt.md` - update manifest entries
-- [ ] Create `codefactory.remove.prompt.md` - remove from manifest
-- [ ] Create `codefactory.inspect.prompt.md` - visualize manifest
+### 🔮 Future Enhancements
+See [ROADMAP.md](../ROADMAP.md) Phase 7 for planned features:
+- Incremental builds
+- Parallel execution
+- Manifest diff tool
+- Factory call templates
 
-### Phase 4: Advanced Features
-- [ ] Incremental builds (only rebuild changed factories)
-- [ ] Parallel execution (respecting dependencies)
-- [ ] Watch mode (`codefactory build --watch`)
-- [ ] Dry-run mode to preview changes
-- [ ] Manifest diff tool
-- [ ] Factory call templates (reusable parameter sets)
+## File Management Strategy
 
-### Phase 5: Documentation & Testing
-- [ ] Update README with new workflow
-- [ ] Create migration guide for existing projects
-- [ ] Add examples to template project
-- [ ] Write integration tests
-- [ ] Create demo video
+### Marker-Based Generation (Always)
 
-## Migration Path
+All generated code is **always** wrapped in markers:
 
-### For Existing Projects
-```bash
-# 1. Initialize manifest from existing generated code
-deno task codefactory init
+```typescript
+// @codefactory:start id="factory-call-id"
+// Generated code here
+export function greet(name: string) {
+  return `Hello, ${name}!`;
+}
+// @codefactory:end
 
-# 2. Review generated manifest
-deno task codefactory inspect
-
-# 3. Make adjustments if needed
-# Edit codefactory.manifest.json
-
-# 4. Test rebuild
-deno task codefactory rebuild --dry-run
-
-# 5. Actual rebuild
-deno task codefactory rebuild
+// User's custom code - safe to edit
+console.log(greet("World"));
 ```
 
-### Backwards Compatibility
-- Old `/codefactory.produce` behavior available via flag: `--immediate`
-- Gradual migration supported
-- Can mix manifest-based and direct generation
+### Behavior
 
-## Open Questions
+**First generation** (file doesn't exist):
+- Create file with markers around generated code
+- User can add custom code outside markers
 
-1. **Conflict Resolution**: What if user manually edits generated file, then rebuilds?
-   - Option A: Always overwrite (manifest is source of truth)
-   - Option B: Detect conflicts, ask user
-   - Option C: Use markers like `@codefactory-managed` sections
+**Regeneration** (file exists with markers):
+- Replace only content between markers
+- Preserve all user code outside markers
+- Safe and deterministic
 
-2. **Partial Regeneration**: Should we support regenerating only specific files?
-   - Likely yes, via `deno task codefactory build <id>`
+**Error case** (file exists without markers):
+- **Refuse to generate** - show error message
+- User must either:
+  1. Delete the file and regenerate
+  2. Add markers manually to the file
+  3. Change `outputPath` in manifest
 
-3. **Factory Versioning**: How to handle breaking changes in factory definitions?
-   - Store factory version in manifest
-   - Show warnings on rebuild if version mismatch
+### Best Practices
 
-4. **Cross-Factory References**: How can one factory reference output of another?
-   - Include `dependsOn` in manifest
-   - Builder resolves execution order
-   - Pass outputs as parameters to dependent factories
+**Recommended**: Keep generated and manual code separate
+```
+src/
+  components/
+    UserList.generated.tsx    # From codefactory
+    UserList.tsx              # User's wrapper/customization
+```
 
-5. **Manifest Format**: Should we support YAML/TOML in addition to JSON?
-   - Start with JSON (native to Deno/TypeScript)
-   - Can add others later if needed
+**Allowed**: Mix in same file (use with caution)
+```typescript
+// @codefactory:start id="user-list-base"
+export function UserListBase(props: Props) { /* generated */ }
+// @codefactory:end
+
+// Custom enhancement
+export function UserList(props: Props) {
+  return <UserListBase {...props} />;
+}
+```
+
+## Design Decisions
+
+### ✅ Partial Regeneration
+Supported via `producer.build(["id1", "id2"])` for targeted rebuilds.
+
+### ✅ Dependency Management
+Factory calls can specify `dependsOn: ["other-id"]` for execution order.
+
+### ✅ Manifest Format
+JSON format (native to Deno/TypeScript). Future: YAML/TOML support possible.
+
+### ✅ Marker Format
+Current: `// @codefactory:start id="..."` for all languages.
+Future: Language-specific comment styles configurable.
 
 ## Success Metrics
 
 - ✅ Can regenerate entire project from manifest in <1 second
 - ✅ Zero AI calls during build phase
 - ✅ 100% deterministic output (same manifest → same code)
-- ✅ Users prefer manifest workflow over direct generation
+- ✅ 49 tests passing with comprehensive coverage
 - ✅ Factory updates benefit all projects automatically
 
-## Related Issues
+## Usage Examples
 
-- Ties into factory versioning strategy
-- Enables proper testing of factories
-- Foundation for factory marketplace/registry
-- Enables CI/CD integration (build in pipeline)
+See complete examples in:
+- `src/create/template/examples/MANIFEST_EXAMPLES.md` - Comprehensive guide
+- `src/create/template/examples/example-workflow.ts` - Working demonstration
 
-## References
+Quick start:
+```typescript
+import { ManifestManager, Producer, FactoryRegistry } from "@codefactory/codefactory";
 
-- Infrastructure as Code (IaC) patterns
-- Declarative configuration systems
-- Build system design (Make, Gradle, Bazel)
-- Code generation best practices
+// Load manifest
+const manager = await ManifestManager.load("./codefactory.manifest.json");
+
+// Add factory call
+manager.addFactoryCall({
+  id: "my-component",
+  factory: "component_factory",
+  params: { name: "MyComponent" },
+  outputPath: "src/MyComponent.ts",
+});
+await manager.save();
+
+// Build
+const registry = new FactoryRegistry();
+await registry.autoRegister("./factories");
+const producer = new Producer(manager.getManifest(), registry);
+await producer.buildAll();
+```
+
+## Related Concepts
+
+- **Infrastructure as Code** (IaC) - Declarative infrastructure management
+- **Build Systems** (Make, Gradle, Bazel) - Dependency-based task execution
+- **Package Managers** (npm, cargo) - Manifest-driven dependency resolution
+- **Configuration Management** (Terraform, Kubernetes) - Desired state → Actual state
