@@ -3,6 +3,7 @@ src/create/template/*
 !src/create/template/deno.json
 !src/create/template/.gitignore
 !src/create/template/README.md
+!src/create/template/codefactory.manifest.json
 !src/create/template/factories/
 src/create/template/factories/*
 !src/create/template/factories/index.ts
@@ -10,10 +11,18 @@ src/create/template/factories/*
 !src/create/template/src/
 src/create/template/src/*
 !src/create/template/src/main.ts
+!src/create/template/examples/
+src/create/template/examples/*
+!src/create/template/examples/example-workflow.ts
+!src/create/template/examples/MANIFEST_EXAMPLES.md
 !src/create/template/.github/
 src/create/template/.github/*
 !src/create/template/.github/copilot-instructions.md
 !src/create/template/.github/prompts/
 src/create/template/.github/prompts/*
-!src/create/template/.github/prompts/codefactory.list.prompt.md
+!src/create/template/.github/prompts/README.md
+!src/create/template/.github/prompts/codefactory.add.prompt.md
 !src/create/template/.github/prompts/codefactory.produce.prompt.md
+!src/create/template/.github/prompts/codefactory.update.prompt.md
+!src/create/template/.github/prompts/codefactory.remove.prompt.md
+!src/create/template/.github/prompts/codefactory.inspect.prompt.md

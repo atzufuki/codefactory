@@ -1,53 +1,84 @@
 # CodeFactory Project - GitHub Copilot Instructions
 
-This project uses **CodeFactory** for deterministic AI code generation through predefined factory templates.
+This project uses **CodeFactory** for deterministic AI code generation with a two-phase workflow.
 
 ## Project Overview
 
 - **Language**: TypeScript (Deno 2)
-- **Purpose**: Define reusable code generation templates that AI can execute consistently
-- **Key Principle**: AI calls factories with parameters instead of writing code from scratch
+- **Purpose**: Define reusable code generation templates (factories) and use a manifest system for reproducible builds
+- **Key Concept**: AI creates "recipes" (manifest), then the system executes them deterministically
 
 ## Available Factories
 
-All factories are defined in the `factories/` directory. Use the `/codefactory.list` command to see available factories and their parameters.
+All factories are defined in the `factories/` directory. Use the `/codefactory.inspect` command to see the manifest and available factories.
 
 ## Directory Structure
 
 ```
-factories/          # Code generation template definitions
-  ├── index.ts     # Main registry - all factories exported here
-  └── examples.ts  # Example factory definitions
-src/               # Generated and custom application code
+codefactory.manifest.json  # Build manifest (like package.json)
+factories/                 # Code generation template definitions
+  ├── index.ts            # Main registry - all factories exported here
+  └── examples.ts         # Example factory definitions
+examples/
+  └── example-workflow.ts # Manifest system demonstration
+src/                      # Generated and custom application code
 ```
+
+## Two-Phase Workflow
+
+### Phase 1: Planning (with AI)
+AI parses user intent and adds factory calls to `codefactory.manifest.json`:
+- Use natural language to describe what you want
+- AI determines the right factory and parameters
+- Factory call is saved to manifest (not executed yet)
+
+### Phase 2: Building (deterministic)
+Execute the manifest to generate code:
+- Read manifest file
+- Execute all factory calls in dependency order
+- Generate code with markers for safe regeneration
+- Same manifest → Always same output
 
 ## Working with Factories
 
-### Discovery
-Use `/codefactory.list` to see all available factories with:
-- Factory names
-- Descriptions
-- Required parameters
-- Output paths
+### Slash Commands
 
-### Production
-Use `/codefactory.produce <factory_name>` with parameters to generate code. The factory will:
-1. Validate parameters
-2. Apply template substitutions
-3. Produce code to specified output path
+- **`/codefactory.add <description>`** - Add factory call to manifest (planning phase)
+- **`/codefactory.produce`** - Build from manifest (execution phase, deterministic)
+- **`/codefactory.update <id> <params>`** - Update factory call in manifest
+- **`/codefactory.remove <id>`** - Remove factory call from manifest
+- **`/codefactory.inspect`** - Show manifest contents and dependency graph
 
-### Creation
-Use `/codefactory.produce define_factory` to create new factories. The `define_factory` is a built-in meta-factory that generates factory definitions from templates.
+### Natural Language (Alternative Syntax)
+
+- **"Add X to manifest"** → Uses `/codefactory.add` internally
+- **"Build from manifest"** → Uses `/codefactory.produce`
+- **"Update X in manifest"** → Uses `/codefactory.update`
+- **"Remove X from manifest"** → Uses `/codefactory.remove`
+- **"Show manifest"** → Uses `/codefactory.inspect`
 
 ## Development Guidelines
 
 ### When User Requests Code Generation
 
-1. **First**, check available factories with `/codefactory.list`
-2. **If a matching factory exists**, use `/codefactory.use` instead of writing code manually
-3. **If no factory exists**, consider:
-   - Is this a one-time thing? → Write code directly
-   - Will this pattern repeat? → Create a factory with `/codefactory.create`
+**Always use the two-phase manifest approach:**
+
+**Phase 1 - Planning:**
+```
+User: "Add button component to manifest"
+You: /codefactory.add "Create a button component"
+→ Adds factory call to codefactory.manifest.json
+→ Does NOT generate code yet
+```
+
+**Phase 2 - Building:**
+```
+User: "Build from manifest"
+You: /codefactory.produce
+→ Reads manifest
+→ Executes all factory calls deterministically
+→ Generates code to files
+```
 
 ### Factory Best Practices
 
@@ -55,50 +86,113 @@ Use `/codefactory.produce define_factory` to create new factories. The `define_f
 - **Parameters**: Define clear, required parameters with descriptions
 - **Templates**: Use `{{variable}}` syntax for substitutions
 - **Output Paths**: Can include `{{variables}}` for dynamic naming
+- **Markers**: All generated code wrapped in `// @codefactory:start` ... `// @codefactory:end`
 
-### Example Workflow
+### Example Workflows
 
-User: "Create a REST API endpoint for users"
+**Adding multiple components:**
+```
+User: "Add validateEmail function to manifest"
+You: /codefactory.add "Create TypeScript function validateEmail with email: string parameter"
 
-1. Check: `/codefactory.list` → Is there an `api_endpoint` factory?
-2. If yes: `/codefactory.use api_endpoint` with parameters
-3. If no: Consider creating one if this will be repeated
+User: "Add sanitizeInput function to manifest"
+You: /codefactory.add "Create TypeScript function sanitizeInput with input: string parameter"
+
+User: "Build everything"
+You: /codefactory.produce
+```
+
+**Updating and rebuilding:**
+```
+User: "Update validateEmail to return ValidationResult instead of boolean"
+You: /codefactory.update validate-email-id returnType=ValidationResult
+
+User: "Rebuild"
+You: /codefactory.produce
+```
 
 ## Code Generation Philosophy
 
-> **Deterministic over flexible**: Factories generate consistent code every time. This is a feature, not a limitation.
+> **"Same manifest, same code. Always."**
 
-- ✅ Use factories for repeated patterns
-- ✅ Keep factories simple and focused
-- ✅ Document factory parameters clearly
-- ⚠️ Don't create factories for one-off code
-- ⚠️ Don't make factories too flexible (defeats the purpose)
+Two-phase approach separates concerns:
+- **Planning** (AI): Creative, flexible, understanding user intent
+- **Building** (deterministic): Fast, consistent, zero randomness
+
+Benefits:
+- ✅ Same manifest → Always same output
+- ✅ Factory updates benefit all projects
+- ✅ Version control the "recipe" not the output
+- ✅ Fast rebuilding without AI inference
+- ✅ Team collaboration through shared manifest
 
 ## Commands Reference
 
-All CodeFactory commands are available as slash commands:
-- `/codefactory.list` - List all available factories (including `define_factory`)
-- `/codefactory.produce <factory_name>` - Produce code using a factory
+### Slash Commands
 
-### Creating New Factories
+- `/codefactory.add <description>` - Add factory call to manifest (AI parses intent)
+- `/codefactory.produce` - Build from manifest (deterministic, no AI)
+- `/codefactory.update <id> <params>` - Update factory call parameters
+- `/codefactory.remove <id>` - Remove factory call from manifest
+- `/codefactory.inspect` - Show manifest contents and dependency graph
 
-To create a new factory, use the built-in meta-factory:
+### Natural Language Patterns
 
+- "Add [X] to manifest" → Uses `/codefactory.add`
+- "Build from manifest" → Uses `/codefactory.produce`
+- "Update [X] in manifest" → Uses `/codefactory.update`
+- "Remove [X] from manifest" → Uses `/codefactory.remove`
+- "Show manifest" → Uses `/codefactory.inspect`
+
+### Marker-Based File Management
+
+**CRITICAL**: All generated code is wrapped in markers:
+```typescript
+// @codefactory:start id="factory-call-id"
+// Generated code here
+// @codefactory:end
 ```
-/codefactory.produce define_factory
-```
 
-This will guide you through creating a new factory definition. The `define_factory` is a special built-in factory that creates other factories - it's the "factory of factories"!
+**Rules:**
+1. First generation: Create file with markers
+2. Regeneration: Replace only content between markers
+3. Error if file exists without markers (tell user to delete file or add markers)
 
-See `.github/prompts/` directory for command implementations.
+See `examples/MANIFEST_EXAMPLES.md` for complete usage guide.
 
 ## Technical Notes
 
-- Factories are defined using `defineFactory()` from `@codefactory/core`
-- Templates use Mustache-style `{{variable}}` placeholders
-- All factories must be exported from `factories/index.ts` to be discoverable
-- Factory registry provides `getCatalog()` for AI consumption
+- **Factories**: Defined using `defineFactory()` from `@codefactory/core`
+- **Templates**: Use Mustache-style `{{variable}}` placeholders
+- **Registry**: All factories exported from `factories/index.ts` for auto-discovery
+- **Manifest**: `ManifestManager` handles factory call tracking and dependency resolution
+- **Producer**: Executes manifest deterministically with marker-based generation
+- **Markers**: `// @codefactory:start id="..."` ensures safe regeneration
+
+## API Quick Reference
+
+```typescript
+import { ManifestManager, Producer, FactoryRegistry } from "@codefactory/core";
+
+// Load/create manifest
+const manager = await ManifestManager.load("./codefactory.manifest.json");
+
+// Add factory call
+manager.addFactoryCall({
+  id: "my-component",
+  factory: "component_factory",
+  params: { name: "MyComponent" },
+  outputPath: "src/MyComponent.ts",
+});
+await manager.save();
+
+// Build from manifest
+const registry = new FactoryRegistry();
+await registry.autoRegister("./factories");
+const producer = new Producer(manager.getManifest(), registry);
+await producer.buildAll();
+```
 
 ---
 
-**Remember**: When in doubt, list factories first. Let factories handle repetitive patterns.
+**Remember**: Prefer manifest-based workflow for projects. Use direct generation for quick prototyping.

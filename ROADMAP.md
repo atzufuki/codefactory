@@ -21,9 +21,11 @@ CodeFactory core is functional and includes GitHub Copilot integration. Not yet 
 ## Phase 2: AI Integration ✅ DONE
 
 - [x] GitHub Copilot slash commands via `.github/prompts/`
-- [x] `/codefactory.list` - List available factories
-- [x] `/codefactory.use` - Execute a factory
-- [x] `/codefactory.create` - Define new factory
+- [x] `/codefactory.add` - Add factory call to manifest
+- [x] `/codefactory.produce` - Build from manifest
+- [x] `/codefactory.update` - Update factory call
+- [x] `/codefactory.remove` - Remove factory call
+- [x] `/codefactory.inspect` - Show manifest contents
 - [x] Natural language support through prompt files
 - [x] Zero-installation integration (spec-kit pattern)
 
