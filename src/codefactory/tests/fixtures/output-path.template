@@ -1,0 +1,11 @@
+---
+name: factory_with_output
+description: Factory with outputPath
+outputPath: src/{{filename}}.ts
+params:
+  filename:
+    type: string
+    description: Output filename
+    required: true
+---
+// Generated file: {{filename}}

@@ -7,6 +7,7 @@
 
 import { builtInFactories, FactoryRegistry } from "@codefactory/core";
 import { apiEndpoint, typescriptFunction, typescriptInterface } from "./examples.ts";
+import { designSystemComponent } from "./design_system_component.ts";
 
 // Create the main registry
 export const registry = new FactoryRegistry();
@@ -20,6 +21,7 @@ for (const factory of builtInFactories) {
 registry.register(typescriptFunction);
 registry.register(apiEndpoint);
 registry.register(typescriptInterface);
+registry.register(designSystemComponent);
 
 // Export for use in your application
 export default registry;
