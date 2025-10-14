@@ -1,23 +1,8 @@
 # Template Frontmatter System
 
-## Status
-**Proposed** - Not yet implemented
+Factory templates can embed metadata directly using YAML or JSON frontmatter, similar to Markdown files in static site generators.
 
-## Problem Statement
-
-Currently, factory definitions are split between two places:
-1. **TypeScript code** (`builtins.ts`) - Contains metadata like `name`, `description`, `params`, `examples`
-2. **Template file** (`factory.ts.hbs`) - Contains the actual code template
-
-This creates several issues:
-- **Duplication**: Template variables must be documented separately in params
-- **Maintenance burden**: Changes require updating two files
-- **Cognitive overhead**: Developer must context-switch between TypeScript and template
-- **Not DRY**: Factory metadata is divorced from its template
-
-## Solution: Embedded Frontmatter in Templates
-
-Embed all factory metadata directly in the template file using frontmatter (similar to Markdown files, Jekyll, Hugo, etc.):
+## Example
 
 ```handlebars
 ---
@@ -62,31 +47,7 @@ export const {{factoryConstName}} = defineFactory({
 });
 ```
 
-## Benefits
-
-### ✅ Single Source of Truth
-- All factory metadata in one file
-- Template and metadata co-located
-- Easier to understand and maintain
-
-### ✅ Less Code
-- Eliminate TypeScript wrapper in `builtins.ts`
-- No manual metadata construction
-- Template file is self-documenting
-
-### ✅ Better DX
-- Edit one file instead of two
-- See template and params together
-- Copy/paste friendly
-
-### ✅ Auto-discovery
-- Scan `factories/` directory for `.hbs` files
-- Parse frontmatter automatically
-- Generate `FactoryDefinition` objects on the fly
-
-## Architecture
-
-### Template Loader
+## Template Loader
 
 ```typescript
 // src/codefactory/template-loader.ts
@@ -156,7 +117,7 @@ export class TemplateLoader {
 }
 ```
 
-### Frontmatter Parser
+## Frontmatter Parser
 
 ```typescript
 // src/codefactory/frontmatter.ts
@@ -195,9 +156,9 @@ export function parseFrontmatter<T = unknown>(content: string): ParseResult<T> {
 }
 ```
 
-## Format Support
+## Supported Formats
 
-### YAML (Primary)
+### YAML
 ```yaml
 ---
 name: my_factory
@@ -214,18 +175,9 @@ examples:
 ---
 ```
 
-**Pros:**
-- ✅ Clean, readable syntax
-- ✅ Native multiline string support
-- ✅ Less verbose than JSON
-- ✅ Industry standard for frontmatter
-- ✅ Deno has official `@std/yaml` parser
+YAML is the recommended format for frontmatter.
 
-**Cons:**
-- ❌ Whitespace-sensitive
-- ❌ Requires YAML parser dependency
-
-### JSON (Secondary)
+### JSON
 ```json
 /*---
 {
@@ -241,143 +193,50 @@ examples:
 ---*/
 ```
 
-**Pros:**
-- ✅ Native JavaScript/TypeScript support
-- ✅ No additional dependencies
-- ✅ Strict parsing (catches errors)
+JSON is supported as an alternative format.
 
-**Cons:**
-- ❌ More verbose (quotes on keys)
-- ❌ No comments
-- ❌ Multiline strings require escape characters
-- ❌ Trailing commas cause errors
-
-### Recommendation
-Use **YAML as the primary format** with JSON as fallback for edge cases. YAML is the standard for frontmatter in static site generators (Jekyll, Hugo, Astro, etc.) and is much more ergonomic for template metadata.
-
-## Implementation Plan
-
-### Phase 1: Frontmatter Parser
-- [ ] Create `src/codefactory/frontmatter.ts`
-- [ ] Implement `parseFrontmatter()` function
-- [ ] Support both YAML and JSON formats
-- [ ] Add unit tests for parser
-- [ ] Add `@std/yaml` dependency
-
-### Phase 2: Template Loader
-- [ ] Create `src/codefactory/template-loader.ts`
-- [ ] Implement `TemplateLoader` class
-- [ ] `loadTemplate()` - Load single template with frontmatter
-- [ ] `toFactoryDefinition()` - Convert to FactoryDefinition
-- [ ] `loadDirectory()` - Load all templates from directory
-- [ ] Add unit tests
-
-### Phase 3: Update Built-in Factories
-- [ ] Convert `builtins.ts` to use TemplateLoader
-- [ ] Simplify to just: `TemplateLoader.loadDirectory('./factories')`
-- [ ] Update `factory.ts.hbs` with frontmatter
-- [ ] Remove manual factory construction code
-- [ ] Verify all built-ins still work
-
-### Phase 4: Template Project Updates
-- [ ] Update example factories with frontmatter
-- [ ] Update documentation
-- [ ] Add examples of both YAML and JSON formats
-- [ ] Update `create` CLI to copy new format
-
-### Phase 5: Documentation
-- [ ] Document frontmatter format in README
-- [ ] Add migration guide for existing factories
-- [ ] Create examples repository
-- [ ] Update Copilot prompts to reference frontmatter
-
-## Migration Path
-
-### Old Format (TypeScript + Separate Template)
-```typescript
-// builtins.ts
-export const myFactory: FactoryDefinition = {
-  name: "my_factory",
-  description: "Does something",
-  params: {
-    name: {
-      description: "The name",
-      required: true,
-    },
-  },
-  generate: (params) => {
-    const template = await loadTemplate("./templates/my-factory.hbs");
-    return { content: render(template, params) };
-  },
-};
-```
-
-### New Format (Template with Frontmatter)
-```yaml
----
-name: my_factory
-description: Does something
-params:
-  name:
-    description: The name
-    required: true
----
-// Template content here
-```
+## Usage
 
 ```typescript
-// builtins.ts (much simpler!)
-import { TemplateLoader } from "./template-loader.ts";
+import { TemplateLoader } from "@codefactory/core";
 
-export const builtInFactories = await TemplateLoader.loadDirectory(
-  new URL("./factories", import.meta.url).pathname
-);
+// Load all factories from directory
+const factories = await TemplateLoader.loadDirectory("./factories");
+for (const factory of factories) {
+  registry.register(factory);
+}
 ```
 
-## Open Questions
+## API Reference
 
-1. **Template format detection**: Should we support `.hbs`, `.template`, both?
-   - Proposal: Support both, detect by extension
-   - `.hbs` → Handlebars syntax highlighting
-   - `.ts.template` → TypeScript syntax highlighting
+### Frontmatter Parser
 
-2. **Frontmatter validation**: How strict should validation be?
-   - Proposal: Required fields: `name`, `description`
-   - Optional: `params`, `examples`, `outputPath`
-   - Runtime validation with helpful error messages
+```typescript
+import { parseFrontmatter, hasFrontmatter, extractFrontmatter } from "@codefactory/core";
 
-3. **Nested factories**: Can templates reference other templates?
-   - Proposal: Phase 2 feature, not MVP
-   - Use `includes` or `extends` in frontmatter
+// Parse frontmatter
+const { frontmatter, body } = parseFrontmatter<MyFrontmatter>(content);
 
-4. **Template caching**: Should parsed templates be cached?
-   - Proposal: Yes, in production mode
-   - Dev mode: Always reload for hot-reloading
+// Check if has frontmatter
+if (hasFrontmatter(content)) {
+  // Has frontmatter
+}
 
-5. **Custom frontmatter fields**: Allow user-defined metadata?
-   - Proposal: Yes, store in `metadata` field
-   - Pass through to factory output
+// Extract just the frontmatter text
+const frontmatterText = extractFrontmatter(content);
+```
 
-## Success Metrics
+### Template Loader
 
-- ✅ Zero-config factory definition (just drop `.hbs` file in `factories/`)
-- ✅ Reduce factory boilerplate by 70%+
-- ✅ Single file contains all factory logic
-- ✅ Backwards compatible with existing TypeScript factories
-- ✅ 100% test coverage on parser
-- ✅ Documentation with 5+ examples
+```typescript
+import { TemplateLoader } from "@codefactory/core";
 
-## Related Issues
+// Load single template
+const { frontmatter, template } = await TemplateLoader.loadTemplate("./path/to/template.hbs");
 
-- Relates to auto-registration (factories auto-discovered from directory)
-- Enables factory marketplace (share single `.hbs` files)
-- Simplifies factory testing (parse frontmatter to validate)
-- Foundation for visual factory editor
+// Convert to factory definition
+const factory = TemplateLoader.toFactoryDefinition(frontmatter, template);
 
-## References
-
-- Jekyll frontmatter: https://jekyllrb.com/docs/front-matter/
-- Hugo frontmatter: https://gohugo.io/content-management/front-matter/
-- Astro frontmatter: https://docs.astro.build/en/basics/astro-components/#the-component-script
-- Gray-matter (Node.js library): https://github.com/jonschlinkert/gray-matter
-- Deno YAML: https://deno.land/std/yaml
+// Load directory
+const factories = await TemplateLoader.loadDirectory("./factories");
+```
