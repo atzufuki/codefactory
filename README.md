@@ -1,6 +1,6 @@
 # AI Code Factory 🏭
 
-> Deterministic code generation with two-phase AI workflow
+> A meta-factory for deterministic AI code generation
 
 [![Test Status](https://img.shields.io/badge/tests-49%20passing-brightgreen)](./src/codefactory/tests/)
 [![Deno 2](https://img.shields.io/badge/deno-2.0-blue)](https://deno.com)
@@ -38,19 +38,64 @@ Same manifest = Same code. Always.
 
 ## Quick Start
 
-### With GitHub Copilot (VS Code)
+### Step 0: Bootstrap a New Project
 
-GitHub Copilot provides slash commands for working with factories:
+Start fresh with a pre-configured project:
 
 ```bash
-# Add factory call to manifest (planning phase)
-/codefactory.add "Create a Button component with label prop"
+# Create a new project with example factories
+deno run --allow-read --allow-write jsr:@codefactory/create my-project
+cd my-project
 
-# Build from manifest (execution phase, deterministic)
+# The project includes:
+# - Example factories in factories/
+# - Sample manifest in codefactory.manifest.json
+# - GitHub Copilot integration ready to use
+```
+
+Or add to an existing project - just start using the commands below!
+
+### Step 1: Create Your First Factory
+
+Before generating code, create a factory (code generator) using the built-in 'factory':
+
+```bash
+# In VS Code with GitHub Copilot:
+/codefactory.add "a 'factory' for functional React component with props interface"
+
+# This adds to manifest:
+# - factory: factory
+# - params: name="react_component", template="...", outputPath="factories/react_component.ts"
+
+# Build the factory definition file
 /codefactory.produce
+```
 
+This generates `factories/react_component.ts` - your first factory! Now you can use it to generate components.
+
+💡 **Tip:** See [Creating Factories](./docs/creating-factories.md) for more patterns and examples.
+
+### Step 2: Use Your Factory
+
+Now use your 'react_component' factory to generate code:
+
+```bash
+# Add component to manifest using your factory
+/codefactory.add "a 'react_component' for Button with label and onClick props"
+
+# This adds to manifest:
+# - factory: react_component
+# - params: componentName="Button", props=["label: string", "onClick: () => void"]
+
+# Build from manifest (generates the actual component)
+/codefactory.produce
+```
+
+### Step 3: More Commands
+
+```bash
 # Update existing factory call
-/codefactory.update button-component props="label: string, onClick: () => void"
+/codefactory.update button-component props="label: string, onClick: () => void, disabled: boolean"
 
 # Remove factory call from manifest
 /codefactory.remove button-component
@@ -64,34 +109,20 @@ Or use natural language for manifest-based workflow:
 ```typescript
 // In VS Code with GitHub Copilot chat:
 
-"Add Button component to manifest"
+"add Button component to manifest"
 // → AI uses /codefactory.add
 // → Factory call saved to codefactory.manifest.json
 
-"Add Card component to manifest"  
+"add Card component to manifest"  
 // → Another factory call added to manifest
 
-"Build all from manifest"
+"build all from manifest"
 // → AI uses /codefactory.produce
 // → Files generated with markers for safe regeneration
 
-"Show me what's in the manifest"
+"show me what's in the manifest"
 // → AI uses /codefactory.inspect
 // → Displays all factory calls and their parameters
-```
-
-### From Terminal
-
-```bash
-# Create a new project
-deno run --allow-read --allow-write jsr:@codefactory/create my-project
-cd my-project
-
-# Run the example workflow
-deno run --allow-read --allow-write examples/example-workflow.ts
-
-# Or use the API directly
-deno run --allow-read --allow-write your-script.ts
 ```
 
 ## Usage Modes
@@ -102,8 +133,8 @@ Use Copilot slash commands to work with the manifest system:
 
 ```bash
 # In VS Code Copilot chat:
-/codefactory.add "Create a design system Button component"
-/codefactory.add "Create a Card component that uses Button"
+/codefactory.add "a 'design_system_component' for Button"
+/codefactory.add "a 'design_system_component' for Card that uses Button"
 /codefactory.produce
 ```
 
@@ -118,13 +149,13 @@ Use natural language - Copilot translates to slash commands:
 
 **Phase 1 - Planning** (natural language with Copilot):
 ```typescript
-"Add Button component to manifest with label and onClick props"
-"Add Card component to manifest, depending on Button"
+"add a 'react_component' for Button with label and onClick props"
+"add a 'react_component' for Card, depending on Button"
 ```
 
 **Phase 2 - Building** (natural language or direct code):
 ```typescript
-"Build all from manifest"
+"build all from manifest"
 // OR execute directly:
 const producer = new Producer(manifest, registry);
 await producer.buildAll();
@@ -261,11 +292,11 @@ export const PrimaryButton = styled(Button, { variant: 'primary' });
 ```
 
 **Natural Language** (conversational):
-- **"Add X to manifest"** → Uses `/codefactory.add` internally
-- **"Build from manifest"** → Uses `/codefactory.produce`
-- **"Update X in manifest"** → Uses `/codefactory.update`
-- **"Remove X from manifest"** → Uses `/codefactory.remove`
-- **"Show manifest"** → Uses `/codefactory.inspect`
+- **"add X to manifest"** → Uses `/codefactory.add` internally
+- **"build from manifest"** → Uses `/codefactory.produce`
+- **"update X in manifest"** → Uses `/codefactory.update`
+- **"remove X from manifest"** → Uses `/codefactory.remove`
+- **"show manifest"** → Uses `/codefactory.inspect`
 
 ## Use Cases
 
@@ -346,6 +377,7 @@ deno run --allow-read --allow-write src/create/mod.ts my-project
 
 ## Documentation
 
+- [Creating Factories](./docs/creating-factories.md) - **Define your own code generators**
 - [Build Manifest System](./docs/manifest-system.md) - Two-phase code generation
 - [Auto-Registration](./docs/auto-registration.md) - Factory discovery
 - [Template System](./docs/template-frontmatter.md) - Frontmatter support
