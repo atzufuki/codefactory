@@ -4,7 +4,9 @@
   "exports": "./src/main.ts",
   "tasks": {
     "dev": "deno run --watch src/main.ts",
-    "start": "deno run src/main.ts"
+    "start": "deno run src/main.ts",
+    "example": "deno run --allow-read --allow-write examples/example-workflow.ts",
+    "build": "deno run --allow-read --allow-write -A build.ts"
   },
   "imports": {
     "@codefactory/core": "jsr:@codefactory/core@^0.1"

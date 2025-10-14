@@ -40,20 +40,44 @@ Same manifest = Same code. Always.
 
 ### With GitHub Copilot (VS Code)
 
+GitHub Copilot provides slash commands for working with factories:
+
+```bash
+# Add factory call to manifest (planning phase)
+/codefactory.add "Create a Button component with label prop"
+
+# Build from manifest (execution phase, deterministic)
+/codefactory.produce
+
+# Update existing factory call
+/codefactory.update button-component props="label: string, onClick: () => void"
+
+# Remove factory call from manifest
+/codefactory.remove button-component
+
+# Show manifest contents
+/codefactory.inspect
+```
+
+Or use natural language for manifest-based workflow:
+
 ```typescript
-// In VS Code with GitHub Copilot enabled:
+// In VS Code with GitHub Copilot chat:
 
-// 1. Add components to manifest
 "Add Button component to manifest"
-// → AI calls ManifestManager.addFactoryCall()
+// → AI uses /codefactory.add
+// → Factory call saved to codefactory.manifest.json
 
-"Add Card component to manifest"
-// → Another factory call added
+"Add Card component to manifest"  
+// → Another factory call added to manifest
 
-// 2. Build from manifest
 "Build all from manifest"
-// → Producer executes all factory calls
+// → AI uses /codefactory.produce
 // → Files generated with markers for safe regeneration
+
+"Show me what's in the manifest"
+// → AI uses /codefactory.inspect
+// → Displays all factory calls and their parameters
 ```
 
 ### From Terminal
@@ -69,6 +93,47 @@ deno run --allow-read --allow-write examples/example-workflow.ts
 # Or use the API directly
 deno run --allow-read --allow-write your-script.ts
 ```
+
+## Usage Modes
+
+### 1. Slash Commands
+
+Use Copilot slash commands to work with the manifest system:
+
+```bash
+# In VS Code Copilot chat:
+/codefactory.add "Create a design system Button component"
+/codefactory.add "Create a Card component that uses Button"
+/codefactory.produce
+```
+
+**When to use:**
+- Working in VS Code with GitHub Copilot
+- Quick access to manifest operations
+- Prefer explicit command syntax
+
+### 2. Natural Language
+
+Use natural language - Copilot translates to slash commands:
+
+**Phase 1 - Planning** (natural language with Copilot):
+```typescript
+"Add Button component to manifest with label and onClick props"
+"Add Card component to manifest, depending on Button"
+```
+
+**Phase 2 - Building** (natural language or direct code):
+```typescript
+"Build all from manifest"
+// OR execute directly:
+const producer = new Producer(manifest, registry);
+await producer.buildAll();
+```
+
+**When to use:**
+- Prefer conversational interface
+- Let AI interpret intent
+- More flexible phrasing
 
 ## Key Features
 
@@ -186,13 +251,21 @@ export const PrimaryButton = styled(Button, { variant: 'primary' });
 
 ### With GitHub Copilot
 
-The system integrates seamlessly with GitHub Copilot through natural language:
+**Slash Commands** (explicit):
+```bash
+/codefactory.add <description>       # Add factory call to manifest
+/codefactory.produce                 # Build from manifest (deterministic)
+/codefactory.update <id> <params>    # Update factory call
+/codefactory.remove <id>             # Remove factory call
+/codefactory.inspect                 # Show manifest contents
+```
 
-- **"Add X to manifest"** → AI adds factory call
-- **"Build from manifest"** → Deterministic code generation
-- **"Update X in manifest"** → Modify parameters
-- **"Remove X from manifest"** → Clean up
-- **"Show manifest"** → Inspect current state
+**Natural Language** (conversational):
+- **"Add X to manifest"** → Uses `/codefactory.add` internally
+- **"Build from manifest"** → Uses `/codefactory.produce`
+- **"Update X in manifest"** → Uses `/codefactory.update`
+- **"Remove X from manifest"** → Uses `/codefactory.remove`
+- **"Show manifest"** → Uses `/codefactory.inspect`
 
 ## Use Cases
 
