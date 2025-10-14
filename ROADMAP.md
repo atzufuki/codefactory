@@ -12,7 +12,7 @@ CodeFactory core is functional and includes GitHub Copilot integration. Not yet 
 - [x] FactoryRegistry for managing factories
 - [x] Template engine with `{{variable}}` substitution
 - [x] `defineFactory()` builder for easy factory creation
-- [x] Meta-factory (`define_factory`) for creating factories
+- [x] Meta-factory (`factory`) for creating factories
 - [x] Built-in factories shipped with the library
 - [x] Demo application showcasing usage
 - [x] Create CLI tool (`create-codefactory`)

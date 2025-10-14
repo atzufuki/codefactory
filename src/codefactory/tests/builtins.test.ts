@@ -1,12 +1,12 @@
 /**
- * Integration test for define_factory meta-factory
+ * Integration test for factory meta-factory
  */
 
 import { assertEquals } from "@std/assert";
 import { defineFactoryFactory } from "../builtins.ts";
 
 Deno.test("defineFactoryFactory - has correct metadata from frontmatter", () => {
-  assertEquals(defineFactoryFactory.name, "define_factory");
+  assertEquals(defineFactoryFactory.name, "factory");
   assertEquals(
     defineFactoryFactory.description,
     "Creates a new template-based factory definition. This meta-factory allows you to define factories using simple templates with {{variable}} placeholders."

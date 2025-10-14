@@ -130,8 +130,8 @@ if (reactFactory) {
 }
 
 // Example 3: Use the meta-factory to CREATE a new factory!
-console.log("📝 Example 3: Using the meta-factory (define_factory) to create a NEW factory:\n");
-const metaFactory = registry.get("define_factory");
+console.log("📝 Example 3: Using the meta-factory (factory) to create a NEW factory:\n");
+const metaFactory = registry.get("factory");
 if (metaFactory) {
   const result = await metaFactory.execute({
     name: "api_endpoint",
