@@ -6,11 +6,19 @@
  */
 
 import Handlebars from "handlebars";
+import { TemplateLoader } from "./template-loader.ts";
 import type { FactoryDefinition } from "./types.ts";
 
-// Load the Handlebars template for factory generation
+// Load the factory template with frontmatter
 const factoryTemplateUrl = new URL("./factories/factory.ts.hbs", import.meta.url);
-const factoryTemplateSource = await Deno.readTextFile(factoryTemplateUrl);
+const factoryTemplatePath = factoryTemplateUrl.protocol === "file:"
+  ? factoryTemplateUrl.pathname.replace(/^\/([A-Z]:)/, "$1") // Fix Windows paths
+  : factoryTemplateUrl.pathname;
+  
+const { frontmatter: factoryMeta, template: factoryTemplateSource } = 
+  await TemplateLoader.loadTemplate(factoryTemplatePath);
+
+// Compile Handlebars template for the factory generator
 const factoryTemplate = Handlebars.compile(factoryTemplateSource);
 
 /**
@@ -19,61 +27,14 @@ const factoryTemplate = Handlebars.compile(factoryTemplateSource);
  * This is the "factory of factories" - it allows AI to define new factories
  * using a simplified template-based approach instead of writing full factory
  * definitions with complex generate functions.
+ * 
+ * Metadata is now loaded from the template's YAML frontmatter.
  */
 export const defineFactoryFactory: FactoryDefinition = {
-  name: "define_factory",
-  description: "Creates a new template-based factory definition. This meta-factory allows you to define factories using simple templates with {{variable}} placeholders.",
-  params: {
-    name: {
-      type: "string",
-      description: "Unique name for the factory (e.g., 'react_component')",
-      required: true,
-    },
-    description: {
-      type: "string",
-      description: "Human-readable description of what the factory does",
-      required: true,
-    },
-    template: {
-      type: "string",
-      description: "Code template with {{variable}} placeholders that will be replaced with parameter values",
-      required: true,
-    },
-    outputPath: {
-      type: "string",
-      description: "Optional file path template (e.g., 'src/{{componentName}}.ts'). Can use same {{variables}} as template.",
-      required: false,
-    },
-    paramDescriptions: {
-      type: "Record<string, string>",
-      description: "Object mapping parameter names to their descriptions. Template variables are auto-detected.",
-      required: false,
-    },
-  },
-  examples: [
-    {
-      name: "typescript_function",
-      description: "Creates a TypeScript function",
-      template: "export function {{functionName}}({{params}}): {{returnType}} {\n  {{body}}\n}",
-      outputPath: "src/{{functionName}}.ts",
-      paramDescriptions: {
-        functionName: "Name of the function",
-        params: "Function parameters",
-        returnType: "Return type",
-        body: "Function body",
-      },
-    },
-    {
-      name: "react_component",
-      description: "Creates a React functional component",
-      template: "export function {{componentName}}(props: {{componentName}}Props) {\n  return <div>{{content}}</div>;\n}",
-      outputPath: "src/components/{{componentName}}.tsx",
-      paramDescriptions: {
-        componentName: "Name of the component",
-        content: "JSX content",
-      },
-    },
-  ],
+  name: factoryMeta.name,
+  description: factoryMeta.description,
+  params: factoryMeta.params || {},
+  examples: factoryMeta.examples || [],
   generate: (params) => {
     const { name, description, template, outputPath, paramDescriptions } = params as {
       name: string;

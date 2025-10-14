@@ -1,0 +1,17 @@
+---
+name: test_factory
+description: A test factory for unit tests
+params:
+  name:
+    type: string
+    description: The name parameter
+    required: true
+  value:
+    type: string
+    description: The value parameter
+    required: false
+examples:
+  - name: example1
+    value: test
+---
+export const {{name}} = "{{value}}";
