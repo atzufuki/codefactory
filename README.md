@@ -2,8 +2,9 @@
 
 > A meta-factory for deterministic AI code generation
 
-[![Test Status](https://img.shields.io/badge/tests-49%20passing-brightgreen)](./src/codefactory/tests/)
+[![Test Status](https://img.shields.io/badge/tests-113%20passing-brightgreen)](./src/codefactory/tests/)
 [![Deno 2](https://img.shields.io/badge/deno-2.0-blue)](https://deno.com)
+[![MCP Compatible](https://img.shields.io/badge/MCP-compatible-purple)](./docs/mcp-setup.md)
 
 ## The Problem
 
@@ -358,13 +359,14 @@ deno run --allow-read --allow-write src/create/mod.ts my-project
 
 ## Project Status
 
-✨ **Feature Complete** - Core system ready with 49 tests passing:
+✨ **Feature Complete** - Core system ready with 113 tests passing:
 
 - ✅ Factory system with auto-registration
 - ✅ Build manifest system (ManifestManager + Producer)
 - ✅ Marker-based safe regeneration
 - ✅ Dependency resolution with topological sort
-- ✅ GitHub Copilot integration
+- ✅ MCP Server for AI assistant integration
+- ✅ GitHub Copilot integration (slash commands + natural language)
 - ✅ Template system with frontmatter
 - 📦 **Next**: JSR publication
 

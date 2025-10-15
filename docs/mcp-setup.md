@@ -1,75 +1,88 @@
 # MCP Server Setup Guide
 
-This project uses the **Model Context Protocol (MCP)** to provide Copilot commands for manifest operations.
+This project uses the **Model Context Protocol (MCP)** to provide AI assistant tools for manifest operations.
 
 ## What is MCP?
 
-MCP allows AI assistants like GitHub Copilot to use external tools (like our codefactory server) to perform operations. Instead of Copilot generating TypeScript code to manipulate the manifest, it calls our MCP tools directly.
+MCP allows AI assistants like GitHub Copilot and Claude Desktop to use external tools (like our CodeFactory server) to perform operations. Instead of AI generating TypeScript code to manipulate the manifest, it calls our MCP tools directly.
 
 **Benefits:**
 - ✅ More reliable (deterministic operations)
 - ✅ Consistent behavior across all uses
 - ✅ Better error handling
+- ✅ Type-safe with schema validation
 - ✅ No code generation needed for manifest operations
 
 ## Setup Instructions
 
-### 1. Install MCP Support in Your IDE
+### For VS Code with GitHub Copilot (VS Code 1.99+)
 
-**For VS Code with GitHub Copilot:**
-
-The MCP server configuration should be added to your Copilot settings.
-
-Create or edit `.vscode/settings.json`:
+Create or edit `.vscode/mcp.json` in your project:
 
 ```json
 {
-  "github.copilot.chat.tools": {
+  "servers": {
     "codefactory": {
-      "enabled": true,
-      "provider": "mcp",
+      "type": "stdio",
       "command": "deno",
       "args": [
-        "task",
-        "mcp:dev"
+        "run",
+        "--allow-read",
+        "--allow-write",
+        "--allow-env",
+        "${workspaceFolder}/path/to/mcp-server/server.ts"
       ],
-      "cwd": "${workspaceFolder}"
+      "env": {
+        "CODEFACTORY_MANIFEST": "${workspaceFolder}/codefactory.manifest.json",
+        "CODEFACTORY_FACTORIES_DIR": "${workspaceFolder}/factories"
+      }
     }
   }
 }
 ```
 
-### 2. Verify MCP Server Task Exists
+**Note:** VS Code will show a "Start" button next to the server configuration when you open the file. Click it to start the MCP server.
 
-The template project includes the MCP server task in `deno.json`:
+### For Claude Desktop
+
+Add to your Claude Desktop config (`~/Library/Application Support/Claude/claude_desktop_config.json` on macOS):
 
 ```json
 {
-  "tasks": {
-    "mcp:dev": "deno run --allow-read --allow-write --allow-env jsr:@codefactory/mcp-server"
+  "mcpServers": {
+    "codefactory": {
+      "command": "deno",
+      "args": [
+        "run",
+        "--allow-read",
+        "--allow-write",
+        "--allow-env",
+        "/absolute/path/to/mcp-server/server.ts"
+      ],
+      "env": {
+        "CODEFACTORY_MANIFEST": "./codefactory.manifest.json",
+        "CODEFACTORY_FACTORIES_DIR": "./factories"
+      }
+    }
   }
 }
 ```
 
-This task starts the MCP server that provides the codefactory tools.
+### Test MCP Connection
 
-### 3. Test MCP Connection
+**For VS Code:**
+1. Open `.vscode/mcp.json` in your project
+2. Click the "Start" button next to the server configuration
+3. Open GitHub Copilot Chat
+4. Click the tools icon (🔧) to see available tools
+5. You should see the 5 CodeFactory tools listed
 
-1. Open GitHub Copilot Chat in your IDE
-2. Type `/codefactory.inspect`
-3. If MCP is configured correctly, you should see your manifest contents
+**For Claude Desktop:**
+1. Restart Claude Desktop after adding the configuration
+2. In a new conversation, the tools should be available automatically
+3. Type: "inspect the manifest" to test
 
-If you get an error like "Tool not found", the MCP server isn't running or isn't configured properly.
-
-### 4. Manual Server Start (Optional)
-
-You can also start the MCP server manually for debugging:
-
-```bash
-deno task mcp:dev
-```
-
-This runs the server in stdio mode, which is what Copilot uses to communicate with it.
+If you don't see the tools, check the troubleshooting section below.
 
 ## Available MCP Tools
 
@@ -85,76 +98,125 @@ Once configured, these tools are available in Copilot Chat:
 
 ## Troubleshooting
 
-### "MCP tools not available"
+### "MCP tools not available" (VS Code)
 
-**Solution 1: Check VS Code settings**
-- Ensure `.vscode/settings.json` has the MCP configuration
-- Restart VS Code after adding configuration
+**Solution 1: Start the server**
+- Open `.vscode/mcp.json`
+- Click the "Start" button next to the server configuration
+- Wait a few seconds for the server to initialize
 
-**Solution 2: Verify Deno is installed**
+**Solution 2: Check VS Code version**
+```bash
+code --version
+# Must be 1.99 or higher for MCP support
+```
+
+**Solution 3: Verify Deno is installed**
 ```bash
 deno --version
+# Should show Deno 2.0 or higher
 ```
 
-**Solution 3: Test MCP server manually**
-```bash
-deno task mcp:dev
-# Should start server without errors
-# Press Ctrl+C to stop
-```
+**Solution 4: Check the MCP server path**
+- Ensure the path in `.vscode/mcp.json` points to the correct server.ts file
+- Use absolute paths or `${workspaceFolder}` variable
 
-### "Cannot find module '@codefactory/mcp-server'"
+### "MCP tools not available" (Claude Desktop)
 
-The MCP server is published to JSR. Ensure you have internet connection:
+**Solution 1: Check config file location**
+- macOS: `~/Library/Application Support/Claude/claude_desktop_config.json`
+- Windows: `%APPDATA%\Claude\claude_desktop_config.json`
+- Linux: `~/.config/Claude/claude_desktop_config.json`
 
-```bash
-deno run jsr:@codefactory/mcp-server --version
-```
+**Solution 2: Use absolute paths**
+- Ensure all paths in the config are absolute
+- Relative paths won't work in Claude Desktop config
+
+**Solution 3: Restart Claude Desktop**
+- Close Claude Desktop completely
+- Wait a few seconds
+- Restart and try again
 
 ### MCP server crashes
 
-Check the Copilot Chat output panel for error messages:
-1. Open VS Code Command Palette (Ctrl+Shift+P / Cmd+Shift+P)
-2. Run: "Developer: Show Logs"
-3. Select "GitHub Copilot Chat"
-4. Look for MCP-related errors
+**For VS Code:**
+1. Open Output panel (View → Output)
+2. Select "MCP" from the dropdown
+3. Look for error messages
+
+**For Claude Desktop:**
+1. Check the Claude Desktop logs
+2. Look for MCP-related errors in the console
 
 ## IDE-Specific Setup
 
-### VS Code
+### VS Code (1.99+)
 
-Configuration via `.vscode/settings.json` (see above).
-
-### Cursor
-
-Cursor has built-in MCP support. Add to your user settings:
+Use `.vscode/mcp.json` (recommended):
 
 ```json
 {
-  "mcp.servers": {
+  "servers": {
     "codefactory": {
+      "type": "stdio",
       "command": "deno",
-      "args": ["task", "mcp:dev"],
-      "cwd": "${workspaceFolder}"
+      "args": ["run", "--allow-read", "--allow-write", "--allow-env", "${workspaceFolder}/server.ts"],
+      "env": {
+        "CODEFACTORY_MANIFEST": "${workspaceFolder}/codefactory.manifest.json",
+        "CODEFACTORY_FACTORIES_DIR": "${workspaceFolder}/factories"
+      }
     }
   }
 }
 ```
 
-### Other IDEs
+### Claude Desktop
 
-MCP support varies by IDE. Check your IDE's documentation for MCP configuration.
-
-## Advanced Configuration
-
-### Custom MCP Server Path
-
-If you want to use a local development version of the MCP server:
+Use the global config file (absolute paths required):
 
 ```json
 {
-  "tasks": {
-    "mcp:dev": "deno run --allow-read --allow-write --allow-env ../path/to/local/mcp-server/mod.ts"
+  "mcpServers": {
+    "codefactory": {
+      "command": "deno",
+      "args": ["run", "--allow-read", "--allow-write", "--allow-env", "/absolute/path/to/server.ts"],
+      "env": {
+        "CODEFACTORY_MANIFEST": "/absolute/path/to/manifest.json",
+        "CODEFACTORY_FACTORIES_DIR": "/absolute/path/to/factories"
+      }
+    }
+  }
+}
+```
+
+### Cursor
+
+Cursor supports MCP through `.cursor/mcp.json` or global settings. Check Cursor documentation for latest MCP support details.
+
+### Other IDEs
+
+MCP support is growing. Check your IDE's documentation for MCP configuration instructions.
+
+## Advanced Configuration
+
+### Custom Server Path
+
+If you're developing the MCP server locally or using a custom fork:
+
+```json
+{
+  "servers": {
+    "codefactory": {
+      "type": "stdio",
+      "command": "deno",
+      "args": [
+        "run",
+        "--allow-read",
+        "--allow-write",
+        "--allow-env",
+        "/path/to/your/custom/mcp-server/server.ts"
+      ]
+    }
   }
 }
 ```
@@ -163,27 +225,34 @@ If you want to use a local development version of the MCP server:
 
 The MCP server respects these environment variables:
 
-- `CODEFACTORY_MANIFEST_PATH` - Custom path to manifest file (default: `./codefactory.manifest.json`)
-- `CODEFACTORY_FACTORIES_PATH` - Custom path to factories directory (default: `./factories`)
+- `CODEFACTORY_MANIFEST` - Path to manifest file (default: `./codefactory.manifest.json`)
+- `CODEFACTORY_FACTORIES_DIR` - Path to factories directory (default: `./factories`)
 
-Set in `.vscode/settings.json`:
+Example with custom paths:
 
 ```json
 {
-  "github.copilot.chat.tools": {
+  "servers": {
     "codefactory": {
-      "enabled": true,
-      "provider": "mcp",
+      "type": "stdio",
       "command": "deno",
-      "args": ["task", "mcp:dev"],
-      "cwd": "${workspaceFolder}",
+      "args": ["run", "--allow-read", "--allow-write", "--allow-env", "server.ts"],
       "env": {
-        "CODEFACTORY_MANIFEST_PATH": "./my-custom-manifest.json"
+        "CODEFACTORY_MANIFEST": "./custom/path/manifest.json",
+        "CODEFACTORY_FACTORIES_DIR": "./custom/factories"
       }
     }
   }
 }
 ```
+
+### Using with Multiple Projects
+
+You can have different MCP configurations for different projects:
+
+1. Each project has its own `.vscode/mcp.json`
+2. VS Code loads the config from the current workspace
+3. No conflicts between projects
 
 ## Learn More
 
