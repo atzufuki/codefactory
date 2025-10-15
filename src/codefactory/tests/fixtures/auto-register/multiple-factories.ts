@@ -14,6 +14,3 @@ export const factory2: FactoryDefinition = {
   generate: () => ({ content: "factory 2" }),
 };
 
-// This should be ignored (not a FactoryDefinition)
-export const helper = () => "helper";
-export const config = { foo: "bar" };

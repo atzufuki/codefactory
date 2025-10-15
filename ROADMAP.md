@@ -20,6 +20,7 @@ CodeFactory core is functional and includes GitHub Copilot integration. Not yet 
 
 ## Phase 2: AI Integration ✅ DONE
 
+### GitHub Copilot Slash Commands
 - [x] GitHub Copilot slash commands via `.github/prompts/`
 - [x] `/codefactory.add` - Add factory call to manifest
 - [x] `/codefactory.produce` - Build from manifest
@@ -28,6 +29,16 @@ CodeFactory core is functional and includes GitHub Copilot integration. Not yet 
 - [x] `/codefactory.inspect` - Show manifest contents
 - [x] Natural language support through prompt files
 - [x] Zero-installation integration (spec-kit pattern)
+
+### MCP Server (Model Context Protocol)
+- [x] MCP server implementation for AI assistant integration
+- [x] 5 MCP tools mapping to Copilot commands
+- [x] AI inference for factory names and parameters
+- [x] Type-safe tool schemas with validation
+- [x] Support for GitHub Copilot Chat (VS Code 1.99+)
+- [x] Support for Claude Desktop and other MCP clients
+- [x] Comprehensive test coverage (113 tests total)
+- [x] Environment variable configuration
 
 ## Phase 3: Auto-Registration & Discovery ✅ DONE
 
@@ -211,9 +222,11 @@ Ideas for the roadmap? Open an issue or PR!
 
 ## Recent Achievements
 
-- ✨ **49 tests passing** across all modules
+- ✨ **113 tests passing** across all modules (core + MCP server + E2E)
+- 🔌 **MCP Server** - Model Context Protocol integration for AI assistants
 - 🏗️ **Build Manifest System** - Deterministic two-phase code generation
 - 🔍 **Auto-Registration** - Automatic factory discovery
-- 🎨 **Template System** - YAML/JSON frontmatter support
-- 📝 **Marker-Based Generation** - Safe code regeneration
-- 🤖 **AI Integration** - GitHub Copilot slash commands
+- 🎨 **Template System** - YAML/JSON frontmatter support with Handlebars
+- 📝 **Marker-Based Generation** - Safe code regeneration with user code preservation
+- 🤖 **AI Integration** - GitHub Copilot slash commands + MCP tools
+- 🐛 **Bug Fixes** - HTML encoding, params merge, empty params handling

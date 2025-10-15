@@ -260,6 +260,38 @@ Deno.test("ManifestManager - updateFactoryCall", async (t) => {
     );
   });
 
+  await t.step("should merge params instead of replacing", () => {
+    const manager = new ManifestManager(join(testDir, "update5.json"));
+    
+    // Add factory call with multiple params
+    manager.addFactoryCall({
+      id: "test",
+      factory: "factory",
+      params: { 
+        name: "web_component",
+        description: "Generate a Web Component",
+        template: "export const {{name}} = {};",
+        outputPath: "src/{{name}}.ts"
+      },
+      outputPath: "factories/web_component.hbs",
+    });
+    
+    // Update only one param - others should be preserved
+    manager.updateFactoryCall("test", {
+      params: { outputPath: "src/components/{{name}}.ts" }
+    });
+    
+    const call = manager.getFactoryCall("test");
+    
+    // Check that the updated param changed
+    assertEquals(call?.params.outputPath, "src/components/{{name}}.ts");
+    
+    // Check that other params were preserved (not deleted)
+    assertEquals(call?.params.name, "web_component", "name should be preserved");
+    assertEquals(call?.params.description, "Generate a Web Component", "description should be preserved");
+    assertEquals(call?.params.template, "export const {{name}} = {};", "template should be preserved");
+  });
+
   await cleanup();
 });
 

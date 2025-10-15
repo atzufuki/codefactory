@@ -1,0 +1,10 @@
+---
+name: hbs_factory
+description: Test factory from HBS template
+outputPath: src/{{name}}.ts
+params:
+  name:
+    type: string
+    required: true
+---
+export const {{name}} = "from-hbs";

@@ -1,0 +1,38 @@
+{
+  "version": "1.0.0",
+  "generated": "2025-01-15T10:30:00Z",
+  "factories": [
+    {
+      "id": "greeting-factory",
+      "factory": "simple_function",
+      "params": {
+        "functionName": "greet",
+        "params": ["name: string"],
+        "returnType": "string"
+      },
+      "outputPath": "src/greet.ts",
+      "createdAt": "2025-01-15T10:00:00Z"
+    },
+    {
+      "id": "user-card",
+      "factory": "react_component",
+      "params": {
+        "componentName": "UserCard",
+        "props": ["user: User"]
+      },
+      "outputPath": "src/components/UserCard.tsx",
+      "createdAt": "2025-01-15T10:15:00Z"
+    },
+    {
+      "id": "user-list",
+      "factory": "react_component",
+      "params": {
+        "componentName": "UserList",
+        "props": ["users: User[]"]
+      },
+      "outputPath": "src/components/UserList.tsx",
+      "dependsOn": ["user-card"],
+      "createdAt": "2025-01-15T10:20:00Z"
+    }
+  ]
+}

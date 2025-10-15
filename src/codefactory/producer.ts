@@ -4,6 +4,7 @@
  * Executes factory calls from manifest and generates code with marker-based management.
  */
 
+import { dirname, isAbsolute, join } from "@std/path";
 import type { FactoryRegistry } from "./registry.ts";
 import type { BuildManifest, FactoryCall } from "./manifest.ts";
 import type { FactoryResult } from "./types.ts";
@@ -29,10 +30,18 @@ export interface BuildPreview {
 }
 
 export class Producer {
+  private manifestDir: string;
+
   constructor(
     private manifest: BuildManifest,
-    private registry: FactoryRegistry
-  ) {}
+    private registry: FactoryRegistry,
+    manifestPath?: string
+  ) {
+    // Determine manifest directory for resolving relative paths
+    // If manifestPath is provided, use its directory
+    // Otherwise use current working directory
+    this.manifestDir = manifestPath ? dirname(manifestPath) : Deno.cwd();
+  }
 
   /**
    * Build all factory calls from manifest
@@ -172,7 +181,7 @@ export class Producer {
     const result: FactoryResult = await factory.execute(factoryCall.params);
 
     // Determine output path (use factory result or manifest)
-    const outputPath = result.filePath ?? factoryCall.outputPath;
+    let outputPath = result.filePath ?? factoryCall.outputPath;
 
     if (!outputPath) {
       throw new Error(
@@ -180,10 +189,23 @@ export class Producer {
       );
     }
 
+    // Resolve relative paths relative to manifest directory
+    outputPath = this.resolveOutputPath(outputPath);
+
     // Write to file with markers
     await this.writeGeneratedCode(outputPath, result.content, factoryCall.id);
 
     return outputPath;
+  }
+
+  /**
+   * Resolve output path relative to manifest directory
+   */
+  private resolveOutputPath(path: string): string {
+    if (isAbsolute(path)) {
+      return path;
+    }
+    return join(this.manifestDir, path);
   }
 
   /**
@@ -194,8 +216,15 @@ export class Producer {
     content: string,
     factoryCallId: string
   ): Promise<void> {
-    const markerStart = `// @codefactory:start id="${factoryCallId}"`;
-    const markerEnd = `// @codefactory:end`;
+    // Use different marker syntax for template files (.hbs, .template, .handlebars)
+    const isTemplateFile = /\.(hbs|template|handlebars)$/.test(filePath);
+    
+    const markerStart = isTemplateFile
+      ? `{{!-- @codefactory:start id="${factoryCallId}" --}}`
+      : `// @codefactory:start id="${factoryCallId}"`;
+    const markerEnd = isTemplateFile
+      ? `{{!-- @codefactory:end --}}`
+      : `// @codefactory:end`;
 
     // Check if file exists
     const exists = await this.fileExists(filePath);
@@ -286,8 +315,8 @@ export class Producer {
    * Ensure directory exists for file path
    */
   private async ensureDir(filePath: string): Promise<void> {
-    const dir = filePath.split("/").slice(0, -1).join("/");
-    if (dir) {
+    const dir = dirname(filePath);
+    if (dir && dir !== ".") {
       await Deno.mkdir(dir, { recursive: true });
     }
   }

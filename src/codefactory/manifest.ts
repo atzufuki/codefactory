@@ -118,7 +118,16 @@ export class ManifestManager {
       }
     }
 
-    Object.assign(factoryCall, updates);
+    // Merge params instead of replacing them entirely
+    // This preserves existing parameters not included in the update
+    if (updates.params) {
+      factoryCall.params = { ...factoryCall.params, ...updates.params };
+      // Remove params from updates to avoid Object.assign overwriting the merge
+      const { params: _params, ...otherUpdates } = updates;
+      Object.assign(factoryCall, otherUpdates);
+    } else {
+      Object.assign(factoryCall, updates);
+    }
   }
 
   /**

@@ -1,0 +1,16 @@
+{
+  "version": "1.0.0",
+  "generated": "2025-10-15T07:26:25.173Z",
+  "factories": [
+    {
+      "id": "existing-id",
+      "factory": "test_factory",
+      "params": {
+        "name": "Another"
+      },
+      "outputPath": "src/existing-id.ts",
+      "dependsOn": [],
+      "createdAt": "2025-10-15T07:26:25.201Z"
+    }
+  ]
+}

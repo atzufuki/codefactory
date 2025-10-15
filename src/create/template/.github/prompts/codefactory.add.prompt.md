@@ -4,53 +4,46 @@ description: Add a factory call to the manifest (planning phase)
 
 # Add Factory Call to Manifest
 
-You are helping the user add a factory call to their `codefactory.manifest.json` file.
+You are helping the user add a factory call to their `codefactory.manifest.json` file using the MCP server.
 
 ## Your Task
 
 1. **Parse the user's intent** from their description
-2. **Determine which factory** to use based on available factories
-3. **Extract parameters** needed for that factory
-4. **Generate a unique ID** for this factory call (kebab-case, descriptive)
-5. **Add the factory call** to the manifest using ManifestManager
-6. **Save the manifest** to disk
+2. **Call the MCP tool** `codefactory_add` with the parsed information
+
+The MCP tool will automatically:
+- Determine which factory to use
+- Extract parameters from user intent  
+- Generate a unique ID
+- Add to manifest and save
 
 ## Process
 
+Use the Model Context Protocol (MCP) tool:
+
 ```typescript
-import { ManifestManager } from "@codefactory/core";
-
-// Load or create manifest
-const manager = await ManifestManager.load("./codefactory.manifest.json");
-
-// Add factory call
-manager.addFactoryCall({
-  id: "unique-id-here",           // e.g., "button-component", "user-api-endpoint"
-  factory: "factory_name",         // Determined from user intent
-  params: {
-    // Extract from user description
-  },
-  outputPath: "src/path/to/file.ts",  // Where code will be generated
-  dependsOn: [],                   // Optional: IDs of other factory calls this depends on
+// The MCP server handles all the logic - just call the tool
+await mcp.callTool("codefactory_add", {
+  userIntent: "Create a Button component with label and onClick props"
+  // Optional overrides:
+  // id: "custom-id",
+  // factory: "specific_factory",
+  // params: { ... },
+  // outputPath: "custom/path.ts",
+  // dependsOn: ["other-id"]
 });
-
-// Save manifest
-await manager.save();
 ```
 
-## Available Factories
-
-Check the `factories/` directory or use the factory registry to see what's available:
-
-```typescript
-import { registry } from "./factories/index.ts";
-const catalog = registry.getCatalog();
-// Use catalog to determine which factory matches user intent
-```
+The tool automatically:
+- Discovers available factories
+- Matches user intent to best factory using AI
+- Generates appropriate parameters
+- Creates a unique ID (kebab-case)
+- Validates and saves to manifest
 
 ## Response Format
 
-After adding to manifest, respond with:
+Display the MCP tool's response to the user:
 
 ```
 ‚úÖ Added to manifest: [descriptive-id]
@@ -61,32 +54,66 @@ Parameters:
   - [param1]: [value1]
   - [param2]: [value2]
 
-üìù The factory call has been saved to codefactory.manifest.json
-üî® Run /codefactory.produce to generate the code
+Ì≥ù The factory call has been saved to codefactory.manifest.json
+Ì¥® Run /codefactory.produce to generate the code
 ```
 
 ## Important Notes
 
-- **Do NOT generate code yet** - this is the planning phase
-- **Do NOT execute the factory** - just add to manifest
-- Generate a **unique, descriptive ID** (kebab-case)
-- Infer sensible defaults for parameters if not specified
-- Suggest dependencies if this component might depend on others already in manifest
+- **Always use the MCP tool** - don't manually manipulate manifest files
+- **The tool handles AI inference** - just provide user intent in natural language
+- **Do NOT generate code yet** - this is the planning phase only
+- You can override tool inference by providing explicit parameters
 
-## Example
+## Examples
 
-User: "Add a Button component to manifest"
+**Example 1: Simple component**
+```typescript
+User: "Add a Button component"
 
-You:
-1. Determine factory: `design_system_component`
-2. Generate ID: `button-component`
-3. Extract params: `{ componentName: "Button", props: ["label: string"] }`
-4. Output path: `src/components/Button.ts`
-5. Add to manifest
-6. Respond with confirmation
+await mcp.callTool("codefactory_add", {
+  userIntent: "Button component with label prop"
+});
+```
+
+**Example 2: With explicit parameters**
+```typescript
+User: "Add a UserCard component with name, email, and avatar props"
+
+await mcp.callTool("codefactory_add", {
+  userIntent: "UserCard component",
+  params: {
+    componentName: "UserCard",
+    props: ["name: string", "email: string", "avatar: string"]
+  }
+});
+```
+
+**Example 3: With dependencies**
+```typescript
+User: "Add a UserList that uses UserCard"
+
+await mcp.callTool("codefactory_add", {
+  userIntent: "UserList component that renders a list of UserCards",
+  dependsOn: ["user-card-component"]
+});
+```
 
 ## Error Handling
 
-- If factory doesn't exist, suggest creating one or choosing another
-- If ID conflicts with existing, generate alternative
-- If required parameters missing, ask user for clarification
+The MCP tool will return errors if:
+- Factory doesn't exist
+- ID conflicts with existing
+- Required parameters missing
+- Validation fails
+
+Display errors to the user and suggest corrections.
+
+## MCP Server Setup
+
+**CRITICAL**: The MCP server must be running for this command to work.
+
+If you get an error about MCP tools not being available:
+1. User needs to configure MCP in their IDE settings
+2. Start the server: `deno task mcp:dev`
+3. See https://github.com/atzufuki/codefactory/blob/main/docs/mcp-setup.md for setup instructions

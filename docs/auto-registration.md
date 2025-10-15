@@ -98,33 +98,27 @@ factories/
 factories/
   index.ts
   typescript/
-    function.ts
-    interface.ts
+    function.hbs
+    interface.hbs
   react/
-    component.ts
-    hook.ts
+    component.hbs
+    hook.hbs
 ```
 
-## Export Conventions
+## File Format
 
-All exported values that match the `FactoryDefinition` interface are automatically registered.
+Factories are defined as Handlebars template files (`.hbs`) with frontmatter metadata. See [Template Frontmatter](./template-frontmatter.md) for details.
 
-```typescript
-// Single factory per file
-export const typescriptFunction = defineFactory({
-  name: "typescript_function",
-  description: "Creates a TypeScript function",
-  // ...
-});
-```
-
-```typescript
-// Multiple factories per file
-export const typescriptFunction = defineFactory({ /* ... */ });
-export const typescriptClass = defineFactory({ /* ... */ });
-export const typescriptInterface = defineFactory({ /* ... */ });
-
-// Non-factory exports are ignored
-export const helper = () => {};
-export const config = { foo: "bar" };
+```handlebars
+---
+name: typescript_function
+description: Creates a TypeScript function
+params:
+  functionName:
+    type: string
+    required: true
+---
+export function {{functionName}}() {
+  // Implementation
+}
 ```
