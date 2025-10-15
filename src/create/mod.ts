@@ -5,7 +5,7 @@
  * Usage: deno run --reload jsr:@codefactory/create <project-name>
  */
 
-import { dirname, join } from "@std/path";
+import { dirname, join, isAbsolute } from "@std/path";
 
 if (import.meta.main) {
   const [projectName] = Deno.args;
@@ -17,7 +17,10 @@ if (import.meta.main) {
     Deno.exit(1);
   }
 
-  const targetDir = join(Deno.cwd(), projectName);
+  // Support both relative names and absolute paths
+  const targetDir = isAbsolute(projectName) 
+    ? projectName 
+    : join(Deno.cwd(), projectName);
   // Use URL to support both local and remote (jsr) execution
   const templateBaseUrl = new URL("template/", import.meta.url);
 
@@ -28,10 +31,7 @@ if (import.meta.main) {
     "README.md",
     "codefactory.manifest.json",
     "factories/index.ts",
-    "factories/examples.ts",
     "src/main.ts",
-    "examples/example-workflow.ts",
-    "examples/MANIFEST_EXAMPLES.md",
     ".github/copilot-instructions.md",
     ".github/prompts/README.md",
     ".github/prompts/codefactory.add.prompt.md",

@@ -43,7 +43,14 @@ export class TemplateLoader {
    * ```
    */
   static async loadTemplate(templatePath: string): Promise<LoadedTemplate> {
-    const content = await Deno.readTextFile(templatePath);
+    let content = await Deno.readTextFile(templatePath);
+    
+    // Strip codefactory markers if present (both Handlebars and regular comments)
+    content = content.replace(/^\{\{!-- @codefactory:start.*?--\}\}\n?/m, "");
+    content = content.replace(/^\{\{!-- @codefactory:end --\}\}\n?/m, "");
+    content = content.replace(/^\/\/ @codefactory:start.*?\n?/m, "");
+    content = content.replace(/^\/\/ @codefactory:end\n?/m, "");
+    
     const { frontmatter, body } = parseFrontmatter<TemplateFrontmatter>(content);
 
     // Validate required fields

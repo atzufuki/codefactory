@@ -3,11 +3,12 @@
     "./src/codefactory",
     "./src/create",
     "./src/create/template",
-    "./src/mcp-server"
+    "./src/mcp-server",
+    "./tests"
   ],
   "tasks": {
     "check": "deno check src/codefactory/mod.ts && deno check src/mcp-server/server.ts",
-    "test": "deno test --allow-read --allow-write",
+    "test": "deno test --allow-read --allow-write --allow-env --allow-run",
     "fmt": "deno fmt",
     "lint": "deno lint",
     "mcp": "cd src/mcp-server && deno task dev"

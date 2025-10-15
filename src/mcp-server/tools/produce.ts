@@ -38,15 +38,22 @@ export const produceTool: MCPTool = {
 
   async execute(args: Record<string, unknown>): Promise<MCPToolResult> {
     try {
+      // Get manifest path
+      const manifestPath = args.manifestPath as string | undefined;
+      
       // Load manifest and registry
-      const manager = await loadManifest(args.manifestPath as string | undefined);
+      const manager = await loadManifest(manifestPath);
       const registry = await loadRegistry(
         args.factoriesPath as string | undefined,
         "*.hbs"
       );
       
-      // Create producer
-      const producer = new Producer(manager.getManifest(), registry);
+      // Create producer with manifest path for resolving relative paths
+      const producer = new Producer(
+        manager.getManifest(), 
+        registry,
+        manifestPath ?? "./codefactory.manifest.json"
+      );
       
       // Check if dry run
       const dryRun = args.dryRun as boolean ?? false;

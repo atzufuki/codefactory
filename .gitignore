@@ -29,3 +29,6 @@ src/create/template/.github/prompts/*
 !src/create/template/.vscode/
 src/create/template/.vscode/*
 !src/create/template/.vscode/settings.json
+
+# E2E test temporary projects
+tests/e2e/.tmp/
