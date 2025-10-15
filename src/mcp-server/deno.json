@@ -1,0 +1,19 @@
+{
+  "name": "@codefactory/mcp-server",
+  "version": "0.1.0",
+  "exports": "./mod.ts",
+  "imports": {
+    "@codefactory/core": "../codefactory/mod.ts",
+    "@modelcontextprotocol/sdk/server/index.js": "npm:@modelcontextprotocol/sdk@0.5.0/server/index.js",
+    "@modelcontextprotocol/sdk/server/stdio.js": "npm:@modelcontextprotocol/sdk@0.5.0/server/stdio.js",
+    "@modelcontextprotocol/sdk/types.js": "npm:@modelcontextprotocol/sdk@0.5.0/types.js"
+  },
+  "tasks": {
+    "dev": "deno run --allow-read --allow-write --allow-env server.ts",
+    "start": "deno run --allow-read --allow-write --allow-env server.ts"
+  },
+  "compilerOptions": {
+    "strict": true,
+    "lib": ["deno.window"]
+  }
+}
