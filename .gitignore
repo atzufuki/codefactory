@@ -32,3 +32,6 @@ src/create/template/.vscode/*
 
 # E2E test temporary projects
 tests/e2e/.tmp/
+
+# Test coverage reports
+coverage/
