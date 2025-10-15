@@ -10,16 +10,16 @@ import { ManifestManager } from "@codefactory/core";
 const DEFAULT_MANIFEST_PATH = "./codefactory.manifest.json";
 
 /**
- * Get manifest path from environment or use default
+ * Get manifest path from args, environment, or use default
  */
-export function getManifestPath(): string {
-  return Deno.env.get("CODEFACTORY_MANIFEST") ?? DEFAULT_MANIFEST_PATH;
+export function getManifestPath(customPath?: string): string {
+  return customPath ?? Deno.env.get("CODEFACTORY_MANIFEST") ?? DEFAULT_MANIFEST_PATH;
 }
 
 /**
  * Load the manifest from disk
  */
-export async function loadManifest(): Promise<ManifestManager> {
-  const path = getManifestPath();
+export async function loadManifest(customPath?: string): Promise<ManifestManager> {
+  const path = getManifestPath(customPath);
   return await ManifestManager.load(path);
 }

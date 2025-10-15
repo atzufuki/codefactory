@@ -106,28 +106,85 @@ export const addTool: MCPTool = {
         description: "Optional: IDs this factory call depends on",
         items: { type: "string" },
       },
+      manifestPath: {
+        type: "string",
+        description: "Optional: Path to manifest file",
+      },
+      factoriesPath: {
+        type: "string",
+        description: "Optional: Path to factories directory",
+      },
     },
-    required: ["description"],
+    required: [],
   },
 
   async execute(args: Record<string, unknown>): Promise<MCPToolResult> {
-    const description = args.description as string;
+    const description = args.description as string | undefined;
+    
+    // Require either description or factory + params
+    if (!description && !args.factory) {
+      return {
+        content: [{
+          type: "text",
+          text: "❌ Error: Either 'description' or 'factory' parameter is required",
+        }],
+        isError: true,
+      };
+    }
     
     try {
       // Load manifest and registry
-      const manager = await loadManifest();
-      const registry = await loadRegistry();
+      const manager = await loadManifest(args.manifestPath as string | undefined);
+      const registry = await loadRegistry(
+        args.factoriesPath as string | undefined,
+        "*.hbs" // Load only .hbs template files
+      );
       const availableFactories = registry.list().map((f) => f.name);
       
       // Infer missing parameters
-      const factory = (args.factory as string) ?? inferFactory(description, availableFactories);
-      const id = (args.id as string) ?? generateId(description, factory);
-      const params = (args.params as Record<string, unknown>) ?? extractParams(description, factory);
+      const factory = (args.factory as string) ?? 
+        (description ? inferFactory(description, availableFactories) : "");
       
-      // Get factory to determine output path if not provided
+      if (!factory) {
+        return {
+          content: [{
+            type: "text",
+            text: "❌ Error: Could not infer factory from description. Available factories: " + 
+              availableFactories.join(", "),
+          }],
+          isError: true,
+        };
+      }
+      
+      // Validate factory exists
       const factoryObj = registry.get(factory);
-      const outputPath = (args.outputPath as string) ?? 
-        (factoryObj ? `src/${id}.ts` : `src/${id}.ts`);
+      if (!factoryObj) {
+        return {
+          content: [{
+            type: "text",
+            text: `❌ Error: Factory '${factory}' not found. Available: ${availableFactories.join(", ")}`,
+          }],
+          isError: true,
+        };
+      }
+      
+      const id = (args.id as string) ?? generateId(description ?? factory, factory);
+      const params = (args.params as Record<string, unknown>) ?? 
+        (description ? extractParams(description, factory) : {});
+      
+      // Check for duplicate ID
+      const existing = manager.getAllFactoryCalls().find(call => call.id === id);
+      if (existing) {
+        return {
+          content: [{
+            type: "text",
+            text: `❌ Error: Factory call with ID '${id}' already exists in manifest`,
+          }],
+          isError: true,
+        };
+      }
+      
+      const outputPath = (args.outputPath as string) ?? `src/${id}.ts`;
       
       // Add to manifest
       manager.addFactoryCall({
