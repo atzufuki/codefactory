@@ -18,7 +18,7 @@ Deno.test("codefactory_produce - should build all factory calls", async () => {
       `---
 name: simple_function
 description: Simple function
-outputPath: {{outputDir}}/{{functionName}}.ts
+outputPath: "{{outputDir}}/{{functionName}}.ts"
 ---
 export function {{functionName}}() {
   return "{{functionName}}";
@@ -73,7 +73,8 @@ Deno.test("codefactory_produce - should support dry-run mode", async () => {
       `${tempFactories}/simple.hbs`,
       `---
 name: simple_function
-outputPath: {{outputDir}}/{{functionName}}.ts
+description: Simple function generator
+outputPath: "{{outputDir}}/{{functionName}}.ts"
 ---
 export function {{functionName}}() {}
 `,
@@ -124,7 +125,8 @@ Deno.test("codefactory_produce - should build specific factory IDs", async () =>
       `${tempFactories}/simple.hbs`,
       `---
 name: simple_function
-outputPath: {{outputDir}}/{{functionName}}.ts
+description: Simple function generator
+outputPath: "{{outputDir}}/{{functionName}}.ts"
 ---
 export function {{functionName}}() {}
 `,
@@ -148,7 +150,7 @@ export function {{functionName}}() {}
     const result = await produceTool.execute({
       manifestPath: tempManifest,
       factoriesPath: tempFactories,
-      factoryIds: ["test-1"],
+      ids: ["test-1"], // Only build test-1
       dryRun: false,
     });
 

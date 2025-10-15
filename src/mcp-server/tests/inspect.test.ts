@@ -67,7 +67,7 @@ Deno.test("codefactory_inspect - should show execution order", async () => {
     });
 
     const text = result.content[0].text || "";
-    assertEquals(text.includes("Execution order"), true);
+    assertEquals(text.includes("Build Order"), true);
     assertEquals(text.includes("base"), true);
     assertEquals(text.includes("derived"), true);
   } finally {
@@ -88,7 +88,7 @@ Deno.test("codefactory_inspect - should handle empty manifest", async () => {
 
     assertEquals(result.isError, undefined);
     const text = result.content[0].text || "";
-    assertEquals(text.includes("0 factory calls"), true);
+    assertEquals(text.includes("Total factory calls: 0"), true);
   } finally {
     await Deno.remove(tempManifest);
   }

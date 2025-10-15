@@ -25,14 +25,25 @@ export const produceTool: MCPTool = {
         type: "boolean",
         description: "Preview what would be generated without writing files",
       },
+      manifestPath: {
+        type: "string",
+        description: "Optional: Path to manifest file",
+      },
+      factoriesPath: {
+        type: "string",
+        description: "Optional: Path to factories directory",
+      },
     },
   },
 
   async execute(args: Record<string, unknown>): Promise<MCPToolResult> {
     try {
       // Load manifest and registry
-      const manager = await loadManifest();
-      const registry = await loadRegistry();
+      const manager = await loadManifest(args.manifestPath as string | undefined);
+      const registry = await loadRegistry(
+        args.factoriesPath as string | undefined,
+        "*.hbs"
+      );
       
       // Create producer
       const producer = new Producer(manager.getManifest(), registry);

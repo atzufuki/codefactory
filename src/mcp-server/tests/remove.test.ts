@@ -81,6 +81,7 @@ Deno.test("codefactory_remove - should warn about dependencies", async () => {
 
     const result = await removeTool.execute({
       id: "base",
+      force: true, // Force removal despite dependency
       manifestPath: tempManifest,
     });
 
@@ -89,7 +90,7 @@ Deno.test("codefactory_remove - should warn about dependencies", async () => {
     
     const text = result.content[0].text || "";
     assertEquals(text.includes("derived"), true);
-    assertEquals(text.includes("depends on"), true);
+    assertEquals(text.includes("depended on this"), true);
   } finally {
     await Deno.remove(tempManifest);
   }

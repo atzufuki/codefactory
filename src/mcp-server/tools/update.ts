@@ -37,6 +37,10 @@ export const updateTool: MCPTool = {
           },
         },
       },
+      manifestPath: {
+        type: "string",
+        description: "Optional: Path to manifest file",
+      },
     },
     required: ["id", "updates"],
   },
@@ -46,7 +50,7 @@ export const updateTool: MCPTool = {
     const updates = args.updates as Record<string, unknown>;
     
     try {
-      const manager = await loadManifest();
+      const manager = await loadManifest(args.manifestPath as string | undefined);
       
       // Get current call for comparison
       const currentCall = manager.getAllFactoryCalls().find((c) => c.id === id);

@@ -26,6 +26,10 @@ export const removeTool: MCPTool = {
         type: "boolean",
         description: "Force removal even if others depend on it",
       },
+      manifestPath: {
+        type: "string",
+        description: "Optional: Path to manifest file",
+      },
     },
     required: ["id"],
   },
@@ -36,7 +40,7 @@ export const removeTool: MCPTool = {
     const force = args.force as boolean ?? false;
     
     try {
-      const manager = await loadManifest();
+      const manager = await loadManifest(args.manifestPath as string | undefined);
       
       // Get the call before removing
       const call = manager.getAllFactoryCalls().find((c) => c.id === id);
@@ -58,7 +62,16 @@ export const removeTool: MCPTool = {
       }
       
       // Remove from manifest
-      manager.removeFactoryCall(id);
+      // If force=true, manually remove without using removeFactoryCall to avoid core's dependency check
+      if (force && dependents.length > 0) {
+        const manifest = manager.getManifest();
+        const index = manifest.factories.findIndex((f) => f.id === id);
+        if (index !== -1) {
+          manifest.factories.splice(index, 1);
+        }
+      } else {
+        manager.removeFactoryCall(id);
+      }
       await manager.save();
       
       // Optionally delete file

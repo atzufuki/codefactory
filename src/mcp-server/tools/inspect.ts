@@ -55,6 +55,10 @@ export const inspectTool: MCPTool = {
         type: "boolean",
         description: "Include project statistics",
       },
+      manifestPath: {
+        type: "string",
+        description: "Optional: Custom path to manifest file (for testing)",
+      },
     },
   },
 
@@ -64,7 +68,7 @@ export const inspectTool: MCPTool = {
     const showStats = args.showStats as boolean ?? true;
     
     try {
-      const manager = await loadManifest();
+      const manager = await loadManifest(args.manifestPath as string | undefined);
       const manifest = manager.getManifest();
       const calls = manager.getAllFactoryCalls();
       
