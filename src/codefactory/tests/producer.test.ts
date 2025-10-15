@@ -2,7 +2,8 @@ import { assertEquals, assertStringIncludes } from "@std/assert";
 import { Producer } from "../producer.ts";
 import { ManifestManager } from "../manifest.ts";
 import { FactoryRegistry } from "../registry.ts";
-import { defineFactory } from "../builder.ts";
+import { TemplateLoader } from "../template-loader.ts";
+import type { FactoryDefinition } from "../types.ts";
 import { join } from "@std/path";
 
 const testDir = join(
@@ -21,12 +22,15 @@ async function cleanup() {
 }
 
 // Helper to create a simple test factory
-function createTestFactory(name: string, output: string) {
-  return defineFactory({
-    name,
-    description: "Test factory",
-    template: output,
-  });
+function createTestFactory(name: string, output: string): FactoryDefinition {
+  return TemplateLoader.toFactoryDefinition(
+    {
+      name,
+      description: "Test factory",
+      params: {},
+    },
+    output
+  );
 }
 
 Deno.test("Producer - basic building", async (t) => {

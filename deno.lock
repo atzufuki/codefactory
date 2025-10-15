@@ -160,6 +160,7 @@
       "src/mcp-server": {
         "dependencies": [
           "jsr:@std/assert@1",
+          "jsr:@std/path@1",
           "npm:@modelcontextprotocol/sdk@0.5.0"
         ]
       },

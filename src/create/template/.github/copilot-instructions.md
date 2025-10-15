@@ -162,7 +162,7 @@ See `examples/MANIFEST_EXAMPLES.md` for complete usage guide.
 
 ## Technical Notes
 
-- **Factories**: Defined using `defineFactory()` from `@codefactory/core`
+- **Factories**: Defined as `.hbs` template files with frontmatter metadata
 - **Templates**: Use Mustache-style `{{variable}}` placeholders
 - **Registry**: All factories exported from `factories/index.ts` for auto-discovery
 - **Manifest**: `ManifestManager` handles factory call tracking and dependency resolution
