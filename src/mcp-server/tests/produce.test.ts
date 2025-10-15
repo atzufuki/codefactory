@@ -172,3 +172,186 @@ export function {{functionName}}() {}
     await Deno.remove(tempOutput, { recursive: true });
   }
 });
+
+Deno.test("codefactory_produce - should handle build errors", async () => {
+  const tempManifest = await Deno.makeTempFile({ suffix: ".json" });
+  const tempFactories = await Deno.makeTempDir();
+
+  try {
+    const manager = new ManifestManager(tempManifest);
+    manager.addFactoryCall({
+      id: "nonexistent-factory",
+      factory: "does_not_exist",
+      params: {},
+      outputPath: "/tmp/output.ts",
+    });
+    await manager.save();
+
+    const result = await produceTool.execute({
+      manifestPath: tempManifest,
+      factoriesPath: tempFactories,
+    });
+
+    assertEquals(result.isError, true);
+    const text = result.content[0].text || "";
+    assertEquals(text.includes("failed"), true);
+    assertEquals(text.includes("errors"), true);
+  } finally {
+    await Deno.remove(tempManifest);
+    await Deno.remove(tempFactories, { recursive: true });
+  }
+});
+
+Deno.test("codefactory_produce - dry run shows files to be created", async () => {
+  const tempManifest = await Deno.makeTempFile({ suffix: ".json" });
+  const tempFactories = await Deno.makeTempDir();
+  const tempOutput = await Deno.makeTempDir();
+
+  try {
+    await Deno.writeTextFile(
+      `${tempFactories}/simple.hbs`,
+      `---
+name: simple_test
+description: Simple test
+outputPath: "{{outputDir}}/test.ts"
+---
+test content
+`,
+    );
+
+    const manager = new ManifestManager(tempManifest);
+    manager.addFactoryCall({
+      id: "test-file",
+      factory: "simple_test",
+      params: { outputDir: tempOutput },
+      outputPath: `${tempOutput}/test.ts`,
+    });
+    await manager.save();
+
+    const result = await produceTool.execute({
+      manifestPath: tempManifest,
+      factoriesPath: tempFactories,
+      dryRun: true,
+    });
+
+    const text = result.content[0].text || "";
+    assertEquals(text.includes("Dry run"), true);
+    assertEquals(text.includes("Will generate"), true);
+    assertEquals(text.includes("test.ts"), true);
+  } finally {
+    await Deno.remove(tempManifest);
+    await Deno.remove(tempFactories, { recursive: true });
+    await Deno.remove(tempOutput, { recursive: true });
+  }
+});
+
+Deno.test("codefactory_produce - dry run shows file errors", async () => {
+  const tempManifest = await Deno.makeTempFile({ suffix: ".json" });
+  const tempFactories = await Deno.makeTempDir();
+  const tempOutput = await Deno.makeTempDir();
+
+  try {
+    // Create factory
+    await Deno.writeTextFile(
+      `${tempFactories}/simple.hbs`,
+      `---
+name: simple_test
+description: Simple test
+outputPath: "{{outputDir}}/test.ts"
+---
+test content
+`,
+    );
+
+    // Create existing file WITHOUT markers
+    const existingFile = `${tempOutput}/existing.ts`;
+    await Deno.writeTextFile(existingFile, "// No markers");
+
+    const manager = new ManifestManager(tempManifest);
+    manager.addFactoryCall({
+      id: "test-existing",
+      factory: "simple_test",
+      params: { outputDir: tempOutput },
+      outputPath: existingFile, // This file exists but has no markers
+    });
+    await manager.save();
+
+    const result = await produceTool.execute({
+      manifestPath: tempManifest,
+      factoriesPath: tempFactories,
+      dryRun: true,
+    });
+
+    assertEquals(result.isError, undefined); // Dry run doesn't error
+    const text = result.content[0].text || "";
+    assertEquals(text.includes("errors"), true);
+    assertEquals(text.includes("⚠️"), true);
+    assertEquals(text.includes("no marker"), true);
+  } finally {
+    await Deno.remove(tempManifest);
+    await Deno.remove(tempFactories, { recursive: true });
+    await Deno.remove(tempOutput, { recursive: true });
+  }
+});
+
+Deno.test("codefactory_produce - dry run distinguishes new vs update", async () => {
+  const tempManifest = await Deno.makeTempFile({ suffix: ".json" });
+  const tempFactories = await Deno.makeTempDir();
+  const tempOutput = await Deno.makeTempDir();
+
+  try {
+    await Deno.writeTextFile(
+      `${tempFactories}/simple.hbs`,
+      `---
+name: simple_test
+description: Simple test
+outputPath: "{{outputDir}}/{{filename}}.ts"
+---
+// @codefactory:start id="{{id}}"
+test content
+// @codefactory:end
+`,
+    );
+
+    // Create existing file with markers
+    await Deno.writeTextFile(
+      `${tempOutput}/existing.ts`,
+      `// @codefactory:start id="existing-file"
+old content
+// @codefactory:end
+`,
+    );
+
+    const manager = new ManifestManager(tempManifest);
+    // This will update existing file
+    manager.addFactoryCall({
+      id: "existing-file",
+      factory: "simple_test",
+      params: { outputDir: tempOutput, filename: "existing", id: "existing-file" },
+      outputPath: `${tempOutput}/existing.ts`,
+    });
+    // This will create new file
+    manager.addFactoryCall({
+      id: "new-file",
+      factory: "simple_test",
+      params: { outputDir: tempOutput, filename: "newfile", id: "new-file" },
+      outputPath: `${tempOutput}/newfile.ts`,
+    });
+    await manager.save();
+
+    const result = await produceTool.execute({
+      manifestPath: tempManifest,
+      factoriesPath: tempFactories,
+      dryRun: true,
+    });
+
+    const text = result.content[0].text || "";
+    assertEquals(text.includes("Dry run"), true);
+    assertEquals(text.includes("➕"), true); // New file icon
+    assertEquals(text.includes("🔄"), true); // Update icon
+  } finally {
+    await Deno.remove(tempManifest);
+    await Deno.remove(tempFactories, { recursive: true });
+    await Deno.remove(tempOutput, { recursive: true });
+  }
+});

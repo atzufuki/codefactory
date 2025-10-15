@@ -315,8 +315,8 @@ export class Producer {
    * Ensure directory exists for file path
    */
   private async ensureDir(filePath: string): Promise<void> {
-    const dir = filePath.split("/").slice(0, -1).join("/");
-    if (dir) {
+    const dir = dirname(filePath);
+    if (dir && dir !== ".") {
       await Deno.mkdir(dir, { recursive: true });
     }
   }
