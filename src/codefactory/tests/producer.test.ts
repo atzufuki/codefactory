@@ -2,7 +2,8 @@ import { assertEquals, assertStringIncludes } from "@std/assert";
 import { Producer } from "../producer.ts";
 import { ManifestManager } from "../manifest.ts";
 import { FactoryRegistry } from "../registry.ts";
-import { defineFactory } from "../builder.ts";
+import { TemplateLoader } from "../template-loader.ts";
+import type { FactoryDefinition } from "../types.ts";
 import { join } from "@std/path";
 
 const testDir = join(
@@ -21,12 +22,15 @@ async function cleanup() {
 }
 
 // Helper to create a simple test factory
-function createTestFactory(name: string, output: string) {
-  return defineFactory({
-    name,
-    description: "Test factory",
-    template: output,
-  });
+function createTestFactory(name: string, output: string): FactoryDefinition {
+  return TemplateLoader.toFactoryDefinition(
+    {
+      name,
+      description: "Test factory",
+      params: {},
+    },
+    output
+  );
 }
 
 Deno.test("Producer - basic building", async (t) => {
@@ -421,6 +425,115 @@ Deno.test("Producer - error handling", async (t) => {
     assertEquals(result.errors.length, 1);
     // Should have validation error
     assertStringIncludes(result.errors[0].error, "name");
+  });
+
+  await cleanup();
+});
+
+Deno.test("Producer - template file markers", async (t) => {
+  await cleanup();
+  await Deno.mkdir(testDir, { recursive: true });
+
+  await t.step("should use template markers for .hbs files", async () => {
+    const manifestPath = join(testDir, "template-markers.json");
+    const outputPath = join(testDir, "test.hbs");
+    
+    const manager = new ManifestManager(manifestPath);
+    const registry = new FactoryRegistry();
+    
+    const factory = createTestFactory("hbs_factory", "{{componentName}}");
+    registry.register(factory);
+    
+    manager.addFactoryCall({
+      id: "test-hbs",
+      factory: "hbs_factory",
+      params: { componentName: "Button" },
+      outputPath,
+    });
+    await manager.save();
+    
+    const producer = new Producer(manager.getManifest(), registry, manifestPath);
+    await producer.buildAll();
+    
+    const content = await Deno.readTextFile(outputPath);
+    // Should use Handlebars comment markers
+    assertEquals(content.includes("{{!-- @codefactory:start"), true);
+    assertEquals(content.includes("{{!-- @codefactory:end"), true);
+  });
+
+  await cleanup();
+});
+
+Deno.test("Producer - relative path resolution", async (t) => {
+  await cleanup();
+  await Deno.mkdir(testDir, { recursive: true });
+
+  await t.step("should resolve relative paths from manifest directory", async () => {
+    const manifestPath = join(testDir, "manifest.json");
+    const outputPath = "relative/output.ts"; // Relative path
+    
+    const manager = new ManifestManager(manifestPath);
+    const registry = new FactoryRegistry();
+    
+    const factory = createTestFactory("rel_factory", "test");
+    registry.register(factory);
+    
+    manager.addFactoryCall({
+      id: "relative-path",
+      factory: "rel_factory",
+      params: {},
+      outputPath,
+    });
+    await manager.save();
+    
+    const producer = new Producer(manager.getManifest(), registry, manifestPath);
+    await producer.buildAll();
+    
+    // Should create file relative to manifest directory
+    const resolvedPath = join(testDir, outputPath);
+    const exists = await fileExists(resolvedPath);
+    assertEquals(exists, true);
+  });
+
+  await cleanup();
+});
+
+Deno.test("Producer - edge cases", async (t) => {
+  await cleanup();
+  await Deno.mkdir(testDir, { recursive: true });
+
+  await t.step("should handle non-Error exceptions", async () => {
+    const manifestPath = join(testDir, "non-error.json");
+    
+    const manager = new ManifestManager(manifestPath);
+    const registry = new FactoryRegistry();
+    
+    // Register factory that throws non-Error
+    const badFactory: FactoryDefinition = {
+      name: "throws_string",
+      description: "Throws string",
+      params: {},
+      generate: () => {
+        throw "This is a string error"; // Not an Error object
+      },
+    };
+    registry.register(badFactory);
+    
+    manager.addFactoryCall({
+      id: "bad-call",
+      factory: "throws_string",
+      params: {},
+      outputPath: join(testDir, "bad.ts"),
+    });
+    await manager.save();
+    
+    const producer = new Producer(manager.getManifest(), registry, manifestPath);
+    const result = await producer.buildAll();
+    
+    assertEquals(result.success, false);
+    assertEquals(result.errors.length, 1);
+    assertEquals(result.errors[0].error, "This is a string error");
+    assertEquals(result.errors[0].stack, undefined);
   });
 
   await cleanup();

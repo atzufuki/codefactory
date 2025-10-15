@@ -140,3 +140,29 @@ Deno.test("TemplateLoader.loadFactory - convenience method", async () => {
   const result = await factory.generate({ name: "test", value: "123" });
   assertEquals(result.content.trim(), 'export const test = "123";');
 });
+
+Deno.test("Handlebars template - no HTML encoding for code", async () => {
+  const frontmatter = {
+    name: "arrow_function_test",
+    description: "Test that arrow functions are not HTML encoded",
+  };
+  
+  const template = "const fn = {{signature}};";
+  const factory = TemplateLoader.toFactoryDefinition(frontmatter, template);
+  
+  // Test arrow function syntax
+  const result1 = await factory.generate({ signature: "() => void" });
+  assertEquals(result1.content, "const fn = () => void;");
+  assertEquals(result1.content.includes("&#x3D;&gt;"), false, "Should not contain HTML entities");
+  
+  // Test comparison operators
+  const result2 = await factory.generate({ signature: "x <= y && y >= z" });
+  assertEquals(result2.content, "const fn = x <= y && y >= z;");
+  assertEquals(result2.content.includes("&lt;"), false, "Should not encode <");
+  assertEquals(result2.content.includes("&gt;"), false, "Should not encode >");
+  
+  // Test JSX/HTML in code
+  const result3 = await factory.generate({ signature: "<div>Hello</div>" });
+  assertEquals(result3.content, "const fn = <div>Hello</div>;");
+  assertEquals(result3.content.includes("&lt;"), false, "Should not encode < in JSX");
+});

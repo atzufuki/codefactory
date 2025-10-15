@@ -90,7 +90,9 @@ export class FactoryRegistry {
       recursive = false,
     } = options;
 
-    const basePath = new URL(".", baseUrl).pathname;
+    // Ensure baseUrl ends with / for directory URLs
+    const normalizedBaseUrl = baseUrl.endsWith("/") ? baseUrl : `${baseUrl}/`;
+    const basePath = new URL(".", normalizedBaseUrl).pathname;
     // Normalize Windows paths
     const normalizedPath = basePath.replace(/^\/([A-Z]:)/, "$1");
     

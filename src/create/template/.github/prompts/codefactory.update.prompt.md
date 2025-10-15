@@ -1,123 +1,63 @@
 ---
-description: Update a factory call in the manifest
+description: Update an existing factory call in the manifest
 ---
 
-# Update Factory Call in Manifest
+# Update Factory Call
 
-You are helping the user update an existing factory call in their `codefactory.manifest.json` file.
+You are helping the user update an existing factory call in their manifest.
 
 ## Your Task
 
-1. **Identify the factory call** by ID (from user input)
-2. **Load the manifest**
-3. **Parse the updates** the user wants to make
-4. **Update the factory call** using ManifestManager
-5. **Save the manifest**
-6. **Remind user to rebuild** to apply changes
+Call the MCP tool `codefactory_update` to modify a factory call.
 
 ## Process
 
 ```typescript
-import { ManifestManager } from "@codefactory/core";
-
-// Load manifest
-const manager = await ManifestManager.load("./codefactory.manifest.json");
-
-// Update factory call
-manager.updateFactoryCall("factory-call-id", {
+// Update parameters
+await mcp.callTool("codefactory_update", {
+  id: "button-component",
   params: {
-    // Updated parameters
-  },
-  // Can also update: outputPath, dependsOn
-});
-
-// Save manifest
-await manager.save();
-```
-
-## What Can Be Updated
-
-- **params** - Any parameter values
-- **outputPath** - Where the code will be generated
-- **dependsOn** - Dependency array (add/remove dependencies)
-
-**Cannot update:**
-- `id` - Use remove + add instead
-- `factory` - Use remove + add instead
-- `createdAt` - Automatically managed
-
-## Usage Examples
-
-User: "Update button-component to add onClick prop"
-
-```typescript
-manager.updateFactoryCall("button-component", {
-  params: {
-    props: ["label: string", "onClick: () => void"]  // Added onClick
+    // New parameters (will merge with existing)
+    props: ["label: string", "onClick: () => void", "disabled: boolean"]
   }
 });
-```
 
-User: "Change Card output path to components/ui/Card.ts"
-
-```typescript
-manager.updateFactoryCall("card-component", {
-  outputPath: "src/components/ui/Card.ts"
+// Update output path
+await mcp.callTool("codefactory_update", {
+  id: "button-component",
+  outputPath: "src/ui/Button.tsx"
 });
-```
 
-User: "Make card-component depend on button-component"
-
-```typescript
-manager.updateFactoryCall("card-component", {
-  dependsOn: ["button-component"]
+// Update dependencies
+await mcp.callTool("codefactory_update", {
+  id: "user-list",
+  dependsOn: ["user-card", "pagination"]
 });
 ```
 
 ## Response Format
 
+Display the MCP tool's response:
+
 ```
-‚úÖ Updated in manifest: [factory-call-id]
+‚úÖ Updated factory call: button-component
 
 Changes:
-  params.props: ["label: string"] ‚Üí ["label: string", "onClick: () => void"]
+  ‚Ä¢ params.props: ["label: string"] ‚Üí ["label: string", "onClick: () => void", "disabled: boolean"]
 
-üìù Changes saved to codefactory.manifest.json
-üî® Run /codefactory.produce to regenerate with new parameters
-```
-
-## Finding the ID
-
-If user doesn't provide exact ID:
-1. Load manifest and list matching factory calls
-2. Ask user to confirm which one to update
-3. Show current values to help user decide
-
-```
-Found multiple matches:
-  1. button-component (design_system_component)
-  2. button-primary-variant (design_system_component)
-
-Which one would you like to update? (1-2)
+Ì≥ù Changes saved to manifest
+Ì¥® Run /codefactory.produce to regenerate the code
 ```
 
 ## Important Notes
 
-- **Updates are not applied** until `/codefactory.produce` is run
-- **Manifest is updated immediately** - changes are saved
-- **Can do dry run** with `/codefactory.produce --dry-run` to preview
-- **Dependency updates** affect execution order on next build
+- After updating, run `/codefactory.produce` to regenerate code
+- Parameters are merged (not replaced) unless you pass the full object
+- Cannot change `id` or `createdAt` fields
 
-## Validation
+## MCP Server Setup
 
-Before updating:
-- Verify the factory call ID exists in manifest
-- Validate parameter types if factory schema is available
-- Check for circular dependencies if updating `dependsOn`
-- Warn if changing outputPath to existing file without markers
-
-## Error Handling
-
-- **ID not found**: List available IDs and ask user to clarify
-- **Invalid params**: Show required parameters for that factory
-- **Circular dependency**: Explain the cycle and suggest fix
+The MCP server must be running. If you get errors:
+1. Check MCP configuration in IDE
+2. Start server: `deno task mcp:dev`
+3. See https://github.com/atzufuki/codefactory/blob/main/docs/mcp-setup.md

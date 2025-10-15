@@ -38,9 +38,13 @@ Deno.test("FactoryRegistry - autoRegister", async (t) => {
     );
     
     const factories = registry.list();
-    // Should find: single-factory.ts, multiple-factories.ts (2 factories), my-factory.factory.ts
+    // Should find: 
+    // - test-single.ts (1 factory)
+    // - multiple-factories.ts (2 factories)
+    // - my-factory.factory.ts (1 factory)
+    // - test-template.hbs (1 factory)
     // Should exclude: index.ts, invalid-factory.ts (not a valid factory)
-    assertEquals(factories.length, 4);
+    assertEquals(factories.length, 5);
   });
 
   await t.step("should exclude index.ts by default", async () => {
@@ -157,6 +161,19 @@ Deno.test("FactoryRegistry - autoRegister", async (t) => {
     // Should still register valid factories
     const factories = registry.list();
     assertEquals(factories.length >= 4, true);
+  });
+
+  await t.step("should load .hbs template files", async () => {
+    const registry = new FactoryRegistry();
+    
+    await registry.autoRegister(
+      new URL("./fixtures/auto-register/", import.meta.url).href,
+      { pattern: "*.hbs" }
+    );
+    
+    const factories = registry.list();
+    assertEquals(factories.length, 1);
+    assertEquals(factories[0].name, "hbs_factory");
   });
 });
 
