@@ -39,6 +39,7 @@ if (import.meta.main) {
     ".github/prompts/codefactory.update.prompt.md",
     ".github/prompts/codefactory.remove.prompt.md",
     ".github/prompts/codefactory.inspect.prompt.md",
+    ".vscode/settings.json",
   ];
 
   // Copy all template files

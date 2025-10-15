@@ -1,0 +1,16 @@
+{
+  "github.copilot.chat.tools": {
+    "codefactory": {
+      "enabled": true,
+      "provider": "mcp",
+      "command": "deno",
+      "args": [
+        "task",
+        "mcp:dev"
+      ],
+      "cwd": "${workspaceFolder}"
+    }
+  },
+  "deno.enable": true,
+  "deno.lint": true
+}

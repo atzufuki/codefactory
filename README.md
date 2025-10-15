@@ -372,6 +372,7 @@ deno run --allow-read --allow-write src/create/mod.ts my-project
 
 - [Creating Factories](./docs/creating-factories.md) - **Define your own code generators**
 - [Build Manifest System](./docs/manifest-system.md) - Two-phase code generation
+- [MCP Setup Guide](./docs/mcp-setup.md) - Configure GitHub Copilot integration
 - [Auto-Registration](./docs/auto-registration.md) - Factory discovery
 - [Template System](./docs/template-frontmatter.md) - Frontmatter support
 - [Examples](./src/create/template/examples/) - Complete workflows

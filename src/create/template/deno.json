@@ -6,7 +6,8 @@
     "dev": "deno run --watch src/main.ts",
     "start": "deno run src/main.ts",
     "example": "deno run --allow-read --allow-write examples/example-workflow.ts",
-    "build": "deno run --allow-read --allow-write -A build.ts"
+    "build": "deno run --allow-read --allow-write -A build.ts",
+    "mcp:dev": "deno run --allow-read --allow-write --allow-env jsr:@codefactory/mcp-server"
   },
   "imports": {
     "@codefactory/core": "jsr:@codefactory/core@^0.1"

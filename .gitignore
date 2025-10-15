@@ -26,3 +26,6 @@ src/create/template/.github/prompts/*
 !src/create/template/.github/prompts/codefactory.update.prompt.md
 !src/create/template/.github/prompts/codefactory.remove.prompt.md
 !src/create/template/.github/prompts/codefactory.inspect.prompt.md
+!src/create/template/.vscode/
+src/create/template/.vscode/*
+!src/create/template/.vscode/settings.json
