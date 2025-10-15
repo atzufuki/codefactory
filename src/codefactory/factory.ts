@@ -18,7 +18,12 @@ export class Factory {
   /**
    * Get factory metadata for AI consumption
    */
-  getMetadata() {
+  getMetadata(): {
+    name: string;
+    description: string;
+    params: Record<string, unknown>;
+    examples: Record<string, unknown>[] | undefined;
+  } {
     return {
       name: this.definition.name,
       description: this.definition.description,

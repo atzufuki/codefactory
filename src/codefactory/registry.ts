@@ -58,7 +58,12 @@ export class FactoryRegistry {
   /**
    * Get all factory metadata for AI consumption
    */
-  getCatalog() {
+  getCatalog(): Array<{
+    name: string;
+    description: string;
+    params: Record<string, unknown>;
+    examples: Record<string, unknown>[] | undefined;
+  }> {
     return Array.from(this.factories.values()).map((factory) => factory.getMetadata());
   }
 

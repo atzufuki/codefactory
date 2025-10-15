@@ -2,6 +2,7 @@
   "name": "@codefactory/create",
   "version": "0.1.0",
   "exports": "./mod.ts",
+  "license": "MIT",
   "imports": {
     "@std/path": "jsr:@std/path@^1.1.2"
   }

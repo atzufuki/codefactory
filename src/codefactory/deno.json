@@ -2,6 +2,7 @@
   "name": "@codefactory/core",
   "version": "0.1.0",
   "exports": "./mod.ts",
+  "license": "MIT",
   "imports": {
     "handlebars": "npm:handlebars@^4.7.8",
     "@std/yaml": "jsr:@std/yaml@^1",

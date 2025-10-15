@@ -12,6 +12,7 @@
     "coverage": "deno coverage coverage",
     "fmt": "deno fmt",
     "lint": "deno lint",
-    "mcp": "cd src/mcp-server && deno task dev"
+    "mcp": "cd src/mcp-server && deno task dev",
+    "publish:check": "cd src/codefactory && deno publish --dry-run && cd ../mcp-server && deno publish --dry-run && cd ../create && deno publish --dry-run"
   }
 }
