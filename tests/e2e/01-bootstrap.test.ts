@@ -50,6 +50,7 @@ Deno.test("E2E Phase 1: Bootstrap project", async () => {
       "factories/index.ts",
       "src/main.ts",
       ".vscode/settings.json",
+      ".vscode/mcp.json",
       ".github/prompts/codefactory.add.prompt.md",
     ];
     
@@ -64,12 +65,17 @@ Deno.test("E2E Phase 1: Bootstrap project", async () => {
     );
     assertExists(denoJson.tasks["mcp:dev"], "MCP dev task should exist");
     
-    const vscodeSettings = JSON.parse(
-      await Deno.readTextFile(join(testProjectDir, ".vscode/settings.json"))
+    const mcpConfig = JSON.parse(
+      await Deno.readTextFile(join(testProjectDir, ".vscode/mcp.json"))
     );
     assertExists(
-      vscodeSettings["github.copilot.chat.tools"]?.codefactory,
-      "VS Code should have MCP configuration"
+      mcpConfig.servers?.codefactory,
+      "VS Code should have MCP server configuration"
+    );
+    assertEquals(
+      mcpConfig.servers.codefactory.type,
+      "stdio",
+      "MCP server should use stdio transport"
     );
     
     // Verify manifest is empty

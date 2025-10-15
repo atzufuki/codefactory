@@ -18,9 +18,7 @@ All factories are defined in the `factories/` directory. Use the `/codefactory.i
 codefactory.manifest.json  # Build manifest (like package.json)
 factories/                 # Code generation template definitions
   ├── index.ts            # Main registry - all factories exported here
-  └── examples.ts         # Example factory definitions
-examples/
-  └── example-workflow.ts # Manifest system demonstration
+  └── *.hbs               # Factory template files
 src/                      # Generated and custom application code
 ```
 
@@ -157,17 +155,67 @@ Benefits:
 1. First generation: Create file with markers
 2. Regeneration: Replace only content between markers
 3. Error if file exists without markers (tell user to delete file or add markers)
-
-See `examples/MANIFEST_EXAMPLES.md` for complete usage guide.
+4. Multiple factory outputs can coexist in same file with different IDs
 
 ## Technical Notes
 
 - **Factories**: Defined as `.hbs` template files with frontmatter metadata
-- **Templates**: Use Mustache-style `{{variable}}` placeholders
+- **Templates**: Use Handlebars syntax with `{{variable}}` placeholders
 - **Registry**: All factories exported from `factories/index.ts` for auto-discovery
 - **Manifest**: `ManifestManager` handles factory call tracking and dependency resolution
 - **Producer**: Executes manifest deterministically with marker-based generation
 - **Markers**: `// @codefactory:start id="..."` ensures safe regeneration
+- **Meta-Factory**: Built-in `factory` factory creates new factories from templates
+
+## Common Patterns
+
+### Creating a New Factory
+
+Use the built-in meta-factory to create factories:
+
+```
+/codefactory.add "Create a factory for generating API endpoints"
+→ Uses 'factory' factory to generate a new .hbs template
+→ Define template structure, parameters, and output path
+→ New factory becomes available for use
+```
+
+### Handlebars Template Syntax
+
+```handlebars
+---
+name: my_factory
+description: Brief description of what this factory generates
+outputPath: src/{{fileName}}.ts
+---
+// Template content with {{variable}} substitutions
+{{#if condition}}
+  // Conditional content
+{{/if}}
+
+{{#each items}}
+  // Iterate over arrays
+  {{this}}
+{{/each}}
+```
+
+### Working with Props and Nested Objects
+
+```handlebars
+{{#each props}}
+  {{this.name}}: {{this.type}};
+{{/each}}
+```
+
+When calling factory:
+```json
+{
+  "props": [
+    {"name": "count", "type": "number"},
+    {"name": "label", "type": "string"}
+  ]
+}
+```
 
 ## API Quick Reference
 
@@ -196,3 +244,56 @@ await producer.buildAll();
 ---
 
 **Remember**: Prefer manifest-based workflow for projects. Use direct generation for quick prototyping.
+
+## Common Issues and Solutions
+
+### Issue: "Factory not found in registry"
+**Cause**: Factory .hbs file missing `name` or `description` in frontmatter  
+**Solution**: Ensure frontmatter has:
+```yaml
+---
+name: factory_name
+description: What this factory does
+---
+```
+
+### Issue: "File exists but has no marker"
+**Cause**: Trying to regenerate into a file without CodeFactory markers  
+**Solution**: Either delete the file, or add markers manually:
+```typescript
+// @codefactory:start id="your-factory-call-id"
+// existing code
+// @codefactory:end
+```
+
+### Issue: Props not defined as class properties
+**Cause**: Factory template doesn't duplicate props from interface  
+**Solution**: Template should include props twice:
+```handlebars
+interface {{componentName}}Props {
+{{#each props}}
+  {{this}};
+{{/each}}
+}
+
+class {{componentName}} {
+{{#each props}}
+  {{this}};  // Duplicate here for class properties
+{{/each}}
+}
+```
+
+### Issue: Template has HTML entity encoding (e.g., `=&gt;`)
+**Cause**: Handlebars auto-escapes by default  
+**Solution**: Use triple braces `{{{variable}}}` or set `noEscape: true` in factory metadata
+
+### Issue: Inline imports (`jsr:`, `npm:`) not allowed
+**Cause**: Generated code uses inline specifiers instead of import map  
+**Solution**: Use bare specifiers and define in `deno.json` or `package.json`:
+```json
+{
+  "imports": {
+    "@mylib/core": "jsr:@mylib/core@^1.0"
+  }
+}
+```

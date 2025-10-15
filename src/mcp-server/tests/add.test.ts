@@ -398,3 +398,159 @@ Deno.test("codefactory_add - should handle meta-factory params", async () => {
     await Deno.remove(tempFactories, { recursive: true });
   }
 });
+
+Deno.test("codefactory_add - should map meta-factory params correctly", async () => {
+  const tempManifest = await Deno.makeTempFile({ suffix: ".json" });
+  const tempFactories = await Deno.makeTempDir();
+
+  try {
+    const manager = new ManifestManager(tempManifest);
+    await manager.save();
+
+    // Test with correct parameter names
+    const result = await addTool.execute({
+      manifestPath: tempManifest,
+      factoriesPath: tempFactories,
+      factory: "factory",
+      params: {
+        name: "react_component",
+        description: "Creates React components",
+        template: "export const {{name}} = () => <div>{{name}}</div>;",
+        outputPath: "factories/react_component.hbs",
+      },
+    });
+
+    assertEquals(result.isError, undefined);
+    
+    // Verify the params were stored correctly
+    const updated = await ManifestManager.load(tempManifest);
+    const call = updated.getAllFactoryCalls()[0];
+    assertEquals(call.params.name, "react_component");
+    assertEquals(call.params.description, "Creates React components");
+    assertEquals(call.params.template, "export const {{name}} = () => <div>{{name}}</div>;");
+  } finally {
+    await Deno.remove(tempManifest);
+    await Deno.remove(tempFactories, { recursive: true });
+  }
+});
+
+Deno.test("codefactory_add - should map legacy meta-factory param names", async () => {
+  const tempManifest = await Deno.makeTempFile({ suffix: ".json" });
+  const tempFactories = await Deno.makeTempDir();
+
+  try {
+    const manager = new ManifestManager(tempManifest);
+    await manager.save();
+
+    // Test with legacy parameter names (factoryName, factoryDescription)
+    const result = await addTool.execute({
+      manifestPath: tempManifest,
+      factoriesPath: tempFactories,
+      factory: "factory",
+      params: {
+        factoryName: "ts_function",
+        factoryDescription: "Creates TypeScript functions",
+        template: "export function {{name}}() {}",
+      },
+    });
+
+    assertEquals(result.isError, undefined);
+    
+    // Verify the params were mapped correctly
+    const updated = await ManifestManager.load(tempManifest);
+    const call = updated.getAllFactoryCalls()[0];
+    assertEquals(call.params.name, "ts_function");
+    assertEquals(call.params.description, "Creates TypeScript functions");
+  } finally {
+    await Deno.remove(tempManifest);
+    await Deno.remove(tempFactories, { recursive: true });
+  }
+});
+
+Deno.test("codefactory_add - should reject meta-factory without template", async () => {
+  const tempManifest = await Deno.makeTempFile({ suffix: ".json" });
+  const tempFactories = await Deno.makeTempDir();
+
+  try {
+    const manager = new ManifestManager(tempManifest);
+    await manager.save();
+
+    // Try without template (should fail)
+    const result = await addTool.execute({
+      manifestPath: tempManifest,
+      factoriesPath: tempFactories,
+      factory: "factory",
+      params: {
+        name: "incomplete_factory",
+        description: "Missing template",
+        // template: missing!
+      },
+    });
+
+    assertEquals(result.isError, true);
+    const text = result.content[0].text || "";
+    assertEquals(text.includes("requires 'template'"), true);
+  } finally {
+    await Deno.remove(tempManifest);
+    await Deno.remove(tempFactories, { recursive: true });
+  }
+});
+
+Deno.test("codefactory_add - should extract params when args.params is empty object", async () => {
+  const tempManifest = await Deno.makeTempFile({ suffix: ".json" });
+  const tempFactories = await Deno.makeTempDir();
+
+  try {
+    const manager = new ManifestManager(tempManifest);
+    await manager.save();
+
+    // Create factory factory
+    await Deno.writeTextFile(
+      `${tempFactories}/factory.hbs`,
+      `---
+name: factory
+description: Meta-factory
+params:
+  name:
+    type: string
+    required: true
+  description:
+    type: string
+    required: true
+  template:
+    type: string
+    required: true
+---
+test
+`,
+    );
+
+    // Simulate Copilot behavior: empty params object
+    const result = await addTool.execute({
+      manifestPath: tempManifest,
+      factoriesPath: tempFactories,
+      description: "Create a factory for React components with props and state",
+      factory: "factory",
+      params: {}, // ← Empty object! Should fall back to extractParams
+    });
+
+    assertEquals(result.isError, undefined);
+    
+    // Verify params were extracted from description
+    const manifest = await ManifestManager.load(tempManifest);
+    const calls = manifest.getAllFactoryCalls();
+    assertEquals(calls.length, 1);
+    
+    const call = calls[0];
+    assertEquals(call.factory, "factory");
+    
+    // Should have extracted name, description, and template
+    assertEquals(typeof call.params.name, "string");
+    assertEquals(typeof call.params.description, "string");
+    assertEquals(typeof call.params.template, "string");
+    assertEquals((call.params.name as string).length > 0, true);
+  } finally {
+    await Deno.remove(tempManifest);
+    await Deno.remove(tempFactories, { recursive: true });
+  }
+});

@@ -63,16 +63,71 @@ function extractParams(description: string, factory: string): Record<string, unk
       params.props = propNames.map((p) => `${p.trim()}: unknown`);
     }
   } else if (factory === "factory") {
-    // Meta-factory parameters
+    // Meta-factory parameters - need to be complete!
     const match = description.match(/for\s+(.+?)(?:\s+with|\s*$)/i);
     if (match) {
-      params.name = match[1].toLowerCase().replace(/\s+/g, "_");
-      params.description = `Creates ${match[1]}`;
-      params.template = "// Template placeholder";
+      const targetName = match[1];
+      params.name = targetName.toLowerCase().replace(/\s+/g, "_");
+      params.description = `Creates ${targetName}`;
+      
+      // Generate a basic template based on the target
+      // This is a minimal template - user should customize it
+      params.template = `---
+name: {{name}}
+description: {{description}}
+outputPath: "src/{{name}}.ts"
+---
+// Generated code for {{name}}
+export const {{name}} = {
+  // TODO: Implement
+};`;
+      
+      params.outputPath = `factories/${params.name}.hbs`;
     }
   }
   
   return params;
+}
+
+/**
+ * Map user-provided params to correct meta-factory parameter names
+ */
+function mapMetaFactoryParams(userParams: Record<string, unknown>): Record<string, unknown> {
+  const mapped: Record<string, unknown> = {};
+  
+  // Handle different naming conventions
+  mapped.name = userParams.name || userParams.factoryName;
+  mapped.description = userParams.description || userParams.factoryDescription;
+  mapped.template = userParams.template;
+  mapped.outputPath = userParams.outputPath;
+  
+  // Convert parameters array to paramDescriptions if needed
+  if (userParams.parameters && Array.isArray(userParams.parameters)) {
+    mapped.paramDescriptions = userParams.parameters.reduce((acc: Record<string, string>, param: unknown) => {
+      if (typeof param === 'string') {
+        acc[param] = `Parameter: ${param}`;
+      } else if (param && typeof param === 'object' && 'name' in param) {
+        const p = param as { name: string; description?: string };
+        acc[p.name] = p.description || `Parameter: ${p.name}`;
+      }
+      return acc;
+    }, {});
+  } else if (userParams.paramDescriptions) {
+    mapped.paramDescriptions = userParams.paramDescriptions;
+  }
+  
+  // Validate required fields for meta-factory
+  if (!mapped.name) {
+    throw new Error("Meta-factory 'factory' requires 'name' parameter");
+  }
+  if (!mapped.description) {
+    throw new Error("Meta-factory 'factory' requires 'description' parameter");
+  }
+  if (!mapped.template) {
+    throw new Error("Meta-factory 'factory' requires 'template' parameter. Please provide the code template with {{variable}} placeholders.");
+  }
+  
+  return mapped;
 }
 
 export const addTool: MCPTool = {
@@ -169,8 +224,21 @@ export const addTool: MCPTool = {
       }
       
       const id = (args.id as string) ?? generateId(description ?? factory, factory);
-      const params = (args.params as Record<string, unknown>) ?? 
-        (description ? extractParams(description, factory) : {});
+      
+      // Get params from args or extract from description
+      // Check if args.params is empty object - if so, use extractParams
+      const hasParams = args.params && 
+        typeof args.params === "object" && 
+        Object.keys(args.params).length > 0;
+      
+      let params = hasParams
+        ? (args.params as Record<string, unknown>)
+        : (description ? extractParams(description, factory) : {});
+      
+      // Special handling for meta-factory: map parameter names correctly
+      if (factory === "factory" && Object.keys(params).length > 0) {
+        params = mapMetaFactoryParams(params);
+      }
       
       // Check for duplicate ID
       const existing = manager.getAllFactoryCalls().find(call => call.id === id);

@@ -85,7 +85,9 @@ export class TemplateLoader {
     template: string
   ): FactoryDefinition {
     // Compile the Handlebars template once
-    const compiledTemplate = Handlebars.compile(template);
+    // Use noEscape: true to prevent HTML encoding in code generation
+    // (e.g., "() => void" should not become "() &#x3D;&gt; void")
+    const compiledTemplate = Handlebars.compile(template, { noEscape: true });
     
     return {
       name: frontmatter.name,
@@ -99,7 +101,7 @@ export class TemplateLoader {
         return {
           content,
           filePath: frontmatter.outputPath
-            ? Handlebars.compile(frontmatter.outputPath)(params)
+            ? Handlebars.compile(frontmatter.outputPath, { noEscape: true })(params)
             : undefined,
         };
       },
