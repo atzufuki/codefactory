@@ -1,170 +1,57 @@
 # My CodeFactory Project
 
-A project powered by [CodeFactory](https://github.com/atzufuki/codefactory) - deterministic code generation with two-phase AI workflow.
+A project using [CodeFactory](https://github.com/atzufuki/codefactory) for deterministic code generation.
 
-## What is This?
+## Quick Start
 
-This project uses **CodeFactory**, a system for deterministic code generation with a **two-phase approach**:
+### 1. Create a Factory
 
-1. **Planning** (with AI): Parse intent → Add to manifest
-2. **Building** (deterministic): Execute manifest → Generate code
-
-This ensures:
-- ✅ Same manifest = Same code, always
-- ✅ Fast rebuilding without AI inference
-- ✅ Version control the "recipe" not the output
-- ✅ Factory updates benefit all projects
-
-## Project Structure
-
-```
-.
-├── codefactory.manifest.json  # Build manifest (like package.json)
-├── factories/                 # Your code generation templates
-│   ├── index.ts              # Main factory registry
-│   └── examples.ts           # Example factories to get started
-├── examples/
-│   └── example-workflow.ts   # Manifest system demo
-├── src/
-│   └── main.ts               # Application entry point
-└── deno.json                 # Deno configuration
-```
-
-## Getting Started
-
-> **Note:** CodeFactory is currently in development. Until it's published to JSR, you'll need to update the import path in `deno.json` to point to a local copy or a GitHub URL.
-
-### 1. Run the example workflow
+Use the built-in `factory` meta-factory to create new code generators:
 
 ```bash
-deno run --allow-read --allow-write examples/example-workflow.ts
+# With GitHub Copilot:
+/codefactory.add "a 'factory' for TypeScript function with params and return type"
+/codefactory.produce
+
+# This creates: factories/typescript_function.hbs
 ```
 
-This demonstrates the manifest system in action:
-- Adds factory calls to manifest
-- Shows execution order with dependencies
-- Performs dry-run preview
-- Builds all from manifest
+### 2. Use Your Factory
 
-### 2. Define Your Own Factories
-
-Edit `factories/examples.ts` or create new factory files:
-
-```typescript
-import { defineFactory } from "@codefactory/core";
-
-export const myFactory = defineFactory({
-  name: "my_component",
-  description: "Creates a custom component",
-  template: `
-export class {{componentName}} {
-  constructor(public {{props}}) {}
-}`,
-  outputPath: "src/{{componentName}}.ts",
-  params: {
-    componentName: {
-      description: "Name of the component",
-      required: true,
-    },
-    props: {
-      description: "Constructor properties",
-      required: true,
-    },
-  },
-});
-```
-
-### 3. Use with GitHub Copilot
-
-This project is configured for **GitHub Copilot** integration with both slash commands and natural language.
-
-**Slash Commands**:
 ```bash
-/codefactory.add <description>       # Add factory call to manifest
-/codefactory.produce                 # Build from manifest (deterministic)
-/codefactory.update <id> <params>    # Update factory call in manifest
-/codefactory.remove <id>             # Remove factory call from manifest
-/codefactory.inspect                 # Show manifest contents
+/codefactory.add "a 'typescript_function' for calculateTotal"
+/codefactory.produce
+
+# This creates: src/calculateTotal.ts
 ```
 
-**Natural Language** (also uses manifest system):
+### 3. Learn More
 
-1. **Add to manifest** (planning phase):
-   ```
-   You: "Add a TypeScript function called validateEmail to manifest"
-   Copilot: Uses /codefactory.add → Adds factory call to manifest
-   ```
+- [User Guide](https://github.com/atzufuki/codefactory/blob/main/docs/for-users.md) - Copilot commands
+- [Creating Factories](https://github.com/atzufuki/codefactory/blob/main/docs/creating-factories.md) - Factory guide
+- [Manifest System](https://github.com/atzufuki/codefactory/blob/main/docs/manifest-system.md) - How it works
 
-2. **Build from manifest** (execution phase):
-   ```
-   You: "Build all from manifest"
-   Copilot: Uses /codefactory.produce → Executes all factory calls
-   ```
+## What is CodeFactory?
 
-3. **Other operations**:
-   ```
-   You: "Update validateEmail in manifest"
-   Copilot: Uses /codefactory.update
-   
-   You: "Remove validateEmail from manifest"
-   Copilot: Uses /codefactory.remove
-   
-   You: "Show me the manifest"
-   Copilot: Uses /codefactory.inspect
-   ```
+Two-phase code generation:
+1. **Plan** (with AI): Add factory calls to `codefactory.manifest.json`
+2. **Build** (deterministic): Execute manifest → Generate code
 
-💡 **Tip**: All commands work through the manifest system for deterministic, reproducible builds!
+**Benefits:**
+- Same manifest = Same code, always
+- Fast rebuilds without AI
+- Version control the "recipe"
+- Factory updates benefit all code
 
-The AI automatically:
-- ✅ Discovers your factories
-- ✅ Chooses the right factory for the task
-- ✅ Validates parameters
-- ✅ Generates consistent code
+## Available Commands
 
-### 4. Use Programmatically
-
-You can also use the manifest system directly in code:
-
-```typescript
-import { ManifestManager, Producer, FactoryRegistry } from "@codefactory/core";
-
-// Load manifest
-const manager = await ManifestManager.load("./codefactory.manifest.json");
-
-// Add factory call
-manager.addFactoryCall({
-  id: "validate-email",
-  factory: "typescript_function",
-  params: {
-    functionName: "validateEmail",
-    params: "email: string",
-    returnType: "boolean",
-  },
-  outputPath: "src/validators.ts",
-});
-await manager.save();
-
-// Build from manifest
-const registry = new FactoryRegistry();
-await registry.autoRegister("./factories");
-const producer = new Producer(manager.getManifest(), registry);
-const result = await producer.buildAll();
-
-console.log(`Generated ${result.generated.length} files`);
+```bash
+/codefactory.add <description>       # Add to manifest (planning)
+/codefactory.produce                 # Build from manifest
+/codefactory.update <id> <changes>   # Update factory call
+/codefactory.remove <id>             # Remove factory call
+/codefactory.inspect                 # Show manifest
 ```
-
-## Learn More
-
-- [CodeFactory Documentation](https://github.com/atzufuki/codefactory)
-- [Manifest System Guide](https://github.com/atzufuki/codefactory/blob/main/docs/manifest-system.md)
-- [Manifest Examples](./examples/MANIFEST_EXAMPLES.md)
-- [Factory Examples](./factories/examples.ts)
-
-## Philosophy
-
-> "Same manifest, same code. Always."
-
-Deterministic code generation through separation of planning (AI) and building (deterministic).
 
 ---
 
