@@ -26,12 +26,19 @@ if (import.meta.main) {
     "deno.json",
     ".gitignore",
     "README.md",
+    "codefactory.manifest.json",
     "factories/index.ts",
     "factories/examples.ts",
     "src/main.ts",
+    "examples/example-workflow.ts",
+    "examples/MANIFEST_EXAMPLES.md",
     ".github/copilot-instructions.md",
-    ".github/prompts/codefactory.list.prompt.md",
+    ".github/prompts/README.md",
+    ".github/prompts/codefactory.add.prompt.md",
     ".github/prompts/codefactory.produce.prompt.md",
+    ".github/prompts/codefactory.update.prompt.md",
+    ".github/prompts/codefactory.remove.prompt.md",
+    ".github/prompts/codefactory.inspect.prompt.md",
   ];
 
   // Copy all template files

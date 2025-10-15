@@ -1,14 +1,11 @@
 {
   "workspace": [
     "./src/codefactory",
-    "./src/demo",
     "./src/create",
     "./src/create/template"
   ],
   "tasks": {
-    "dev": "cd src/demo && deno run --watch main.ts",
-    "demo": "cd src/demo && deno run main.ts",
-    "check": "deno check src/codefactory/mod.ts && deno check src/demo/main.ts",
+    "check": "deno check src/codefactory/mod.ts",
     "test": "deno test --allow-read --allow-write",
     "fmt": "deno fmt",
     "lint": "deno lint"

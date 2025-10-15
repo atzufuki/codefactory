@@ -5,15 +5,15 @@
  * and how AI can discover and use them.
  */
 
-import { builtInFactories, defineFactory, FactoryRegistry } from "@codefactory/core";
+import { defineFactory, FactoryRegistry } from "@codefactory/core";
 
 // Create a registry for this demo project
 const registry = new FactoryRegistry();
 
 // Register built-in factories (including the meta-factory!)
 console.log("🔧 Registering built-in factories...\n");
-for (const factory of builtInFactories) {
-  registry.register(factory);
+await registry.registerBuiltIns();
+for (const factory of registry.list()) {
   console.log(`  ✓ Registered: ${factory.name}`);
 }
 
@@ -130,8 +130,8 @@ if (reactFactory) {
 }
 
 // Example 3: Use the meta-factory to CREATE a new factory!
-console.log("📝 Example 3: Using the meta-factory (define_factory) to create a NEW factory:\n");
-const metaFactory = registry.get("define_factory");
+console.log("📝 Example 3: Using the meta-factory (factory) to create a NEW factory:\n");
+const metaFactory = registry.get("factory");
 if (metaFactory) {
   const result = await metaFactory.execute({
     name: "api_endpoint",

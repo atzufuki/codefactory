@@ -12,7 +12,7 @@ CodeFactory core is functional and includes GitHub Copilot integration. Not yet 
 - [x] FactoryRegistry for managing factories
 - [x] Template engine with `{{variable}}` substitution
 - [x] `defineFactory()` builder for easy factory creation
-- [x] Meta-factory (`define_factory`) for creating factories
+- [x] Meta-factory (`factory`) for creating factories
 - [x] Built-in factories shipped with the library
 - [x] Demo application showcasing usage
 - [x] Create CLI tool (`create-codefactory`)
@@ -21,26 +21,65 @@ CodeFactory core is functional and includes GitHub Copilot integration. Not yet 
 ## Phase 2: AI Integration ✅ DONE
 
 - [x] GitHub Copilot slash commands via `.github/prompts/`
-- [x] `/codefactory.list` - List available factories
-- [x] `/codefactory.use` - Execute a factory
-- [x] `/codefactory.create` - Define new factory
+- [x] `/codefactory.add` - Add factory call to manifest
+- [x] `/codefactory.produce` - Build from manifest
+- [x] `/codefactory.update` - Update factory call
+- [x] `/codefactory.remove` - Remove factory call
+- [x] `/codefactory.inspect` - Show manifest contents
 - [x] Natural language support through prompt files
 - [x] Zero-installation integration (spec-kit pattern)
 
-## Phase 3: JSR Publication 🚧 IN PROGRESS
+## Phase 3: Auto-Registration & Discovery ✅ DONE
+
+- [x] Automatic factory discovery from directory
+- [x] Pattern-based factory registration
+- [x] Exclude patterns for controlling discovery
+- [x] Recursive directory scanning
+- [x] Integration with FactoryRegistry
+- [x] Comprehensive test coverage (37 tests)
+
+## Phase 4: Build Manifest System ✅ DONE
+
+### Two-Phase Code Generation
+- [x] **ManifestManager** - Track factory calls in manifest (221 lines, 17 tests)
+  - Add/remove/update factory calls
+  - Dependency resolution with topological sort
+  - Circular dependency detection
+  - Save/load to disk
+- [x] **Producer** - Execute factories from manifest (338 lines, 9 tests)
+  - Build all or specific factory calls
+  - Marker-based file generation
+  - Dry-run preview mode
+  - Error handling
+- [x] **Marker System** - Safe regeneration
+  - Always wrap generated code in markers
+  - Preserve user code outside markers
+  - Error if file exists without markers
+- [x] **AI Documentation** - Copilot integration guide
+- [x] **Examples** - Complete workflow demonstrations
+
+### Benefits
+- ✅ Deterministic builds (same manifest → same code)
+- ✅ Fast rebuilding (no AI during build phase)
+- ✅ Version control friendly (manifest in Git)
+- ✅ Factory evolution (update factory → rebuild all)
+- ✅ Dependency management (automatic execution order)
+
+## Phase 5: JSR Publication 📋 PLANNED
 
 ### Packages to Publish
 
 1. **@codefactory/core** - Core library
    - Factory and FactoryRegistry classes
-   - Template engine
+   - ManifestManager and Producer
+   - Template engine and loaders
    - Built-in factories
    - TypeScript types
 
 2. **@codefactory/create** - Project scaffolding
    - CLI tool for creating projects
    - Project template with GitHub Copilot integration
-   - Example factories
+   - Example factories and workflows
 
 ### Tasks
 
@@ -51,7 +90,7 @@ CodeFactory core is functional and includes GitHub Copilot integration. Not yet 
 - [ ] Update template imports to use JSR packages
 - [ ] Test end-to-end: `deno run jsr:@codefactory/create my-app`
 
-## Phase 4: Real-World Testing 📋 PLANNED
+## Phase 6: Real-World Testing 📋 PLANNED
 
 ### Community Feedback
 - [ ] Share with early adopters
@@ -73,7 +112,15 @@ CodeFactory core is functional and includes GitHub Copilot integration. Not yet 
 - [ ] Database schema factories
 - [ ] CI/CD configuration factories
 
-## Phase 5: Enhanced Features 🔮 FUTURE
+## Phase 7: Enhanced Features 🔮 FUTURE
+
+### Manifest System Enhancements
+- [ ] Incremental builds (only rebuild changed factories)
+- [ ] Parallel execution (respecting dependencies)
+- [ ] Manifest diff tool
+- [ ] Factory call templates (reusable parameter sets)
+- [ ] Factory versioning and compatibility tracking
+- [ ] Migration tools for manifest format changes
 
 ### Factory Improvements
 - [ ] Conditional logic in templates (`{{#if}}`)
@@ -108,7 +155,7 @@ CodeFactory core is functional and includes GitHub Copilot integration. Not yet 
 - [ ] Plugin system for custom template engines
 - [ ] Factory analytics (which are most used?)
 
-## Phase 6: Ecosystem 🌍 VISION
+## Phase 8: Ecosystem 🌍 VISION
 
 ### Community
 - [ ] Factory registry/marketplace
@@ -157,6 +204,16 @@ Ideas for the roadmap? Open an issue or PR!
 
 ---
 
-**Current Focus**: JSR Publication (Phase 3)
+**Current Status**: Phase 4 Complete (Build Manifest System)
+**Current Focus**: JSR Publication (Phase 5)
 **Next Milestone**: v0.1.0 on JSR
 **Target**: Real-world testing with early adopters
+
+## Recent Achievements
+
+- ✨ **49 tests passing** across all modules
+- 🏗️ **Build Manifest System** - Deterministic two-phase code generation
+- 🔍 **Auto-Registration** - Automatic factory discovery
+- 🎨 **Template System** - YAML/JSON frontmatter support
+- 📝 **Marker-Based Generation** - Safe code regeneration
+- 🤖 **AI Integration** - GitHub Copilot slash commands
