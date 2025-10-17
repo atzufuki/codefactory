@@ -15,10 +15,13 @@ import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js"
 import {
   CallToolRequestSchema,
   ListToolsRequestSchema,
+  ListResourcesRequestSchema,
+  ReadResourceRequestSchema,
 } from "@modelcontextprotocol/sdk/types.js";
 
 import { createTool } from "./tools/create.ts";
 import { syncTool } from "./tools/sync.ts";
+import { loadRegistry } from "./utils/factory-registry.ts";
 
 /**
  * Create and configure the MCP server
@@ -31,6 +34,7 @@ const server = new Server(
   {
     capabilities: {
       tools: {},
+      resources: {},
     },
   }
 );
@@ -54,6 +58,77 @@ server.setRequestHandler(ListToolsRequestSchema, () => {
       inputSchema: tool.inputSchema,
     })),
   };
+});
+
+/**
+ * Handle resource list requests - show available factories
+ */
+server.setRequestHandler(ListResourcesRequestSchema, async () => {
+  try {
+    const registry = await loadRegistry();
+    const catalog = registry.getCatalog();
+    
+    return {
+      resources: catalog.map((factory) => ({
+        uri: `codefactory://factory/${factory.name}`,
+        mimeType: "application/json",
+        name: `Factory: ${factory.name}`,
+        description: factory.description,
+      })),
+    };
+  } catch (error) {
+    console.error("Failed to load factory catalog:", error);
+    return { resources: [] };
+  }
+});
+
+/**
+ * Handle resource read requests - show factory details
+ */
+server.setRequestHandler(ReadResourceRequestSchema, async (request) => {
+  const uri = request.params.uri;
+  const match = uri.match(/^codefactory:\/\/factory\/(.+)$/);
+  
+  if (!match) {
+    throw new Error(`Invalid resource URI: ${uri}`);
+  }
+  
+  const factoryName = match[1];
+  
+  try {
+    const registry = await loadRegistry();
+    const factory = registry.get(factoryName);
+    
+    if (!factory) {
+      throw new Error(`Factory not found: ${factoryName}`);
+    }
+    
+    const metadata = factory.getMetadata();
+    const details = {
+      name: metadata.name,
+      description: metadata.description,
+      parameters: Object.entries(metadata.params).map(([name, def]) => {
+        const paramDef = def as Record<string, unknown>;
+        return {
+          name,
+          type: paramDef.type || "unknown",
+          required: paramDef.required || false,
+          description: paramDef.description || "No description",
+        };
+      }),
+      examples: metadata.examples || [],
+    };
+    
+    return {
+      contents: [{
+        uri,
+        mimeType: "application/json",
+        text: JSON.stringify(details, null, 2),
+      }],
+    };
+  } catch (error) {
+    throw new Error(`Failed to read factory ${factoryName}: ${error instanceof Error ? error.message : String(error)}`);
+  }
 });
 
 /**

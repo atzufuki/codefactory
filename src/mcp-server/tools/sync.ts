@@ -35,8 +35,7 @@ export const syncTool: MCPTool = {
     try {
       // Load registry
       const registry = await loadRegistry(
-        args.factoriesPath as string | undefined,
-        "*.hbs"
+        args.factoriesPath as string | undefined
       );
       
       // Create producer

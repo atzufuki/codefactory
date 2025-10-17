@@ -82,14 +82,39 @@ function extractParams(description: string, factory: string): Record<string, unk
       params.props = propNames.map((p) => `${p.trim()}: unknown`);
     }
   } else if (factory === "factory") {
-    // Meta-factory parameters
-    const match = description.match(/for\s+(.+?)(?:\s+with|\s*$)/i);
-    if (match) {
-      const targetName = match[1];
-      params.name = targetName.toLowerCase().replace(/\s+/g, "_");
-      params.description = `Creates ${targetName}`;
-      params.template = `// Generated code for {{name}}`;
-      params.outputPath = `factories/${params.name}.hbs`;
+    // Meta-factory parameters - extract factory name from various patterns
+    let factoryName = "";
+    let factoryDesc = "";
+    
+    // Try: "web component factory"
+    const patternMatch = description.match(/^(.+?)\s+factory$/i);
+    if (patternMatch) {
+      factoryName = patternMatch[1].toLowerCase().replace(/\s+/g, "_");
+      factoryDesc = `Creates ${patternMatch[1]}`;
+    }
+    
+    // Try: "factory for web components"
+    if (!factoryName) {
+      const forMatch = description.match(/factory\s+for\s+(.+?)(?:\s+with|\s*$)/i);
+      if (forMatch) {
+        factoryName = forMatch[1].toLowerCase().replace(/\s+/g, "_");
+        factoryDesc = `Creates ${forMatch[1]}`;
+      }
+    }
+    
+    // Try: "'web_component' factory"
+    if (!factoryName) {
+      const quotedMatch = description.match(/['"]([^'"]+)['"]\s+factory/i);
+      if (quotedMatch) {
+        factoryName = quotedMatch[1];
+        factoryDesc = `Creates ${quotedMatch[1].replace(/_/g, " ")}`;
+      }
+    }
+    
+    if (factoryName) {
+      params.name = factoryName;
+      params.description = factoryDesc;
+      params.template = `// TODO: Implement template for ${factoryName}`;
     }
   }
   
@@ -158,8 +183,7 @@ export const createTool: MCPTool = {
     try {
       // Load registry
       const registry = await loadRegistry(
-        args.factoriesPath as string | undefined,
-        "*.hbs"
+        args.factoriesPath as string | undefined
       );
       const availableFactories = registry.list().map((f) => f.name);
       
@@ -168,11 +192,23 @@ export const createTool: MCPTool = {
         (description ? inferFactory(description, availableFactories) : "");
       
       if (!factory) {
+        // List all available factories with their parameters
+        const catalog = registry.getCatalog();
+        const factoryList = catalog.map(meta => {
+          const paramList = Object.entries(meta.params)
+            .map(([name, def]) => {
+              const paramDef = def as Record<string, unknown>;
+              return `${name}: ${paramDef.type || 'unknown'}${paramDef.required ? ' (required)' : ''}`;
+            })
+            .join(", ");
+          return `  - ${meta.name}: ${meta.description}\n    Parameters: ${paramList || 'none'}`;
+        }).join("\n");
+        
         return {
           content: [{
             type: "text",
-            text: "❌ Error: Could not infer factory from description. Available factories: " + 
-              availableFactories.join(", "),
+            text: "❌ Error: Could not infer factory from description.\n\n" + 
+              "Available factories:\n" + factoryList,
           }],
           isError: true,
         };
@@ -181,10 +217,22 @@ export const createTool: MCPTool = {
       // Validate factory exists
       const factoryObj = registry.get(factory);
       if (!factoryObj) {
+        // Show available factories with parameters
+        const catalog = registry.getCatalog();
+        const factoryList = catalog.map(meta => {
+          const paramList = Object.entries(meta.params)
+            .map(([name, def]) => {
+              const paramDef = def as Record<string, unknown>;
+              return `${name}: ${paramDef.type || 'unknown'}${paramDef.required ? ' (required)' : ''}`;
+            })
+            .join(", ");
+          return `  - ${meta.name}: ${meta.description}\n    Parameters: ${paramList || 'none'}`;
+        }).join("\n");
+        
         return {
           content: [{
             type: "text",
-            text: `❌ Error: Factory '${factory}' not found. Available: ${availableFactories.join(", ")}`,
+            text: `❌ Error: Factory '${factory}' not found.\n\nAvailable factories:\n${factoryList}`,
           }],
           isError: true,
         };
@@ -198,6 +246,35 @@ export const createTool: MCPTool = {
       const params = hasParams
         ? (args.params as Record<string, unknown>)
         : (description ? extractParams(description, factory) : {});
+      
+      // Validate required parameters
+      const metadata = factoryObj.getMetadata();
+      const missingParams: string[] = [];
+      
+      for (const [paramName, paramDef] of Object.entries(metadata.params)) {
+        const def = paramDef as Record<string, unknown>;
+        if (def.required && !(paramName in params)) {
+          missingParams.push(`${paramName} (${def.description || 'no description'})`);
+        }
+      }
+      
+      if (missingParams.length > 0) {
+        return {
+          content: [{
+            type: "text",
+            text: `❌ Error: Missing required parameters for factory '${factory}':\n\n` +
+              missingParams.map(p => `  - ${p}`).join("\n") + "\n\n" +
+              `Expected parameters:\n` +
+              Object.entries(metadata.params)
+                .map(([name, def]) => {
+                  const paramDef = def as Record<string, unknown>;
+                  return `  - ${name}: ${paramDef.type || 'unknown'}${paramDef.required ? ' (required)' : ' (optional)'}\n    ${paramDef.description || 'No description'}`;
+                })
+                .join("\n"),
+          }],
+          isError: true,
+        };
+      }
       
       // Determine output path
       const outputPath = (args.outputPath as string) ?? generateOutputPath(factory, params);

@@ -46,10 +46,13 @@ export class TemplateLoader {
     let content = await Deno.readTextFile(templatePath);
     
     // Strip codefactory markers if present (both Handlebars and regular comments)
-    content = content.replace(/^\{\{!-- @codefactory:start.*?--\}\}\n?/m, "");
-    content = content.replace(/^\{\{!-- @codefactory:end --\}\}\n?/m, "");
-    content = content.replace(/^\/\/ @codefactory:start.*?\n?/m, "");
-    content = content.replace(/^\/\/ @codefactory:end\n?/m, "");
+    // Note: Markers can be before, after, or around the frontmatter
+    // Match entire lines containing markers (including line endings)
+    content = content.replace(/^.*@codefactory:start.*$(\r?\n)?/gm, "");
+    content = content.replace(/^.*@codefactory:end.*$(\r?\n)?/gm, "");
+    
+    // Remove any leading/trailing whitespace left by marker removal
+    content = content.trimStart();
     
     const { frontmatter, body } = parseFrontmatter<TemplateFrontmatter>(content);
 

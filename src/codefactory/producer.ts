@@ -223,7 +223,22 @@ export class Producer {
   private async scanCodefactoryFiles(directory: string): Promise<string[]> {
     const files: string[] = [];
     
-    for await (const entry of walk(directory, { includeFiles: true, includeDirs: false })) {
+    // Only scan source code files (whitelist approach)
+    const sourceExtensions = ['.ts', '.tsx', '.js', '.jsx', '.py', '.go', '.rs', '.java', '.cs', '.cpp', '.c', '.h'];
+    
+    // Skip common non-source directories
+    const skipDirs = ['.git', 'node_modules', '.vscode', 'dist', 'build', 'coverage', '.github'];
+    
+    for await (const entry of walk(directory, { 
+      includeFiles: true, 
+      includeDirs: false,
+      skip: skipDirs.map(dir => new RegExp(`[\\\\/]${dir}[\\\\/]`))
+    })) {
+      // Only process whitelisted source file extensions
+      if (!sourceExtensions.some(ext => entry.path.endsWith(ext))) {
+        continue;
+      }
+      
       const content = await Deno.readTextFile(entry.path);
       if (content.includes('@codefactory:start')) {
         files.push(entry.path);

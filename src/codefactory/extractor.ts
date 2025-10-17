@@ -181,10 +181,29 @@ export function generateSimpleExtractor(
   const capturePattern = typePatterns[paramType] || typePatterns.string;
   let pattern = template;
   
+  // Replace first occurrence with capture group, rest with backreference
   const marker = "___CAPTURE_GROUP___";
-  pattern = pattern.replace(new RegExp(`\\{\\{${paramName}\\}\\}`, "g"), marker);
+  const backrefMarker = "___BACKREFERENCE___";
+  
+  // Find all occurrences
+  const paramRegex = new RegExp(`\\{\\{${paramName}\\}\\}`, "g");
+  let firstReplaced = false;
+  pattern = pattern.replace(paramRegex, () => {
+    if (!firstReplaced) {
+      firstReplaced = true;
+      return marker;
+    }
+    return backrefMarker;
+  });
+  
+  // Escape regex special chars
   pattern = pattern.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  
+  // Replace markers
   pattern = pattern.replace(marker, capturePattern);
+  pattern = pattern.replace(new RegExp(backrefMarker.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"), "g"), "\\1");
+  
+  // Replace other template vars with generic pattern
   pattern = pattern.replace(/\\\{\\\{[^}]+\\\}\\\}/g, "\\w+");
   pattern = pattern.replace(/\\s\+/g, "\\s+");
 
@@ -292,30 +311,61 @@ export function extractLoopParams(
  * ```
  */
 export function generateExtractors(blocks: TemplateBlock[]): Array<ParameterExtractor | null> {
-  return blocks.map((block) => {
+  // Group param blocks by paramName and prioritize better templates
+  const paramBlocks = new Map<string, TemplateBlock>();
+  
+  for (const block of blocks) {
     if (block.type === "param" && block.template && block.paramName) {
-      return {
-        paramName: block.paramName,
-        extractor: (source: string) => {
-          const regex = generateSimpleExtractor(
-            block.template!,
-            block.paramName!,
-            block.paramType || "identifier"
-          );
-          const match = source.match(regex);
-          return match?.[1] || null;
-        },
-      };
+      const existing = paramBlocks.get(block.paramName);
+      
+      // Prioritize:
+      // 1. class declarations (most reliable)
+      // 2. export statements (good fallback)
+      // 3. Other statements
+      const isClass = block.template.includes("class ");
+      const isExport = block.template.startsWith("export");
+      const existingIsClass = existing?.template?.includes("class ");
+      const existingIsExport = existing?.template?.startsWith("export");
+      
+      if (!existing) {
+        paramBlocks.set(block.paramName, block);
+      } else if (isClass && !existingIsClass) {
+        paramBlocks.set(block.paramName, block);
+      } else if (isExport && !existingIsExport && !existingIsClass) {
+        paramBlocks.set(block.paramName, block);
+      }
     }
-    
+  }
+  
+  // Convert param blocks to extractors
+  const extractors: Array<ParameterExtractor | null> = [];
+  
+  for (const [paramName, block] of paramBlocks) {
+    extractors.push({
+      paramName,
+      extractor: (source: string) => {
+        const regex = generateSimpleExtractor(
+          block.template!,
+          paramName,
+          block.paramType || "identifier"
+        );
+        const match = source.match(regex);
+        return match?.[1] || null;
+      },
+    });
+  }
+  
+  // Add loop extractors
+  for (const block of blocks) {
     if (block.type === "loop" && block.loopBody && block.loopItemStructure) {
-      return {
+      extractors.push({
         paramName: block.paramName!,
         extractor: (source: string) => {
           // Check if this is a simple {{this}} loop (like props)
           if (block.loopItemStructure!["_isSimple"]) {
             // Extract lines from interface block
-            const interfaceMatch = source.match(/interface\s+\w+Props\s*\{([^}]+)\}/s);
+            // Match interface with optional extends clause and optional content
+            const interfaceMatch = source.match(/interface\s+\w+Props\s*(?:extends\s+[^{]+)?\{([^}]*)\}/s);
             if (interfaceMatch) {
               const propsBlock = interfaceMatch[1];
               const lines = propsBlock
@@ -331,11 +381,11 @@ export function generateExtractors(blocks: TemplateBlock[]): Array<ParameterExtr
           // Complex structure with fields
           return extractLoopParams(source, block.loopBody!, block.loopItemStructure!);
         },
-      };
+      });
     }
-    
-    return null;
-  }).filter(Boolean) as ParameterExtractor[];
+  }
+  
+  return extractors.filter(Boolean) as ParameterExtractor[];
 }
 
 // ============================================================================
