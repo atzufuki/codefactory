@@ -3,14 +3,11 @@
  * CodeFactory MCP Server
  * 
  * Model Context Protocol server that provides tools for AI assistants
- * to interact with the CodeFactory manifest system.
+ * to interact with the CodeFactory extraction-based system.
  * 
  * This allows AI assistants to:
- * - Add factory calls to manifest (/codefactory.add)
- * - Build code from manifest (/codefactory.produce)
- * - Update factory calls (/codefactory.update)
- * - Remove factory calls (/codefactory.remove)
- * - Inspect manifest contents (/codefactory.inspect)
+ * - Create new files from factories (/codefactory.create)
+ * - Sync generated code with templates (/codefactory.sync)
  */
 
 import { Server } from "@modelcontextprotocol/sdk/server/index.js";
@@ -20,11 +17,8 @@ import {
   ListToolsRequestSchema,
 } from "@modelcontextprotocol/sdk/types.js";
 
-import { addTool } from "./tools/add.ts";
-import { produceTool } from "./tools/produce.ts";
-import { updateTool } from "./tools/update.ts";
-import { removeTool } from "./tools/remove.ts";
-import { inspectTool } from "./tools/inspect.ts";
+import { createTool } from "./tools/create.ts";
+import { syncTool } from "./tools/sync.ts";
 
 /**
  * Create and configure the MCP server
@@ -45,11 +39,8 @@ const server = new Server(
  * Register all available tools
  */
 const tools = [
-  addTool,
-  produceTool,
-  updateTool,
-  removeTool,
-  inspectTool,
+  createTool,
+  syncTool,
 ];
 
 /**

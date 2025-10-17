@@ -1,24 +1,15 @@
 /**
- * codefactory_add tool
+ * codefactory_create tool
  * 
- * Adds a factory call to the manifest (planning phase).
- * Maps to /codefactory.add command.
+ * Creates a new file using a factory with extraction-based markers.
+ * Maps to /codefactory.create command.
+ * 
+ * This is the new workflow that replaces the manifest-based approach.
  */
 
 import type { MCPTool, MCPToolResult } from "../types.ts";
-import { loadManifest } from "../utils/manifest-loader.ts";
 import { loadRegistry } from "../utils/factory-registry.ts";
-
-/**
- * Generate a kebab-case ID from a description
- */
-function generateId(description: string, factory: string): string {
-  // Try to extract a name from the description
-  const match = description.match(/(?:a|an|the)\s+(\w+)/i);
-  const name = match ? match[1] : factory;
-  
-  return `${name.toLowerCase()}-component`;
-}
+import { Producer } from "../../codefactory/producer.ts";
 
 /**
  * Infer factory name from description
@@ -34,7 +25,8 @@ function inferFactory(description: string, availableFactories: string[]): string
   }
   
   // Default heuristics
-  if (lower.includes("component")) return "react_component";
+  if (lower.includes("component") || lower.includes("web component")) return "web_component";
+  if (lower.includes("react")) return "react_component";
   if (lower.includes("function")) return "typescript_function";
   if (lower.includes("factory")) return "factory";
   
@@ -46,10 +38,39 @@ function inferFactory(description: string, availableFactories: string[]): string
  * Extract parameters from description
  */
 function extractParams(description: string, factory: string): Record<string, unknown> {
-  // This is a simplified version - real implementation would use AI or more sophisticated parsing
   const params: Record<string, unknown> = {};
   
-  if (factory === "react_component") {
+  if (factory === "web_component") {
+    // Extract component name
+    const match = description.match(/(?:a|an|the)\s+(\w+)/i);
+    if (match) {
+      const name = match[1].charAt(0).toUpperCase() + match[1].slice(1);
+      params.componentName = name;
+      params.tagName = `app-${name.toLowerCase()}`;
+    }
+    
+    // Extract props
+    const propsMatch = description.match(/with\s+(.+?)\s+prop/i);
+    if (propsMatch) {
+      const propNames = propsMatch[1].split(/\s+and\s+|\s*,\s*/);
+      params.props = propNames.map((p) => `${p.trim()}: unknown`);
+    } else {
+      params.props = [];
+    }
+    
+    // Extract signals
+    const signalsMatch = description.match(/(?:with|has)\s+(.+?)\s+signal/i);
+    if (signalsMatch) {
+      const signalNames = signalsMatch[1].split(/\s+and\s+|\s*,\s*/);
+      params.signals = signalNames.map((s) => ({
+        name: s.trim(),
+        type: "unknown",
+        default: "null",
+      }));
+    } else {
+      params.signals = [];
+    }
+  } else if (factory === "react_component") {
     // Extract component name
     const match = description.match(/(?:a|an|the)\s+(\w+)/i);
     if (match) {
@@ -63,25 +84,13 @@ function extractParams(description: string, factory: string): Record<string, unk
       params.props = propNames.map((p) => `${p.trim()}: unknown`);
     }
   } else if (factory === "factory") {
-    // Meta-factory parameters - need to be complete!
+    // Meta-factory parameters
     const match = description.match(/for\s+(.+?)(?:\s+with|\s*$)/i);
     if (match) {
       const targetName = match[1];
       params.name = targetName.toLowerCase().replace(/\s+/g, "_");
       params.description = `Creates ${targetName}`;
-      
-      // Generate a basic template based on the target
-      // This is a minimal template - user should customize it
-      params.template = `---
-name: {{name}}
-description: {{description}}
-outputPath: "src/{{name}}.ts"
----
-// Generated code for {{name}}
-export const {{name}} = {
-  // TODO: Implement
-};`;
-      
+      params.template = `// Generated code for {{name}}`;
       params.outputPath = `factories/${params.name}.hbs`;
     }
   }
@@ -90,59 +99,29 @@ export const {{name}} = {
 }
 
 /**
- * Map user-provided params to correct meta-factory parameter names
+ * Generate output path from parameters
  */
-function mapMetaFactoryParams(userParams: Record<string, unknown>): Record<string, unknown> {
-  const mapped: Record<string, unknown> = {};
-  
-  // Handle different naming conventions
-  mapped.name = userParams.name || userParams.factoryName;
-  mapped.description = userParams.description || userParams.factoryDescription;
-  mapped.template = userParams.template;
-  mapped.outputPath = userParams.outputPath;
-  
-  // Convert parameters array to paramDescriptions if needed
-  if (userParams.parameters && Array.isArray(userParams.parameters)) {
-    mapped.paramDescriptions = userParams.parameters.reduce((acc: Record<string, string>, param: unknown) => {
-      if (typeof param === 'string') {
-        acc[param] = `Parameter: ${param}`;
-      } else if (param && typeof param === 'object' && 'name' in param) {
-        const p = param as { name: string; description?: string };
-        acc[p.name] = p.description || `Parameter: ${p.name}`;
-      }
-      return acc;
-    }, {});
-  } else if (userParams.paramDescriptions) {
-    mapped.paramDescriptions = userParams.paramDescriptions;
+function generateOutputPath(factory: string, params: Record<string, unknown>): string {
+  if (factory === "web_component" && params.componentName) {
+    return `src/components/${params.componentName}.ts`;
+  } else if (factory === "react_component" && params.componentName) {
+    return `src/components/${params.componentName}.tsx`;
+  } else if (factory === "factory" && params.name) {
+    return `factories/${params.name}.hbs`;
   }
   
-  // Validate required fields for meta-factory
-  if (!mapped.name) {
-    throw new Error("Meta-factory 'factory' requires 'name' parameter");
-  }
-  if (!mapped.description) {
-    throw new Error("Meta-factory 'factory' requires 'description' parameter");
-  }
-  if (!mapped.template) {
-    throw new Error("Meta-factory 'factory' requires 'template' parameter. Please provide the code template with {{variable}} placeholders.");
-  }
-  
-  return mapped;
+  return `src/${factory}-output.ts`;
 }
 
-export const addTool: MCPTool = {
-  name: "codefactory_add",
-  description: "Add a factory call to the manifest (planning phase)",
+export const createTool: MCPTool = {
+  name: "codefactory_create",
+  description: "Create a new file using a factory (extraction-based workflow)",
   inputSchema: {
     type: "object",
     properties: {
       description: {
         type: "string",
         description: "Natural language description of what to create",
-      },
-      id: {
-        type: "string",
-        description: "Optional: Unique identifier (kebab-case)",
       },
       factory: {
         type: "string",
@@ -154,16 +133,7 @@ export const addTool: MCPTool = {
       },
       outputPath: {
         type: "string",
-        description: "Optional: Where to generate the code",
-      },
-      dependsOn: {
-        type: "array",
-        description: "Optional: IDs this factory call depends on",
-        items: { type: "string" },
-      },
-      manifestPath: {
-        type: "string",
-        description: "Optional: Path to manifest file",
+        description: "Optional: Where to generate the file",
       },
       factoriesPath: {
         type: "string",
@@ -188,11 +158,10 @@ export const addTool: MCPTool = {
     }
     
     try {
-      // Load manifest and registry
-      const manager = await loadManifest(args.manifestPath as string | undefined);
+      // Load registry
       const registry = await loadRegistry(
         args.factoriesPath as string | undefined,
-        "*.hbs" // Load only .hbs template files
+        "*.hbs"
       );
       const availableFactories = registry.list().map((f) => f.name);
       
@@ -223,61 +192,65 @@ export const addTool: MCPTool = {
         };
       }
       
-      const id = (args.id as string) ?? generateId(description ?? factory, factory);
-      
       // Get params from args or extract from description
-      // Check if args.params is empty object - if so, use extractParams
       const hasParams = args.params && 
         typeof args.params === "object" && 
         Object.keys(args.params).length > 0;
       
-      let params = hasParams
+      const params = hasParams
         ? (args.params as Record<string, unknown>)
         : (description ? extractParams(description, factory) : {});
       
-      // Special handling for meta-factory: map parameter names correctly
-      if (factory === "factory" && Object.keys(params).length > 0) {
-        params = mapMetaFactoryParams(params);
-      }
+      // Determine output path
+      const outputPath = (args.outputPath as string) ?? generateOutputPath(factory, params);
       
-      // Check for duplicate ID
-      const existing = manager.getAllFactoryCalls().find(call => call.id === id);
-      if (existing) {
+      // Check if file already exists
+      try {
+        await Deno.stat(outputPath);
         return {
           content: [{
             type: "text",
-            text: `❌ Error: Factory call with ID '${id}' already exists in manifest`,
+            text: `❌ Error: File ${outputPath} already exists\n\n` +
+              `Options:\n` +
+              `  1. Delete the file first\n` +
+              `  2. Use a different output path\n` +
+              `  3. Use /codefactory.sync to update existing file`,
           }],
           isError: true,
         };
+      } catch {
+        // File doesn't exist - good!
       }
       
-      const outputPath = (args.outputPath as string) ?? `src/${id}.ts`;
-      
-      // Add to manifest
-      manager.addFactoryCall({
-        id,
-        factory,
-        params,
-        outputPath,
-        dependsOn: (args.dependsOn as string[]) ?? [],
-      });
-      
-      await manager.save();
+      // Create producer and generate file
+      // Note: Producer constructor requires manifest for legacy methods,
+      // but createFile() doesn't use it. Pass empty manifest.
+      const producer = new Producer(
+        {
+          version: "1.0.0",
+          generated: new Date().toISOString(),
+          factories: [],
+        },
+        registry
+      );
+      await producer.createFile(factory, params, outputPath);
       
       // Format response
       const response = [
-        `✅ Added to manifest: ${id}`,
+        `✅ Created ${outputPath}`,
         "",
         `Factory: ${factory}`,
-        `Output: ${outputPath}`,
-        "",
         "Parameters:",
         ...Object.entries(params).map(([key, value]) => 
           `  - ${key}: ${JSON.stringify(value)}`
         ),
         "",
-        "📝 Run /codefactory.produce to generate the code",
+        "📝 You can now:",
+        "  1. Edit the file directly (add signals, change props)",
+        "  2. Add custom code below // @codefactory:end marker",
+        "  3. Run /codefactory.sync to regenerate factory sections",
+        "",
+        "💡 The code is the source of truth - no manifest needed!",
       ].join("\n");
       
       return {

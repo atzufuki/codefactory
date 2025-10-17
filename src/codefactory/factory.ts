@@ -33,6 +33,18 @@ export class Factory {
   }
 
   /**
+   * Get the raw template string for extraction
+   * 
+   * This is used by the extraction system to analyze generated code
+   * and extract parameters back from source files.
+   * 
+   * @returns The raw Handlebars template string, or undefined if not available
+   */
+  getTemplate(): string | undefined {
+    return this.definition.template;
+  }
+
+  /**
    * Static factory method to create a new Factory
    */
   static define(definition: FactoryDefinition): Factory {

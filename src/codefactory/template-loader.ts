@@ -94,6 +94,7 @@ export class TemplateLoader {
       description: frontmatter.description,
       params: frontmatter.params || {},
       examples: frontmatter.examples || [],
+      template: template, // Store raw template for extraction
       generate: (params) => {
         // Render using Handlebars for full syntax support
         const content = compiledTemplate(params);

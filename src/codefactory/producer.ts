@@ -210,18 +210,28 @@ export class Producer {
 
   /**
    * Write generated code to file with marker-based management
+   * 
+   * @param filePath - Output file path
+   * @param content - Generated content
+   * @param factoryNameOrId - Factory name (new format) or factory call ID (legacy)
+   * @param useLegacyMarker - If true, use old id-based markers (for backwards compatibility)
    */
   private async writeGeneratedCode(
     filePath: string,
     content: string,
-    factoryCallId: string
+    factoryNameOrId: string,
+    useLegacyMarker: boolean = true
   ): Promise<void> {
     // Use different marker syntax for template files (.hbs, .template, .handlebars)
     const isTemplateFile = /\.(hbs|template|handlebars)$/.test(filePath);
     
+    // NEW FORMAT: factory="name" (for extraction-based system)
+    // OLD FORMAT: id="uuid" (for manifest-based system, backwards compatible)
+    const markerAttr = useLegacyMarker ? `id="${factoryNameOrId}"` : `factory="${factoryNameOrId}"`;
+    
     const markerStart = isTemplateFile
-      ? `{{!-- @codefactory:start id="${factoryCallId}" --}}`
-      : `// @codefactory:start id="${factoryCallId}"`;
+      ? `{{!-- @codefactory:start ${markerAttr} --}}`
+      : `// @codefactory:start ${markerAttr}`;
     const markerEnd = isTemplateFile
       ? `{{!-- @codefactory:end --}}`
       : `// @codefactory:end`;
@@ -242,7 +252,7 @@ export class Producer {
 
     if (!existingContent.includes(markerStart)) {
       throw new Error(
-        `File ${filePath} exists but has no marker for "${factoryCallId}".\n\n` +
+        `File ${filePath} exists but has no marker for "${factoryNameOrId}".\n\n` +
         `Options:\n` +
         `1. Delete the file and run /codefactory.produce again\n` +
         `2. Add marker manually:\n   ${markerStart}\n   ${markerEnd}\n` +
@@ -362,5 +372,259 @@ export class Producer {
     }
 
     return sorted;
+  }
+
+  // ============================================================================
+  // EXTRACTION-BASED METHODS (New approach - no manifest needed)
+  // ============================================================================
+
+  /**
+   * Sync all files with @codefactory markers in a directory
+   * 
+   * This is the new extraction-based approach where:
+   * 1. Scan directory for files with @codefactory markers
+   * 2. Extract factory name from marker
+   * 3. Extract parameters from source code using template
+   * 4. Regenerate factory section
+   * 5. Replace marked section, preserve custom code
+   * 
+   * @param directory - Directory to scan for codefactory files
+   * @returns Build result with synced files
+   */
+  async syncAll(directory: string): Promise<BuildResult> {
+    const startTime = Date.now();
+    const generated: string[] = [];
+    const errors: BuildError[] = [];
+
+    // Find all files with @codefactory markers
+    const files = await this.scanCodefactoryFiles(directory);
+
+    for (const filePath of files) {
+      try {
+        await this.syncFile(filePath);
+        generated.push(filePath);
+      } catch (error) {
+        errors.push({
+          factoryCallId: filePath,
+          error: error instanceof Error ? error.message : String(error),
+          stack: error instanceof Error ? error.stack : undefined,
+        });
+      }
+    }
+
+    const duration = Date.now() - startTime;
+
+    return {
+      success: errors.length === 0,
+      generated,
+      errors,
+      duration,
+    };
+  }
+
+  /**
+   * Sync a single file with @codefactory marker
+   * 
+   * Process:
+   * 1. Read source file
+   * 2. Extract factory name from marker
+   * 3. Get factory and template from registry
+   * 4. Extract parameters from source using template
+   * 5. Regenerate code with extracted params
+   * 6. Replace only the marked section
+   * 
+   * @param filePath - Path to file to sync
+   */
+  async syncFile(filePath: string): Promise<void> {
+    const source = await Deno.readTextFile(filePath);
+    
+    // Extract factory name from marker
+    const marker = this.extractMarker(source);
+    if (!marker) {
+      throw new Error(`No @codefactory marker found in ${filePath}`);
+    }
+    
+    // Get factory from registry
+    const factory = this.registry.get(marker.factoryName);
+    if (!factory) {
+      throw new Error(`Factory "${marker.factoryName}" not found in registry`);
+    }
+    
+    // Get template from factory
+    const template = factory.getTemplate();
+    if (!template) {
+      throw new Error(
+        `Factory "${marker.factoryName}" has no template (cannot extract parameters)`
+      );
+    }
+    
+    // Import extractor dynamically to avoid circular dependency
+    const { extractAllParams } = await import("./extractor.ts");
+    
+    // Extract marked section only (not whole file)
+    const markedSection = this.extractMarkedSection(source, marker);
+    
+    // Extract params from marked section using template
+    const params = extractAllParams(markedSection, template);
+    
+    // Regenerate code with extracted params
+    const result = await factory.execute(params);
+    
+    // Replace only the marked section
+    const updated = this.replaceMarkedSection(source, result.content, marker);
+    
+    // Write back to file
+    await Deno.writeTextFile(filePath, updated);
+  }
+
+  /**
+   * Create a new file using a factory (extraction-based workflow)
+   * 
+   * This generates a file with the new marker format: factory="name"
+   * 
+   * @param factoryName - Name of the factory to use
+   * @param params - Parameters for the factory
+   * @param outputPath - Where to write the file
+   */
+  async createFile(
+    factoryName: string,
+    params: Record<string, unknown>,
+    outputPath: string
+  ): Promise<void> {
+    // Get factory from registry
+    const factory = this.registry.get(factoryName);
+    if (!factory) {
+      throw new Error(`Factory "${factoryName}" not found in registry`);
+    }
+
+    // Execute factory
+    const result = await factory.execute(params);
+
+    // Resolve output path
+    const resolvedPath = this.resolveOutputPath(outputPath);
+
+    // Write with NEW marker format (factory="name")
+    await this.writeGeneratedCode(resolvedPath, result.content, factoryName, false);
+  }
+
+  /**
+   * Scan directory for files containing @codefactory markers
+   */
+  private async scanCodefactoryFiles(directory: string): Promise<string[]> {
+    const files: string[] = [];
+
+    async function scan(dir: string) {
+      try {
+        for await (const entry of Deno.readDir(dir)) {
+          const fullPath = join(dir, entry.name);
+          
+          if (entry.isDirectory) {
+            // Skip node_modules, .git, etc.
+            if (!entry.name.startsWith(".") && entry.name !== "node_modules") {
+              await scan(fullPath);
+            }
+          } else if (entry.isFile) {
+            try {
+              const content = await Deno.readTextFile(fullPath);
+              if (content.includes("@codefactory:start")) {
+                files.push(fullPath);
+              }
+            } catch {
+              // Skip files that can't be read as text
+            }
+          }
+        }
+      } catch (error) {
+        if (!(error instanceof Deno.errors.NotFound)) {
+          throw error;
+        }
+      }
+    }
+
+    await scan(directory);
+    return files;
+  }
+
+  /**
+   * Extract factory name from @codefactory:start marker
+   * 
+   * Supports both formats:
+   * - NEW: factory="component_factory"
+   * - OLD: id="uuid-here" (not supported by extraction, needs manifest)
+   */
+  private extractMarker(source: string): { factoryName: string; isTemplateFile: boolean } | null {
+    // Try new format: factory="name"
+    const factoryMatch = source.match(/\/\/\s*@codefactory:start\s+factory="(\w+)"/);
+    if (factoryMatch) {
+      return { factoryName: factoryMatch[1], isTemplateFile: false };
+    }
+
+    // Try template file format
+    const templateMatch = source.match(/\{\{!--\s*@codefactory:start\s+factory="(\w+)"\s*--\}\}/);
+    if (templateMatch) {
+      return { factoryName: templateMatch[1], isTemplateFile: true };
+    }
+
+    // Old format not supported by extraction system
+    if (source.includes('@codefactory:start id=')) {
+      throw new Error(
+        'Old marker format (id="...") detected. Extraction system requires new format (factory="...").\n' +
+        'Please update markers or use manifest-based buildAll() method.'
+      );
+    }
+
+    return null;
+  }
+
+  /**
+   * Extract content between @codefactory markers
+   */
+  private extractMarkedSection(source: string, marker: { isTemplateFile: boolean }): string {
+    const startPattern = marker.isTemplateFile
+      ? /\{\{!--\s*@codefactory:start[^>]*--\}\}/
+      : /\/\/\s*@codefactory:start[^\n]*/;
+    const endPattern = marker.isTemplateFile
+      ? /\{\{!--\s*@codefactory:end\s*--\}\}/
+      : /\/\/\s*@codefactory:end/;
+
+    const startMatch = source.match(startPattern);
+    const endMatch = source.match(endPattern);
+
+    if (!startMatch || !endMatch) {
+      throw new Error("Malformed @codefactory markers");
+    }
+
+    const startIdx = startMatch.index! + startMatch[0].length;
+    const endIdx = endMatch.index!;
+
+    return source.slice(startIdx, endIdx).trim();
+  }
+
+  /**
+   * Replace marked section with new content
+   */
+  private replaceMarkedSection(
+    source: string,
+    newContent: string,
+    marker: { isTemplateFile: boolean }
+  ): string {
+    const startPattern = marker.isTemplateFile
+      ? /\{\{!--\s*@codefactory:start[^>]*--\}\}/
+      : /\/\/\s*@codefactory:start[^\n]*/;
+    const endPattern = marker.isTemplateFile
+      ? /\{\{!--\s*@codefactory:end\s*--\}\}/
+      : /\/\/\s*@codefactory:end/;
+
+    const startMatch = source.match(startPattern);
+    const endMatch = source.match(endPattern);
+
+    if (!startMatch || !endMatch) {
+      throw new Error("Malformed @codefactory markers");
+    }
+
+    const before = source.slice(0, startMatch.index! + startMatch[0].length);
+    const after = source.slice(endMatch.index!);
+
+    return `${before}\n${newContent}\n${after}`;
   }
 }

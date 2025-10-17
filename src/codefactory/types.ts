@@ -35,6 +35,8 @@ export interface FactoryDefinition {
   examples?: Array<Record<string, unknown>>;
   /** The generator function */
   generate: (params: FactoryParams) => FactoryResult | Promise<FactoryResult>;
+  /** Optional template string (for extraction-based sync) */
+  template?: string;
 }
 
 /**
