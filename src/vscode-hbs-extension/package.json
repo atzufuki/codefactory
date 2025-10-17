@@ -24,6 +24,15 @@
         "language": "multi-language-template",
         "scopeName": "source.multi-language-template",
         "path": "./syntaxes/multi-language-template.tmLanguage.json"
+      },
+      {
+        "scopeName": "source.handlebars.injection",
+        "path": "./syntaxes/handlebars.injection.json",
+        "injectTo": [
+          "source.multi-language-template",
+          "source.ts",
+          "source.yaml"
+        ]
       }
     ]
   }
