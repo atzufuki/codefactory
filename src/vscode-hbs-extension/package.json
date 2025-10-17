@@ -1,0 +1,30 @@
+{
+  "name": "multi-language-templates",
+  "displayName": "Multi-Language Templates",
+  "description": "Syntax highlighting for template files with YAML/JSON frontmatter and embedded code in any language (TypeScript, Python, etc.) with Handlebars templating",
+  "version": "0.1.0",
+  "publisher": "codefactory",
+  "engines": {
+    "vscode": "^1.80.0"
+  },
+  "categories": [
+    "Programming Languages"
+  ],
+  "contributes": {
+    "languages": [
+      {
+        "id": "multi-language-template",
+        "aliases": ["Multi-Language Template", "Template"],
+        "extensions": [".hbs", ".handlebars", ".template"],
+        "configuration": "./language-configuration.json"
+      }
+    ],
+    "grammars": [
+      {
+        "language": "multi-language-template",
+        "scopeName": "source.multi-language-template",
+        "path": "./syntaxes/multi-language-template.tmLanguage.json"
+      }
+    ]
+  }
+}

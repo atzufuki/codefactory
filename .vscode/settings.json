@@ -1,9 +1,5 @@
 {
   "files.associations": {
-    "*.hbs": "handlebars",
-    "*.ts.hbs": "handlebars"
+    "*.hbs": "multi-language-template",
   },
-  "emmet.includeLanguages": {
-    "handlebars": "html"
-  }
 }

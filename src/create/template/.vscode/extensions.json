@@ -1,0 +1,8 @@
+{
+    "recommendations": [
+        "codefactory.multi-language-templates"
+    ],
+    "unwantedRecommendations": [
+        "andrejunges.handlebars"
+    ]
+}
