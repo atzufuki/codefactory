@@ -39,7 +39,7 @@ export class TemplateLoader {
    * 
    * @example
    * ```ts
-   * const { frontmatter, template } = await TemplateLoader.loadTemplate("./factory.ts.hbs");
+   * const { frontmatter, template } = await TemplateLoader.loadTemplate("./factory.hbs");
    * ```
    */
   static async loadTemplate(templatePath: string): Promise<LoadedTemplate> {

@@ -1,5 +1,13 @@
 {
   "deno.enable": true,
   "deno.lint": true,
-  "chat.mcp.access": "all"
+  "chat.mcp.access": "all",
+  // Multi-Language Template syntax highlighting for .hbs files
+  // Requires: codefactory.multi-language-templates extension
+  // See: .vscode/extensions.json for installation
+  "files.associations": {
+    "*.hbs": "multi-language-template",
+    "*.handlebars": "multi-language-template",
+    "*.template": "multi-language-template"
+  }
 }

@@ -780,7 +780,7 @@ project/
 │       ├── frontmatter.ts               ← YAML/JSON parser
 │       ├── types.ts                     ← TypeScript interfaces
 │       ├── factories/                   ← Built-in factories
-│       │   └── factory.ts.hbs          ← Meta-factory template
+│       │   └── factory.hbs          ← Meta-factory template
 │       └── tests/                       ← Test suite (44 tests)
 │           ├── registry.test.ts
 │           ├── template-loader.test.ts

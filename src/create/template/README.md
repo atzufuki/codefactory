@@ -4,7 +4,31 @@ A project using [CodeFactory](https://github.com/atzufuki/codefactory) for deter
 
 ## Quick Start
 
-### 1. Setup MCP (One-Time)
+### 1. Install VSCode Extension (Recommended)
+
+For the best experience with `.hbs` template files:
+
+**Option A: Install from Extensions Folder** (Development)
+```bash
+# Copy the extension to your VSCode extensions folder
+cp -r /path/to/codefactory/src/vscode-hbs-extension ~/.vscode/extensions/multi-language-templates-0.1.0/
+
+# Reload VSCode
+# Ctrl+Shift+P → "Developer: Reload Window"
+```
+
+**Option B: VSCode Marketplace** (Coming Soon)
+```
+Search for "Multi-Language Templates" in VSCode Extensions
+```
+
+This enables:
+- ✅ YAML frontmatter syntax highlighting
+- ✅ TypeScript/Python code highlighting in templates
+- ✅ Handlebars tags (`{{variable}}`) recognition
+- ✅ Comment syntax (`{{!-- comment --}}`)
+
+### 2. Setup MCP (One-Time)
 
 This project uses Model Context Protocol (MCP) to enable Copilot commands.
 
@@ -14,7 +38,7 @@ This project uses Model Context Protocol (MCP) to enable Copilot commands.
 
 If you get "MCP tools not available", see [MCP Setup Guide](https://github.com/atzufuki/codefactory/blob/main/docs/mcp-setup.md)
 
-### 2. Create a Factory
+### 3. Create a Factory
 
 Use the built-in `factory` meta-factory to create new code generators:
 
@@ -26,7 +50,7 @@ Use the built-in `factory` meta-factory to create new code generators:
 # This creates: factories/typescript_function.hbs
 ```
 
-### 3. Use Your Factory
+### 4. Use Your Factory
 
 ```bash
 /codefactory.add "a 'typescript_function' for calculateTotal"
@@ -35,7 +59,7 @@ Use the built-in `factory` meta-factory to create new code generators:
 # This creates: src/calculateTotal.ts
 ```
 
-### 4. Learn More
+### 5. Learn More
 
 - [MCP Setup Guide](https://github.com/atzufuki/codefactory/blob/main/docs/mcp-setup.md) - Configure Copilot integration
 - [User Guide](https://github.com/atzufuki/codefactory/blob/main/docs/for-users.md) - Copilot commands

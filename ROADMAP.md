@@ -123,7 +123,40 @@ CodeFactory core is functional and includes GitHub Copilot integration. Not yet 
 - [ ] Database schema factories
 - [ ] CI/CD configuration factories
 
-## Phase 7: Enhanced Features 🔮 FUTURE
+## Phase 7: Developer Tooling 🔧 IN PROGRESS
+
+### VSCode Extension: Multi-Language Templates ✅ INITIAL RELEASE
+- [x] **Extension Package** (`multi-language-templates`)
+  - TextMate grammar for syntax highlighting
+  - YAML frontmatter support (`---` delimiters)
+  - Handlebars syntax (`{{variable}}`, `{{#each}}`, `{{#if}}`)
+  - Handlebars comments (`{{!-- comment --}}`)
+  - TypeScript code highlighting with Handlebars integration
+  - Support for `.hbs`, `.handlebars`, `.template` files
+- [x] **Local Development**
+  - Language configuration (brackets, auto-closing)
+  - Comprehensive README with examples
+  - Grammar testing and validation
+- [ ] **Publishing** (Phase 7a)
+  - Extension icon/logo
+  - CHANGELOG.md
+  - VSCode Marketplace publication
+  - Installation instructions
+- [ ] **Multi-Language Support** (Phase 7b)
+  - Python syntax support
+  - JavaScript syntax support
+  - JSON frontmatter (in addition to YAML)
+  - Language auto-detection from frontmatter
+
+**Related**: `.github/issues/vscode-extension-multi-language-templates.md`
+
+### Future Tooling Enhancements
+- [ ] IntelliSense for frontmatter fields
+- [ ] Template validation (schema checking)
+- [ ] Snippet support for common patterns
+- [ ] Language Server Protocol (LSP) for advanced features
+
+## Phase 8: Enhanced Features 🔮 FUTURE
 
 ### Manifest System Enhancements
 - [ ] Incremental builds (only rebuild changed factories)
@@ -149,7 +182,7 @@ CodeFactory core is functional and includes GitHub Copilot integration. Not yet 
 - [ ] Factory marketplace/catalog
 
 ### Integrations
-- [ ] VS Code extension (Language Model Tools API)
+- [ ] VS Code extension enhancements (Language Model Tools API)
   - Real-time validation
   - IntelliSense for factory names
   - Parameter auto-completion
@@ -166,7 +199,7 @@ CodeFactory core is functional and includes GitHub Copilot integration. Not yet 
 - [ ] Plugin system for custom template engines
 - [ ] Factory analytics (which are most used?)
 
-## Phase 8: Ecosystem 🌍 VISION
+## Phase 9: Ecosystem 🌍 VISION
 
 ### Community
 - [ ] Factory registry/marketplace
@@ -215,13 +248,17 @@ Ideas for the roadmap? Open an issue or PR!
 
 ---
 
-**Current Status**: Phase 4 Complete (Build Manifest System)
-**Current Focus**: JSR Publication (Phase 5)
-**Next Milestone**: v0.1.0 on JSR
-**Target**: Real-world testing with early adopters
+**Current Status**: Phase 7 In Progress (Developer Tooling)
+**Current Focus**: VSCode Extension Development
+**Next Milestone**: Extension Publication + JSR v0.1.0
+**Target**: Complete developer experience with tooling
 
 ## Recent Achievements
 
+- 🎨 **VSCode Extension** - Multi-language template syntax highlighting (v0.1.0)
+  - YAML frontmatter + TypeScript + Handlebars in single file
+  - TextMate grammar with smart pattern detection
+  - Support for `.hbs`, `.template` files
 - ✨ **113 tests passing** across all modules (core + MCP server + E2E)
 - 🔌 **MCP Server** - Model Context Protocol integration for AI assistants
 - 🏗️ **Build Manifest System** - Deterministic two-phase code generation

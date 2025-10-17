@@ -40,6 +40,7 @@ if (import.meta.main) {
     ".github/prompts/codefactory.remove.prompt.md",
     ".github/prompts/codefactory.inspect.prompt.md",
     ".vscode/settings.json",
+    ".vscode/extensions.json",
     ".vscode/mcp.json",
   ];
 

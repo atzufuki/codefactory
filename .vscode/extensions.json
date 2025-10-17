@@ -1,5 +1,6 @@
 {
     "recommendations": [
-        "andrejunges.handlebars"
+        "andrejunges.handlebars",
+        "hoodiecollin.es6-string-typescript"
     ]
 }
