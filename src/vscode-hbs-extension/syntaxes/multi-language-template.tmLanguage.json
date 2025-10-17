@@ -21,8 +21,10 @@
       "endCaptures": {
         "1": { "name": "punctuation.definition.frontmatter.end" }
       },
-      "contentName": "source.yaml",
       "patterns": [
+        {
+          "include": "#handlebars-tag"
+        },
         {
           "include": "source.yaml"
         }
@@ -53,19 +55,31 @@
       }
     },
     "handlebars-tag": {
-      "name": "meta.tag.handlebars",
+      "name": "meta.embedded.block.handlebars",
       "begin": "(\\{\\{)",
       "end": "(\\}\\})",
       "beginCaptures": {
-        "1": { "name": "punctuation.definition.tag.handlebars" }
+        "1": { "name": "punctuation.section.embedded.begin.handlebars" }
       },
       "endCaptures": {
-        "1": { "name": "punctuation.definition.tag.handlebars" }
+        "1": { "name": "punctuation.section.embedded.end.handlebars" }
       },
       "patterns": [
         {
-          "name": "variable.other.handlebars",
-          "match": "[a-zA-Z_][a-zA-Z0-9_]*"
+          "name": "keyword.control.handlebars",
+          "match": "\\#(if|unless|each|with|lookup|log)\\b"
+        },
+        {
+          "name": "keyword.control.handlebars",
+          "match": "/"
+        },
+        {
+          "name": "keyword.operator.handlebars",
+          "match": "\\.\\.?|this"
+        },
+        {
+          "name": "entity.name.tag.handlebars",
+          "match": "[a-zA-Z_][a-zA-Z0-9_\\.-]*"
         }
       ]
     }
