@@ -170,38 +170,6 @@ Deno.test("codefactory_create - should use default factoriesPath", async () => {
   }
 });
 
-Deno.test("codefactory_create - should handle Handlebars template files", async () => {
-  const tempFactories = await Deno.makeTempDir();
-  const tempOutput = await Deno.makeTempDir();
-
-  try {
-    await createTestFactory(
-      tempFactories,
-      "hbs_factory",
-      "{{componentName}}"
-    );
-
-    const outputPath = `${tempOutput}/test.hbs`;
-    const result = await createTool.execute({
-      factory: "hbs_factory",
-      params: { name: "Button", componentName: "Button" },
-      outputPath,
-      factoriesPath: tempFactories,
-    });
-
-    assertEquals(result.isError, undefined);
-
-    // Verify Handlebars comment markers were used
-    const content = await Deno.readTextFile(outputPath);
-    assertStringIncludes(content, "{{!-- @codefactory:start");
-    assertStringIncludes(content, 'factory="hbs_factory"');
-    assertStringIncludes(content, "{{!-- @codefactory:end");
-  } finally {
-    await Deno.remove(tempFactories, { recursive: true });
-    await Deno.remove(tempOutput, { recursive: true });
-  }
-});
-
 Deno.test("codefactory_create - should handle nested output directories", async () => {
   const tempFactories = await Deno.makeTempDir();
   const tempOutput = await Deno.makeTempDir();

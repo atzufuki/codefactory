@@ -22,22 +22,19 @@ CodeFactory core is functional and includes GitHub Copilot integration. Not yet 
 
 ### GitHub Copilot Slash Commands
 - [x] GitHub Copilot slash commands via `.github/prompts/`
-- [x] `/codefactory.add` - Add factory call to manifest
-- [x] `/codefactory.produce` - Build from manifest
-- [x] `/codefactory.update` - Update factory call
-- [x] `/codefactory.remove` - Remove factory call
-- [x] `/codefactory.inspect` - Show manifest contents
+- [x] `/codefactory.create` - Create file from factory
+- [x] `/codefactory.sync` - Sync edited files with factories
 - [x] Natural language support through prompt files
 - [x] Zero-installation integration (spec-kit pattern)
 
 ### MCP Server (Model Context Protocol)
 - [x] MCP server implementation for AI assistant integration
-- [x] 5 MCP tools mapping to Copilot commands
+- [x] 2 MCP tools (create, sync) for extraction-based workflow
 - [x] AI inference for factory names and parameters
 - [x] Type-safe tool schemas with validation
 - [x] Support for GitHub Copilot Chat (VS Code 1.99+)
 - [x] Support for Claude Desktop and other MCP clients
-- [x] Comprehensive test coverage (113 tests total)
+- [x] Comprehensive test coverage (82 tests total)
 - [x] Environment variable configuration
 
 ## Phase 3: Auto-Registration & Discovery ✅ DONE
@@ -49,32 +46,32 @@ CodeFactory core is functional and includes GitHub Copilot integration. Not yet 
 - [x] Integration with FactoryRegistry
 - [x] Comprehensive test coverage (37 tests)
 
-## Phase 4: Build Manifest System ✅ DONE
+## Phase 4: Extraction-Based System ✅ DONE
 
-### Two-Phase Code Generation
-- [x] **ManifestManager** - Track factory calls in manifest (221 lines, 17 tests)
-  - Add/remove/update factory calls
-  - Dependency resolution with topological sort
-  - Circular dependency detection
-  - Save/load to disk
-- [x] **Producer** - Execute factories from manifest (338 lines, 9 tests)
-  - Build all or specific factory calls
-  - Marker-based file generation
-  - Dry-run preview mode
-  - Error handling
+### Extraction Workflow
+- [x] **Producer** - Create and sync files (230 lines, 21 tests)
+  - Create files from factories with markers
+  - Extract parameters from edited code
+  - Sync changes back to factory structure
+  - Recursive directory scanning
+- [x] **Extractor** - Automatic parameter extraction (400+ lines, 11 tests)
+  - Analyze Handlebars templates
+  - Generate extraction patterns
+  - Extract parameters from source code
+  - Detect user modifications
 - [x] **Marker System** - Safe regeneration
-  - Always wrap generated code in markers
+  - Wrap generated code in markers
   - Preserve user code outside markers
-  - Error if file exists without markers
+  - Support for factory-based markers
 - [x] **AI Documentation** - Copilot integration guide
 - [x] **Examples** - Complete workflow demonstrations
 
 ### Benefits
-- ✅ Deterministic builds (same manifest → same code)
-- ✅ Fast rebuilding (no AI during build phase)
-- ✅ Version control friendly (manifest in Git)
-- ✅ Factory evolution (update factory → rebuild all)
-- ✅ Dependency management (automatic execution order)
+- ✅ Code as source of truth (edit code directly)
+- ✅ Automatic parameter extraction (no manual config)
+- ✅ Bidirectional sync (template ↔ code)
+- ✅ Factory consistency (regenerate with extracted params)
+- ✅ User code preservation (outside markers)
 
 ## Phase 5: JSR Publication 📋 PLANNED
 
@@ -82,7 +79,7 @@ CodeFactory core is functional and includes GitHub Copilot integration. Not yet 
 
 1. **@codefactory/core** - Core library
    - Factory and FactoryRegistry classes
-   - ManifestManager and Producer
+   - Producer and Extractor
    - Template engine and loaders
    - Built-in factories
    - TypeScript types
@@ -158,13 +155,13 @@ CodeFactory core is functional and includes GitHub Copilot integration. Not yet 
 
 ## Phase 8: Enhanced Features 🔮 FUTURE
 
-### Manifest System Enhancements
-- [ ] Incremental builds (only rebuild changed factories)
-- [ ] Parallel execution (respecting dependencies)
-- [ ] Manifest diff tool
-- [ ] Factory call templates (reusable parameter sets)
+### Extraction System Enhancements
+- [ ] Incremental sync (only process changed files)
+- [ ] Parallel processing of multiple files
+- [ ] Extraction accuracy improvements
+- [ ] Parameter validation rules
 - [ ] Factory versioning and compatibility tracking
-- [ ] Migration tools for manifest format changes
+- [ ] Smart conflict resolution
 
 ### Factory Improvements
 - [ ] Conditional logic in templates (`{{#if}}`)
@@ -259,9 +256,9 @@ Ideas for the roadmap? Open an issue or PR!
   - YAML frontmatter + TypeScript + Handlebars in single file
   - TextMate grammar with smart pattern detection
   - Support for `.hbs`, `.template` files
-- ✨ **113 tests passing** across all modules (core + MCP server + E2E)
+- ✨ **82 tests passing** across all modules (core + MCP server + E2E)
 - 🔌 **MCP Server** - Model Context Protocol integration for AI assistants
-- 🏗️ **Build Manifest System** - Deterministic two-phase code generation
+- 🔄 **Extraction System** - Automatic parameter extraction from edited code
 - 🔍 **Auto-Registration** - Automatic factory discovery
 - 🎨 **Template System** - YAML/JSON frontmatter support with Handlebars
 - 📝 **Marker-Based Generation** - Safe code regeneration with user code preservation

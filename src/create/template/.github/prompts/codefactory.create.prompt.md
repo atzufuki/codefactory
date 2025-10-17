@@ -1,7 +1,7 @@
 # /codefactory.create - Generate New File from Factory
 
 ## Purpose
-Generate a new source file using a factory template. This command uses the **extraction-based workflow** where the generated code becomes the single source of truth (no separate manifest needed).
+Generate a new source file using a factory template. The generated code becomes the single source of truth.
 
 ## Usage
 
@@ -73,14 +73,12 @@ export default Button;
 
 ## Key Features
 
-### ✅ New Marker Format
-- Uses `factory="name"` instead of `id="uuid"`
-- Enables extraction-based sync (no manifest needed)
+### ✅ Marker Format
+- Uses `factory="name"` in markers
 - Factory name links to template for parameter extraction
 
 ### ✅ Single Source of Truth
 - Parameters are stored IN the generated code
-- No separate manifest.json file
 - Edit code directly, sync later
 
 ### ✅ Custom Code Preservation
@@ -204,7 +202,7 @@ Parameters:
   2. Add custom code below // @codefactory:end marker
   3. Run /codefactory.sync to regenerate factory sections
 
-💡 The code is the source of truth - no manifest needed!
+💡 Your code is the source of truth
 ```
 
 ## Implementation Notes
@@ -222,21 +220,13 @@ Parameters:
 3. **Run /codefactory.sync** - Regenerate factory sections
 4. **Iterate** - Edit → Sync → Edit → Sync
 
-## Workflow Comparison
+## Workflow
 
-### OLD (Manifest-based):
-```
-1. /codefactory.add → manifest.json updated
-2. /codefactory.produce → Code generated
-3. Edit manifest.json
-4. /codefactory.produce again
-```
-
-### NEW (Extraction-based):
 ```
 1. /codefactory.create → Code generated with markers
 2. Edit code directly
 3. /codefactory.sync → Factory sections regenerated
+4. Iterate: Edit → Sync → Edit → Sync
 ```
 
 Much simpler! 🎉

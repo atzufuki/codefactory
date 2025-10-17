@@ -2,9 +2,7 @@
  * Automatic Parameter Extraction from Source Code
  * 
  * This module provides functionality to extract parameters from generated source code
- * by analyzing the factory template. This enables the "code is the source of truth"
- * approach where parameters are stored in the generated code itself rather than in
- * a separate manifest file.
+ * by analyzing the factory template.
  * 
  * Key Features:
  * - Automatic template analysis

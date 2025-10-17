@@ -252,7 +252,6 @@ The extraction system requires the new marker format.
 Options:
   1. Update marker manually
   2. Delete file and use /codefactory.create
-  3. Use old /codefactory.produce command (manifest-based)
 ```
 
 ### Extraction Failed

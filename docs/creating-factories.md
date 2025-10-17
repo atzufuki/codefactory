@@ -1,79 +1,109 @@
 # Creating Your Own Factories
 
-> Use the `factory` factory to create new code generators
+> Define code generators using Handlebars templates
 
-## TL;DR
+## Overview
 
-Use Copilot to create factories. No code needed.
-
-```bash
-/codefactory.add "a 'factory' for TypeScript function with parameters and return type"
-/codefactory.produce
-# → Creates factories/typescript_function.hbs
-
-# Now use your new factory:
-/codefactory.add "a 'typescript_function' for calculateTotal"
-/codefactory.produce
-# → Creates src/calculateTotal.ts
-```
-
-That's it!
+Factories are Handlebars templates that generate code. Create them manually or let AI help you design them.
 
 ## Quick Start
 
-### 1. Create a Factory
+### 1. Create a Factory Manually
 
-```bash
-/codefactory.add "a 'factory' for TypeScript function with parameters and return type"
-/codefactory.produce
+Create a `.hbs` file in your `factories/` directory:
+
+**factories/typescript_function.hbs:**
+```handlebars
+---
+name: typescript_function
+description: Creates a TypeScript function
+outputPath: src/{{functionName}}.ts
+params:
+  functionName:
+    type: string
+    required: true
+  parameters:
+    type: array
+    required: false
+  returnType:
+    type: string
+    required: false
+---
+export function {{functionName}}({{#each parameters}}{{this}}{{#unless @last}}, {{/unless}}{{/each}}){{#if returnType}}: {{returnType}}{{/if}} {
+  // TODO: Implement function
+}
 ```
-
-This generates `factories/typescript_function.hbs`.
 
 ### 2. Use Your Factory
 
 ```bash
-/codefactory.add "a 'typescript_function' for calculateTotal with items array parameter"
-/codefactory.produce
-```
+/codefactory.create factory="typescript_function" functionName="calculateTotal" returnType="number"
+# → Creates src/calculateTotal.ts
 
-This generates `src/calculateTotal.ts` using your factory!
+# Edit the file directly, then:
+/codefactory.sync "src/calculateTotal.ts"
+# → Extracts your changes and regenerates
+```
 
 ---
 
 ## Example: React Component Factory
 
-**Step 1 - Create the factory**:
+**Create the factory file:**
 
-```bash
-/codefactory.add "a 'factory' for functional React component with props interface and component body"
-/codefactory.produce
+**factories/react_component.hbs:**
+```handlebars
+---
+name: react_component
+description: Creates a React functional component
+outputPath: src/components/{{componentName}}.tsx
+params:
+  componentName:
+    type: string
+    description: Name of the component
+    required: true
+  props:
+    type: array
+    description: Component props
+    required: false
+---
+export interface {{componentName}}Props {
+  {{#each props}}
+  {{this}};
+  {{/each}}
+}
+
+export function {{componentName}}(props: {{componentName}}Props) {
+  return <div>Hello from {{componentName}}</div>;
+}
 ```
 
-Result: `factories/react_component.hbs` created.
-
-**Step 2 - Use the factory**:
+**Use the factory:**
 
 ```bash
-/codefactory.add "a 'react_component' for UserCard with name and email props"
-/codefactory.produce
+/codefactory.create factory="react_component" componentName="UserCard" props="name: string, email: string"
 ```
 
 Result: `src/components/UserCard.tsx` created!
 
 ---
 
-## How It Works
+## How Factories Work
 
-The `factory` is a **meta-factory** - it generates other factories.
+Factories are **Handlebars templates** with **frontmatter metadata**.
 
-**Input**: Natural language description  
-**AI Does**: Infers template structure, variables, output path  
-**Output**: Handlebars template file (`.hbs`) with frontmatter
+**Template Structure:**
+1. **Frontmatter** (YAML between `---`): Defines name, params, output path
+2. **Template Body** (Handlebars): Generates the actual code
+
+**Automatic Discovery:**
+- Place `.hbs` files in `factories/` directory
+- System auto-discovers and registers them
+- No manual registration needed!
 
 ### What Gets Generated
 
-When you create a factory, you get a template file like this:
+When you use a factory, the template generates code with markers:
 
 ```handlebars
 ---
@@ -88,7 +118,7 @@ params:
   props:
     type: array
     description: Component props
-    required: true
+    required: false
 ---
 export interface {{componentName}}Props {
   {{#each props}}
@@ -97,11 +127,11 @@ export interface {{componentName}}Props {
 }
 
 export function {{componentName}}(props: {{componentName}}Props) {
-  return <div>{{content}}</div>;
+  return <div>Component content here</div>;
 }
 ```
 
-**This template is automatically discovered and registered!** No imports needed.
+**This template is automatically discovered and registered!** No imports or configuration needed.
 
 ## Template Syntax Quick Reference
 
@@ -127,20 +157,28 @@ For full syntax, see [Handlebars documentation](https://handlebarsjs.com/).
 
 ## Tips
 
-1. **Keep templates simple** - Complex logic belongs in separate factories
+1. **Keep templates simple** - Complex logic belongs in your code edits, not templates
 2. **Use descriptive variable names** - `{{componentName}}` not `{{name}}`
-3. **Test with Copilot** - Let AI infer the structure first
-4. **Iterate** - Run `/codefactory.produce` often to verify output
+3. **Test immediately** - Use `/codefactory.create` to test your factory right away
+4. **Iterate with sync** - Edit generated code, then `/codefactory.sync` to verify extraction works
 
 ---
 
-## Advanced: Manual Factory Creation
+## Advanced: Factory Requirements
 
-If you need to write factory code manually (for complex validation logic), see `docs/for-contributors.md`.
+For factories to work with the extraction system, they must:
 
-Most users should stick to Copilot commands!
+1. **Be `.hbs` files** - Handlebars template format
+2. **Have frontmatter** - YAML metadata between `---`
+3. **Use supported patterns** - Simple variables, loops (no complex conditionals)
+
+For complex generation logic, write the template to generate a simple structure, then edit the code manually.
 
 ---
 
-**Next**: Learn about the [manifest system](./manifest-system.md) for project-wide builds.
+## Next Steps
+
+- Learn about [Extraction System](./extraction-system.md) workflow
+- Set up [MCP Integration](./mcp-setup.md) for GitHub Copilot
+- Explore [Template Frontmatter](./template-frontmatter.md) syntax
 

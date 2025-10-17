@@ -4,16 +4,13 @@
 
 ## What is This?
 
-An MCP (Model Context Protocol) server that allows AI assistants like Claude Desktop to interact directly with the CodeFactory manifest system through native tools instead of generating and executing TypeScript code.
+An MCP (Model Context Protocol) server that allows AI assistants like Claude Desktop to interact directly with the CodeFactory extraction-based system through native tools instead of generating and executing TypeScript code.
 
 ## Features
 
-✅ **5 MCP Tools** mapping to Copilot commands:
-- `codefactory_add` - Add factory calls to manifest (/codefactory.add)
-- `codefactory_produce` - Build code from manifest (/codefactory.produce)
-- `codefactory_update` - Update factory calls (/codefactory.update)
-- `codefactory_remove` - Remove factory calls (/codefactory.remove)
-- `codefactory_inspect` - Inspect manifest contents (/codefactory.inspect)
+✅ **2 MCP Tools** mapping to Copilot commands:
+- `codefactory_create` - Create new files from factories (/codefactory.create)
+- `codefactory_sync` - Synchronize edited code with factories (/codefactory.sync)
 
 ✅ **AI Inference** - Automatically infers factory names and parameters from descriptions
 
@@ -40,7 +37,6 @@ Add to your Claude Desktop config (`~/Library/Application Support/Claude/claude_
         "/path/to/codefactory/src/mcp-server/server.ts"
       ],
       "env": {
-        "CODEFACTORY_MANIFEST": "./codefactory.manifest.json",
         "CODEFACTORY_FACTORIES_DIR": "./factories"
       }
     }
@@ -56,23 +52,22 @@ The server uses stdio transport and can be integrated with any MCP-compatible cl
 
 Once configured, AI assistants can use the tools directly:
 
-**User:** "Add a Button component to the manifest"
+**User:** "Create a Button component"
 
-**AI uses:** `codefactory_add({ description: "a Button component with label and onClick props" })`
+**AI uses:** `codefactory_create({ factory: "react_component", outputPath: "src/components/Button.tsx", params: { ... } })`
 
-**Result:** Factory call added to `codefactory.manifest.json`
+**Result:** File created with extraction markers
 
 ---
 
-**User:** "Build the project"
+**User:** "Sync my changes"
 
-**AI uses:** `codefactory_produce({})`
+**AI uses:** `codefactory_sync({ path: "src/components" })`
 
-**Result:** Code generated from manifest
+**Result:** All edited files synchronized with their factories
 
 ## Environment Variables
 
-- `CODEFACTORY_MANIFEST` - Path to manifest file (default: `./codefactory.manifest.json`)
 - `CODEFACTORY_FACTORIES_DIR` - Path to factories directory (default: `./factories`)
 
 ## Development
@@ -91,13 +86,9 @@ deno check server.ts
 mcp-server/
 ├── server.ts              # MCP server entry point
 ├── tools/                 # Tool implementations
-│   ├── add.ts            # codefactory_add
-│   ├── produce.ts        # codefactory_produce
-│   ├── update.ts         # codefactory_update
-│   ├── remove.ts         # codefactory_remove
-│   └── inspect.ts        # codefactory_inspect
+│   ├── create.ts         # codefactory_create
+│   └── sync.ts           # codefactory_sync
 ├── utils/                # Utilities
-│   ├── manifest-loader.ts
 │   └── factory-registry.ts
 ├── types.ts              # Type definitions
 └── mod.ts                # Public exports

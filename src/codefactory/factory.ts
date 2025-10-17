@@ -8,6 +8,13 @@ export class Factory {
   constructor(private definition: FactoryDefinition) {}
 
   /**
+   * Get the raw template string (for extraction)
+   */
+  get template(): string | undefined {
+    return this.definition.template;
+  }
+
+  /**
    * Execute the factory with given parameters
    */
   async execute(params: FactoryParams): Promise<FactoryResult> {
@@ -30,18 +37,6 @@ export class Factory {
       params: this.definition.params,
       examples: this.definition.examples,
     };
-  }
-
-  /**
-   * Get the raw template string for extraction
-   * 
-   * This is used by the extraction system to analyze generated code
-   * and extract parameters back from source files.
-   * 
-   * @returns The raw Handlebars template string, or undefined if not available
-   */
-  getTemplate(): string | undefined {
-    return this.definition.template;
   }
 
   /**

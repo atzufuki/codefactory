@@ -3,6 +3,7 @@
   "specifiers": {
     "jsr:@std/assert@1": "1.0.15",
     "jsr:@std/fs@1": "1.0.19",
+    "jsr:@std/fs@^1.0.19": "1.0.19",
     "jsr:@std/internal@^1.0.10": "1.0.12",
     "jsr:@std/internal@^1.0.12": "1.0.12",
     "jsr:@std/internal@^1.0.9": "1.0.12",
@@ -138,6 +139,9 @@
     }
   },
   "workspace": {
+    "dependencies": [
+      "jsr:@std/fs@^1.0.19"
+    ],
     "members": {
       "src/codefactory": {
         "dependencies": [

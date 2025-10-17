@@ -43,10 +43,10 @@ This:
 
 ## Benefits
 
-✅ **Single Source of Truth** - Code contains parameters, no separate manifest
+✅ **Single Source of Truth** - Code contains all parameters
 ✅ **Direct Editing** - Edit generated files freely
 ✅ **Bidirectional Sync** - Changes in code → Regenerated automatically
-✅ **Simpler Workflow** - Create → Edit → Sync (no manifest management)
+✅ **Simple Workflow** - Create → Edit → Sync
 
 ## Usage
 

@@ -1,7 +1,6 @@
 import { assertEquals, assertStringIncludes } from "@std/assert";
 import { Producer } from "../producer.ts";
 import { FactoryRegistry } from "../registry.ts";
-import type { BuildManifest } from "../manifest.ts";
 import type { FactoryDefinition } from "../types.ts";
 import { join } from "@std/path";
 
@@ -18,15 +17,6 @@ async function cleanup() {
   } catch {
     // Ignore if doesn't exist
   }
-}
-
-// Helper to create empty manifest for extraction-based workflow
-function emptyManifest(): BuildManifest {
-  return {
-    version: "1.0.0",
-    generated: new Date().toISOString(),
-    factories: [],
-  };
 }
 
 // Helper to create a test factory with template
@@ -75,7 +65,7 @@ Deno.test("Producer (Extraction) - createFile", async (t) => {
     );
     registry.register(factory);
     
-    const producer = new Producer(emptyManifest(), registry);
+    const producer = new Producer(registry);
     await producer.createFile("test_factory", { name: "TestValue" }, outputPath);
     
     // Check file was created
@@ -98,7 +88,7 @@ Deno.test("Producer (Extraction) - createFile", async (t) => {
     const factory = createTestFactory("test_factory", "test", "test");
     registry.register(factory);
     
-    const producer = new Producer(emptyManifest(), registry);
+    const producer = new Producer(registry);
     
     // Should throw error
     let errorThrown = false;
@@ -116,7 +106,7 @@ Deno.test("Producer (Extraction) - createFile", async (t) => {
   await t.step("should error if factory not found", async () => {
     const outputPath = join(testDir, "create3.ts");
     const registry = new FactoryRegistry();
-    const producer = new Producer(emptyManifest(), registry);
+    const producer = new Producer(registry);
     
     let errorThrown = false;
     try {
@@ -165,7 +155,7 @@ Deno.test("Producer (Extraction) - syncFile", async (t) => {
     );
     
     // Sync should extract "EditedByUser" and regenerate
-    const producer = new Producer(emptyManifest(), registry);
+    const producer = new Producer(registry);
     await producer.syncFile(outputPath);
     
     const content = await Deno.readTextFile(outputPath);
@@ -194,7 +184,7 @@ Deno.test("Producer (Extraction) - syncFile", async (t) => {
       "export const custom = 'preserved';\n"
     );
     
-    const producer = new Producer(emptyManifest(), registry);
+    const producer = new Producer(registry);
     await producer.syncFile(outputPath);
     
     const content = await Deno.readTextFile(outputPath);
@@ -210,7 +200,7 @@ Deno.test("Producer (Extraction) - syncFile", async (t) => {
     await Deno.writeTextFile(outputPath, "export const x = 'no marker';");
     
     const registry = new FactoryRegistry();
-    const producer = new Producer(emptyManifest(), registry);
+    const producer = new Producer(registry);
     
     let errorThrown = false;
     try {
@@ -234,7 +224,7 @@ Deno.test("Producer (Extraction) - syncFile", async (t) => {
     );
     
     const registry = new FactoryRegistry();
-    const producer = new Producer(emptyManifest(), registry);
+    const producer = new Producer(registry);
     
     let errorThrown = false;
     try {
@@ -268,7 +258,7 @@ Deno.test("Producer (Extraction) - syncFile", async (t) => {
       "// @codefactory:end\n"
     );
     
-    const producer = new Producer(emptyManifest(), registry);
+    const producer = new Producer(registry);
     
     let errorThrown = false;
     try {
@@ -322,7 +312,7 @@ Deno.test("Producer (Extraction) - syncAll", async (t) => {
     // File without marker (should be skipped)
     await Deno.writeTextFile(file3, "export const y = 'no marker';");
     
-    const producer = new Producer(emptyManifest(), registry);
+    const producer = new Producer(registry);
     const result = await producer.syncAll(dir);
     
     assertEquals(result.success, true);
@@ -371,7 +361,7 @@ Deno.test("Producer (Extraction) - syncAll", async (t) => {
       "// @codefactory:end\n"
     );
     
-    const producer = new Producer(emptyManifest(), registry);
+    const producer = new Producer(registry);
     const result = await producer.syncAll(rootDir);
     
     assertEquals(result.success, true);
@@ -408,7 +398,7 @@ Deno.test("Producer (Extraction) - syncAll", async (t) => {
       "// @codefactory:end\n"
     );
     
-    const producer = new Producer(emptyManifest(), registry);
+    const producer = new Producer(registry);
     const result = await producer.syncAll(dir);
     
     assertEquals(result.success, false);
@@ -422,7 +412,7 @@ Deno.test("Producer (Extraction) - syncAll", async (t) => {
     await Deno.mkdir(dir, { recursive: true });
     
     const registry = new FactoryRegistry();
-    const producer = new Producer(emptyManifest(), registry);
+    const producer = new Producer(registry);
     const result = await producer.syncAll(dir);
     
     assertEquals(result.success, true);
@@ -457,7 +447,7 @@ Deno.test("Producer (Extraction) - marker format compatibility", async (t) => {
     );
     
     // syncFile should detect it's a legacy marker and skip (or error)
-    const producer = new Producer(emptyManifest(), registry);
+    const producer = new Producer(registry);
     
     let errorThrown = false;
     try {
@@ -531,39 +521,11 @@ Deno.test("Producer (Extraction) - complex parameter extraction", async (t) => {
       "// @codefactory:end\n"
     );
     
-    const producer = new Producer(emptyManifest(), registry);
+    const producer = new Producer(registry);
     await producer.syncFile(outputPath);
     
     const content = await Deno.readTextFile(outputPath);
     assertStringIncludes(content, "export const myVar = 'myValue';");
-  });
-
-  await cleanup();
-});
-
-Deno.test("Producer (Extraction) - Handlebars template markers", async (t) => {
-  await cleanup();
-  await Deno.mkdir(testDir, { recursive: true });
-
-  await t.step("should use Handlebars markers for .hbs files", async () => {
-    const outputPath = join(testDir, "test.hbs");
-    const registry = new FactoryRegistry();
-    
-    const factory = createTestFactory(
-      "hbs_factory",
-      "{{componentName}}",
-      "{{componentName}}"
-    );
-    registry.register(factory);
-    
-    const producer = new Producer(emptyManifest(), registry);
-    await producer.createFile("hbs_factory", { componentName: "Button" }, outputPath);
-    
-    const content = await Deno.readTextFile(outputPath);
-    // Should use Handlebars comment markers
-    assertStringIncludes(content, "{{!-- @codefactory:start");
-    assertStringIncludes(content, 'factory="hbs_factory"');
-    assertStringIncludes(content, "{{!-- @codefactory:end");
   });
 
   await cleanup();

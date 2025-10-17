@@ -2,7 +2,6 @@
  * E2E Test Phase 1: Project Bootstrap
  * 
  * Tests project creation with the create package.
- * New extraction-based workflow (no manifest.json).
  */
 
 import { assertEquals, assertExists } from "@std/assert";
@@ -60,10 +59,6 @@ Deno.test("E2E Phase 1: Bootstrap project (extraction-based)", async () => {
       const fileExists = await exists(join(testProjectDir, file));
       assertEquals(fileExists, true, `File ${file} should exist`);
     }
-    
-    // Verify manifest.json does NOT exist (extraction-based workflow)
-    const manifestExists = await exists(join(testProjectDir, "codefactory.manifest.json"));
-    assertEquals(manifestExists, false, "Manifest should NOT exist in extraction workflow");
     
     // Verify MCP configuration
     const denoJson = JSON.parse(

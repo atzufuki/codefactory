@@ -2,7 +2,6 @@
  * E2E Test Phase 2: Create File with Factory
  * 
  * Tests using MCP create tool to generate a new file.
- * Extraction-based workflow (no manifest).
  * Depends on: 01-bootstrap.test.ts
  */
 

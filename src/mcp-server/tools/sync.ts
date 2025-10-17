@@ -40,14 +40,7 @@ export const syncTool: MCPTool = {
       );
       
       // Create producer
-      const producer = new Producer(
-        {
-          version: "1.0.0",
-          generated: new Date().toISOString(),
-          factories: [],
-        },
-        registry
-      );
+      const producer = new Producer(registry);
       
       // Determine what to sync
       const targetPath = (args.path as string) ?? Deno.cwd();

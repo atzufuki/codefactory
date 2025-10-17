@@ -1,10 +1,8 @@
 /**
  * codefactory_create tool
  * 
- * Creates a new file using a factory with extraction-based markers.
+ * Creates a new file using a factory with markers for extraction-based sync.
  * Maps to /codefactory.create command.
- * 
- * This is the new workflow that replaces the manifest-based approach.
  */
 
 import type { MCPTool, MCPToolResult } from "../types.ts";
@@ -223,16 +221,7 @@ export const createTool: MCPTool = {
       }
       
       // Create producer and generate file
-      // Note: Producer constructor requires manifest for legacy methods,
-      // but createFile() doesn't use it. Pass empty manifest.
-      const producer = new Producer(
-        {
-          version: "1.0.0",
-          generated: new Date().toISOString(),
-          factories: [],
-        },
-        registry
-      );
+      const producer = new Producer(registry);
       await producer.createFile(factory, params, outputPath);
       
       // Format response
@@ -250,7 +239,7 @@ export const createTool: MCPTool = {
         "  2. Add custom code below // @codefactory:end marker",
         "  3. Run /codefactory.sync to regenerate factory sections",
         "",
-        "💡 The code is the source of truth - no manifest needed!",
+        "💡 Your code is the source of truth",
       ].join("\n");
       
       return {

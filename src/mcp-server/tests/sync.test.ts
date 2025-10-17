@@ -472,7 +472,7 @@ Deno.test("codefactory_sync - should report extracted changes", async () => {
   }
 });
 
-Deno.test("codefactory_sync - should warn about legacy markers", async () => {
+Deno.test("codefactory_sync - should error on legacy markers", async () => {
   const tempFactories = await Deno.makeTempDir();
   const tempOutput = await Deno.makeTempDir();
 
@@ -493,9 +493,8 @@ Deno.test("codefactory_sync - should warn about legacy markers", async () => {
     assertEquals(result.isError, true);
     const text = result.content[0].text || "";
     
-    assertStringIncludes(text, "Old marker format");
-    assertStringIncludes(text, "id=");
-    assertStringIncludes(text, "factory=");
+    assertStringIncludes(text, "Legacy marker format");
+    assertStringIncludes(text, 'id="');
   } finally {
     await Deno.remove(tempFactories, { recursive: true });
     await Deno.remove(tempOutput, { recursive: true });

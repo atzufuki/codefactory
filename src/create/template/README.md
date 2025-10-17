@@ -102,7 +102,7 @@ When you edit code or factory templates change:
 3. **Sync** (deterministic): Re-extract parameters → Regenerate factory sections
 
 **Benefits:**
-- ✅ Code contains all parameters (no separate manifest)
+- ✅ Code contains all parameters
 - ✅ Edit generated files freely
 - ✅ Bidirectional sync (code changes → automatic regeneration)
 - ✅ Custom code preserved (outside markers)

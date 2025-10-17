@@ -26,15 +26,3 @@ export interface MCPToolResult {
   }>;
   isError?: boolean;
 }
-
-/**
- * Factory call structure (matches ManifestManager)
- */
-export interface FactoryCall {
-  id: string;
-  factory: string;
-  params: Record<string, unknown>;
-  outputPath: string;
-  dependsOn?: string[];
-  createdAt?: string;
-}
