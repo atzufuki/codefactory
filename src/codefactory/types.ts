@@ -3,6 +3,19 @@
  */
 
 /**
+ * Allowed parameter types - all primitives or lists of them
+ * Forces parameters to be data points, not code abstractions
+ */
+export type AllowedParamType =
+  | "string"      // Short texts: names, IDs, classes
+  | "number"      // Numeric values: sizes, counts
+  | "boolean"     // Feature flags: on/off
+  | "string[]"    // Lists of strings
+  | "number[]"    // Lists of numbers
+  | "boolean[]"   // Lists of booleans
+  | `enum:${string}`; // Limited set of options, e.g.: "enum:left|center|right"
+
+/**
  * Parameters that can be passed to a factory
  */
 export type FactoryParams = Record<string, unknown>;
@@ -35,13 +48,15 @@ export interface FactoryDefinition {
   examples?: Array<Record<string, unknown>>;
   /** The generator function */
   generate: (params: FactoryParams) => FactoryResult | Promise<FactoryResult>;
+  /** Optional template string (for extraction-based sync) */
+  template?: string;
 }
 
 /**
  * Definition of a factory parameter
  */
 export interface ParamDefinition {
-  /** TypeScript type as string */
+  /** TypeScript type as string - must be one of AllowedParamType */
   type: string;
   /** Parameter description */
   description: string;
@@ -49,4 +64,8 @@ export interface ParamDefinition {
   required?: boolean;
   /** Default value if not provided */
   default?: unknown;
+  /** Maximum length for string parameters (prevents code abstractions) */
+  maxLength?: number;
+  /** Regex pattern for validation (e.g., for identifiers: "^[a-zA-Z][a-zA-Z0-9]*$") */
+  pattern?: string;
 }

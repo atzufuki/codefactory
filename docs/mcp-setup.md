@@ -1,17 +1,17 @@
 # MCP Server Setup Guide
 
-This project uses the **Model Context Protocol (MCP)** to provide AI assistant tools for manifest operations.
+This project uses the **Model Context Protocol (MCP)** to provide AI assistant tools for code generation and synchronization.
 
 ## What is MCP?
 
-MCP allows AI assistants like GitHub Copilot and Claude Desktop to use external tools (like our CodeFactory server) to perform operations. Instead of AI generating TypeScript code to manipulate the manifest, it calls our MCP tools directly.
+MCP allows AI assistants like GitHub Copilot and Claude Desktop to use external tools (like our CodeFactory server) to perform operations. Instead of AI generating code directly, it calls our MCP tools for structured code generation.
 
 **Benefits:**
 - ✅ More reliable (deterministic operations)
 - ✅ Consistent behavior across all uses
 - ✅ Better error handling
 - ✅ Type-safe with schema validation
-- ✅ No code generation needed for manifest operations
+- ✅ Extraction-based workflow support
 
 ## Setup Instructions
 
@@ -33,7 +33,6 @@ Create or edit `.vscode/mcp.json` in your project:
         "${workspaceFolder}/path/to/mcp-server/server.ts"
       ],
       "env": {
-        "CODEFACTORY_MANIFEST": "${workspaceFolder}/codefactory.manifest.json",
         "CODEFACTORY_FACTORIES_DIR": "${workspaceFolder}/factories"
       }
     }
@@ -41,7 +40,8 @@ Create or edit `.vscode/mcp.json` in your project:
 }
 ```
 
-**Note:** VS Code will show a "Start" button next to the server configuration when you open the file. Click it to start the MCP server.
+**Note:** 
+- VS Code will show a "Start" button next to the server configuration when you open the file. Click it to start the MCP server.
 
 ### For Claude Desktop
 
@@ -60,7 +60,6 @@ Add to your Claude Desktop config (`~/Library/Application Support/Claude/claude_
         "/absolute/path/to/mcp-server/server.ts"
       ],
       "env": {
-        "CODEFACTORY_MANIFEST": "./codefactory.manifest.json",
         "CODEFACTORY_FACTORIES_DIR": "./factories"
       }
     }
@@ -75,12 +74,12 @@ Add to your Claude Desktop config (`~/Library/Application Support/Claude/claude_
 2. Click the "Start" button next to the server configuration
 3. Open GitHub Copilot Chat
 4. Click the tools icon (🔧) to see available tools
-5. You should see the 5 CodeFactory tools listed
+5. You should see CodeFactory tools listed
 
 **For Claude Desktop:**
 1. Restart Claude Desktop after adding the configuration
 2. In a new conversation, the tools should be available automatically
-3. Type: "inspect the manifest" to test
+3. Type: "create a button component" to test
 
 If you don't see the tools, check the troubleshooting section below.
 
@@ -90,11 +89,14 @@ Once configured, these tools are available in Copilot Chat:
 
 | Tool | Description | Example |
 |------|-------------|---------|
-| `codefactory_add` | Add factory call to manifest | `/codefactory.add "Button component"` |
-| `codefactory_produce` | Build code from manifest | `/codefactory.produce` |
-| `codefactory_update` | Update existing factory call | `/codefactory.update button-component` |
-| `codefactory_remove` | Remove factory call | `/codefactory.remove button-component` |
-| `codefactory_inspect` | View manifest contents | `/codefactory.inspect` |
+| `codefactory_create` | Create file from factory | `/codefactory.create factory="component" name="Button"` |
+| `codefactory_sync` | Sync files (extract & regenerate) | `/codefactory.sync "src/components"` |
+
+**Usage:**
+- **Create**: Generate initial code from factory template
+- **Sync**: Extract changes from edited code and regenerate
+
+Your code is always the source of truth!
 
 ## Troubleshooting
 
@@ -152,7 +154,7 @@ deno --version
 
 ### VS Code (1.99+)
 
-Use `.vscode/mcp.json` (recommended):
+Use `.vscode/mcp.json`:
 
 ```json
 {
@@ -162,7 +164,6 @@ Use `.vscode/mcp.json` (recommended):
       "command": "deno",
       "args": ["run", "--allow-read", "--allow-write", "--allow-env", "${workspaceFolder}/server.ts"],
       "env": {
-        "CODEFACTORY_MANIFEST": "${workspaceFolder}/codefactory.manifest.json",
         "CODEFACTORY_FACTORIES_DIR": "${workspaceFolder}/factories"
       }
     }
@@ -181,7 +182,6 @@ Use the global config file (absolute paths required):
       "command": "deno",
       "args": ["run", "--allow-read", "--allow-write", "--allow-env", "/absolute/path/to/server.ts"],
       "env": {
-        "CODEFACTORY_MANIFEST": "/absolute/path/to/manifest.json",
         "CODEFACTORY_FACTORIES_DIR": "/absolute/path/to/factories"
       }
     }
@@ -225,10 +225,9 @@ If you're developing the MCP server locally or using a custom fork:
 
 The MCP server respects these environment variables:
 
-- `CODEFACTORY_MANIFEST` - Path to manifest file (default: `./codefactory.manifest.json`)
 - `CODEFACTORY_FACTORIES_DIR` - Path to factories directory (default: `./factories`)
 
-Example with custom paths:
+Example with custom path:
 
 ```json
 {
@@ -238,7 +237,6 @@ Example with custom paths:
       "command": "deno",
       "args": ["run", "--allow-read", "--allow-write", "--allow-env", "server.ts"],
       "env": {
-        "CODEFACTORY_MANIFEST": "./custom/path/manifest.json",
         "CODEFACTORY_FACTORIES_DIR": "./custom/factories"
       }
     }

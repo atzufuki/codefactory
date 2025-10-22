@@ -11,7 +11,6 @@
         "${workspaceFolder}/../../mcp-server/server.ts"
       ],
       "env": {
-        "CODEFACTORY_MANIFEST": "${workspaceFolder}/codefactory.manifest.json",
         "CODEFACTORY_FACTORIES_DIR": "${workspaceFolder}/factories"
       }
     }

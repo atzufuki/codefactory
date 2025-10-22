@@ -8,7 +8,7 @@ import { assertEquals, assertExists } from "@std/assert";
 import { exists } from "@std/fs";
 import { join } from "@std/path";
 
-Deno.test("E2E Phase 1: Bootstrap project", async () => {
+Deno.test("E2E Phase 1: Bootstrap project (extraction-based)", async () => {
   const testProjectName = `test-project-${Date.now()}`;
   const tmpDir = join(Deno.cwd(), "tests", "e2e", ".tmp");
   await Deno.mkdir(tmpDir, { recursive: true });
@@ -42,16 +42,17 @@ Deno.test("E2E Phase 1: Bootstrap project", async () => {
     const projectExists = await exists(testProjectDir);
     assertEquals(projectExists, true, "Project directory should exist");
     
-    // Verify key files
+    // Verify key files (extraction-based workflow)
     const expectedFiles = [
       "deno.json",
       "README.md",
-      "codefactory.manifest.json",
       "factories/index.ts",
       "src/main.ts",
       ".vscode/settings.json",
       ".vscode/mcp.json",
-      ".github/prompts/codefactory.add.prompt.md",
+      ".github/copilot-instructions.md",
+      ".github/prompts/codefactory.create.prompt.md",
+      ".github/prompts/codefactory.sync.prompt.md",
     ];
     
     for (const file of expectedFiles) {
@@ -78,13 +79,22 @@ Deno.test("E2E Phase 1: Bootstrap project", async () => {
       "MCP server should use stdio transport"
     );
     
-    // Verify manifest is empty
-    const manifest = JSON.parse(
-      await Deno.readTextFile(join(testProjectDir, "codefactory.manifest.json"))
+    // Verify copilot-instructions.md mentions extraction workflow
+    const copilotInstructions = await Deno.readTextFile(
+      join(testProjectDir, ".github/copilot-instructions.md")
     );
-    assertEquals(manifest.factories.length, 0, "Manifest should be empty initially");
+    assertEquals(
+      copilotInstructions.includes("extraction-based"),
+      true,
+      "Instructions should mention extraction-based workflow"
+    );
+    assertEquals(
+      copilotInstructions.includes("source of truth"),
+      true,
+      "Instructions should explain code as source of truth"
+    );
     
-    console.log("✅ Project bootstrapped successfully");
+    console.log("✅ Project bootstrapped successfully (extraction-based)");
     
     // Save project path for next tests
     await Deno.writeTextFile(

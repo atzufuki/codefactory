@@ -6,6 +6,7 @@
 
 import { parseFrontmatter } from "./frontmatter.ts";
 import type { FactoryDefinition, ParamDefinition } from "./types.ts";
+import { validateFactoryParamsWithWarnings } from "./validator.ts";
 import Handlebars from "handlebars";
 
 /**
@@ -45,11 +46,17 @@ export class TemplateLoader {
   static async loadTemplate(templatePath: string): Promise<LoadedTemplate> {
     let content = await Deno.readTextFile(templatePath);
     
-    // Strip codefactory markers if present (both Handlebars and regular comments)
-    content = content.replace(/^\{\{!-- @codefactory:start.*?--\}\}\n?/m, "");
-    content = content.replace(/^\{\{!-- @codefactory:end --\}\}\n?/m, "");
-    content = content.replace(/^\/\/ @codefactory:start.*?\n?/m, "");
-    content = content.replace(/^\/\/ @codefactory:end\n?/m, "");
+    // Strip codefactory markers if present (both old and new formats)
+    // Old format: // @codefactory:start and // @codefactory:end
+    content = content.replace(/^.*@codefactory:start.*$(\r?\n)?/gm, "");
+    content = content.replace(/^.*@codefactory:end.*$(\r?\n)?/gm, "");
+    
+    // New format: JSDoc-style metadata block /** @codefactory factory ... */
+    // This regex matches the entire JSDoc block including all lines
+    content = content.replace(/\/\*\*[\s\S]*?@codefactory[\s\S]*?\*\/(\r?\n)?/g, "");
+    
+    // Remove any leading/trailing whitespace left by marker removal
+    content = content.trimStart();
     
     const { frontmatter, body } = parseFrontmatter<TemplateFrontmatter>(content);
 
@@ -84,6 +91,13 @@ export class TemplateLoader {
     frontmatter: TemplateFrontmatter,
     template: string
   ): FactoryDefinition {
+    // Validate parameters before creating factory
+    // Skip validation for the meta-factory since it generates other factories
+    // and legitimately needs code abstraction parameters like "template"
+    if (frontmatter.params && frontmatter.name !== "factory") {
+      validateFactoryParamsWithWarnings(frontmatter.params);
+    }
+    
     // Compile the Handlebars template once
     // Use noEscape: true to prevent HTML encoding in code generation
     // (e.g., "() => void" should not become "() &#x3D;&gt; void")
@@ -94,6 +108,7 @@ export class TemplateLoader {
       description: frontmatter.description,
       params: frontmatter.params || {},
       examples: frontmatter.examples || [],
+      template: template, // Store raw template for extraction
       generate: (params) => {
         // Render using Handlebars for full syntax support
         const content = compiledTemplate(params);

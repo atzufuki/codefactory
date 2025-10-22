@@ -8,6 +8,13 @@ export class Factory {
   constructor(private definition: FactoryDefinition) {}
 
   /**
+   * Get the raw template string (for extraction)
+   */
+  get template(): string | undefined {
+    return this.definition.template;
+  }
+
+  /**
    * Execute the factory with given parameters
    */
   async execute(params: FactoryParams): Promise<FactoryResult> {

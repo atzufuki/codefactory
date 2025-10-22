@@ -1,16 +1,15 @@
 /**
- * E2E Test Phase 2: Create Factory via Meta-Factory
+ * E2E Test Phase 2: Create Factory with Meta-Factory
  * 
- * Tests using MCP add and produce tools to create a new factory.
+ * Tests creating a factory using the meta-factory.
  * Depends on: 01-bootstrap.test.ts
  */
 
-import { assertEquals } from "@std/assert";
+import { assertEquals, assertStringIncludes } from "@std/assert";
 import { exists } from "@std/fs";
 import { join } from "@std/path";
-import { addTool } from "../../src/mcp-server/tools/add.ts";
-import { produceTool } from "../../src/mcp-server/tools/produce.ts";
-import { inspectTool } from "../../src/mcp-server/tools/inspect.ts";
+import { FactoryRegistry } from "../../src/codefactory/registry.ts";
+import { Producer } from "../../src/codefactory/producer.ts";
 
 async function getTestProjectDir(): Promise<string> {
   const tmpDir = join(Deno.cwd(), "tests", "e2e", ".tmp");
@@ -20,72 +19,36 @@ async function getTestProjectDir(): Promise<string> {
 
 Deno.test("E2E Phase 2: Create factory using meta-factory", async () => {
   const testProjectDir = await getTestProjectDir();
-  const manifestPath = join(testProjectDir, "codefactory.manifest.json");
-  const factoriesPath = join(testProjectDir, "factories");
+  const factoriesDir = join(testProjectDir, "factories");
   
-  console.log("\n🏭 Creating factory via meta-factory...");
+  console.log("\n��� Creating 'greeter' factory with meta-factory...");
   
-  // Add factory call to manifest
-  const addResult = await addTool.execute({
-    description: "Create a factory called simple_greeter that generates greeting functions",
-    id: "create-greeter-factory",
-    factory: "factory",
-    params: {
-      name: "simple_greeter",
-      description: "Creates a simple greeting function",
-      outputPath: "src/{{fileName}}.ts",
-      template: `export function {{functionName}}({{#each params}}{{this}}{{#unless @last}}, {{/unless}}{{/each}}) {
-  {{implementation}}
-}`,
-    },
-    outputPath: join(testProjectDir, "factories/simple_greeter.hbs"),
-    manifestPath,
-    factoriesPath,
-  });
+  const registry = new FactoryRegistry();
+  await registry.registerBuiltIns();
+  const producer = new Producer(registry);
   
+  const greeterFactoryParams = {
+    name: "greeter",
+    description: "Creates a greeting function",
+    template: "export function {{functionName}}(name: string): string {\\n  return \`{{message}}, \${name}!\`;\\n}",
+    outputPath: "src/{{functionName}}.ts"
+  };
+  
+  const greeterFactoryPath = join(factoriesDir, "greeter.hbs");
+  await producer.createFile("factory", greeterFactoryParams, greeterFactoryPath);
+  
+  const factoryExists = await exists(greeterFactoryPath);
+  assertEquals(factoryExists, true, "Greeter factory file should be created");
+  
+  const factoryContent = await Deno.readTextFile(greeterFactoryPath);
   assertEquals(
-    addResult.content[0].text.includes("Added to manifest"),
-    true,
-    "Should confirm factory call added"
+    factoryContent.includes("/** @codefactory"),
+    false,
+    "Factory should NOT have JSDoc metadata"
   );
   
-  // Build the factory
-  const produceResult = await produceTool.execute({
-    manifestPath,
-    factoriesPath,
-  });
+  assertStringIncludes(factoryContent, "name: greeter", "Should have correct name");
+  assertStringIncludes(factoryContent, "export function {{functionName}}", "Should have template");
   
-  assertEquals(
-    produceResult.content[0].text.includes("✅"),
-    true,
-    "Should confirm successful build"
-  );
-  
-  // Verify factory file was created
-  const factoryFilePath = join(testProjectDir, "factories/simple_greeter.hbs");
-  const factoryFileExists = await exists(factoryFilePath);
-  assertEquals(factoryFileExists, true, "Factory file should exist");
-  
-  const factoryContent = await Deno.readTextFile(factoryFilePath);
-  assertEquals(
-    factoryContent.includes("name: simple_greeter"),
-    true,
-    "Factory should have correct name"
-  );
-  
-  assertEquals(
-    factoryContent.includes("{{!-- @codefactory:start"),
-    true,
-    "Factory should have Handlebars-style markers"
-  );
-  
-  // Verify manifest shows the factory
-  const inspectResult = await inspectTool.execute({ manifestPath });
-  assertEquals(
-    inspectResult.content[0].text.includes("create-greeter-factory"),
-    true,
-    "Manifest should show the factory"
-  );
-  
-  console.log("✅ Factory created successfully");
+  console.log("✓ Greeter factory created successfully");
 });

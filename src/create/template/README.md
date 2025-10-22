@@ -34,60 +34,87 @@ This project uses Model Context Protocol (MCP) to enable Copilot commands.
 
 **Configure once:**
 1. VS Code will detect `.vscode/settings.json` automatically
-2. Verify MCP is working: `/codefactory.inspect` in Copilot Chat
+2. Verify MCP is working: Try `/codefactory.create` in Copilot Chat
 
 If you get "MCP tools not available", see [MCP Setup Guide](https://github.com/atzufuki/codefactory/blob/main/docs/mcp-setup.md)
 
-### 3. Create a Factory
+### 3. Create Your First Component
 
-Use the built-in `factory` meta-factory to create new code generators:
+Use the extraction-based workflow - code is the source of truth!
 
 ```bash
 # In GitHub Copilot Chat:
-/codefactory.add "a 'factory' for TypeScript function with params and return type"
-/codefactory.produce
+/codefactory.create "Button component with label and onClick props"
 
-# This creates: factories/typescript_function.hbs
+# This creates: src/components/Button.ts (with @codefactory markers)
 ```
 
-### 4. Use Your Factory
+### 4. Edit Code Directly
+
+The generated file is now your source of truth. Edit it freely:
+
+```typescript
+// src/components/Button.ts
+// @codefactory:start factory="web_component"
+class Button extends HTMLProps(HTMLElement)<ButtonProps>() {
+  label: string;
+  onClick?: () => void;
+  
+  // Add signals directly in code
+  count = signal<number>(0);  // ← You added this
+  isDisabled = signal<boolean>(false);  // ← And this
+  
+  render() {
+    return new html.Button({ content: this.label });
+  }
+}
+// @codefactory:end
+
+// Add custom code below markers (preserved on sync)
+export const PrimaryButton = styled(Button);
+```
+
+### 5. Sync to Regenerate
+
+When you edit code or factory templates change:
 
 ```bash
-/codefactory.add "a 'typescript_function' for calculateTotal"
-/codefactory.produce
+/codefactory.sync
 
-# This creates: src/calculateTotal.ts
+# System:
+# - Extracts parameters from your edited code
+# - Regenerates factory section
+# - Preserves all custom code
 ```
 
-### 5. Learn More
+### 6. Learn More
 
 - [MCP Setup Guide](https://github.com/atzufuki/codefactory/blob/main/docs/mcp-setup.md) - Configure Copilot integration
-- [User Guide](https://github.com/atzufuki/codefactory/blob/main/docs/for-users.md) - Copilot commands
-- [Creating Factories](https://github.com/atzufuki/codefactory/blob/main/docs/creating-factories.md) - Factory guide
-- [Manifest System](https://github.com/atzufuki/codefactory/blob/main/docs/manifest-system.md) - How it works
+- [User Guide](https://github.com/atzufuki/codefactory/blob/main/docs/for-users.md) - Complete command reference
+- [Creating Factories](https://github.com/atzufuki/codefactory/blob/main/docs/creating-factories.md) - Build your own templates
 
 ## What is CodeFactory?
 
-Two-phase code generation:
-1. **Plan** (with AI): Add factory calls to `codefactory.manifest.json`
-2. **Build** (deterministic): Execute manifest → Generate code
+**Extraction-based code generation** where source code is the single source of truth:
+
+1. **Create** (with AI): Generate file with factory markers
+2. **Edit** (directly): Modify generated code as needed
+3. **Sync** (deterministic): Re-extract parameters → Regenerate factory sections
 
 **Benefits:**
-- Same manifest = Same code, always
-- Fast rebuilds without AI
-- Version control the "recipe"
-- Factory updates benefit all code
+- ✅ Code contains all parameters
+- ✅ Edit generated files freely
+- ✅ Bidirectional sync (code changes → automatic regeneration)
+- ✅ Custom code preserved (outside markers)
+- ✅ Template updates benefit all files
 
 ## Available Commands
 
-All commands work through MCP (no code generation by Copilot needed):
+All commands work through MCP:
 
 ```bash
-/codefactory.add <description>       # Add to manifest (planning)
-/codefactory.produce                 # Build from manifest
-/codefactory.update <id> <changes>   # Update factory call
-/codefactory.remove <id>             # Remove factory call
-/codefactory.inspect                 # Show manifest
+/codefactory.create <description>    # Create new file with factory
+/codefactory.sync [path]             # Sync files (extract + regenerate)
 ```
 
 ## Manual Tasks (Optional)
@@ -95,8 +122,6 @@ All commands work through MCP (no code generation by Copilot needed):
 ```bash
 deno task dev          # Run main.ts with watch mode
 deno task mcp:dev      # Start MCP server (usually auto-started by Copilot)
-deno task example      # Run example workflow
-deno task build        # Execute manifest to generate code
 ```
 
 ---
