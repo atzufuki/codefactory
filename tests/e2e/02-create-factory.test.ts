@@ -5,7 +5,7 @@
  * Depends on: 01-bootstrap.test.ts
  */
 
-import { assertEquals, assertStringIncludes, assertExists } from "@std/assert";
+import { assertEquals, assertStringIncludes } from "@std/assert";
 import { exists } from "@std/fs";
 import { join } from "@std/path";
 import { FactoryRegistry } from "../../src/codefactory/registry.ts";
