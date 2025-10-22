@@ -1,5 +1,5 @@
 /**
- * Tests for codefactory_create tool (extraction-based workflow)
+ * Tests for codefactory_create tool (metadata-based workflow)
  */
 
 import { assertEquals, assertExists, assertStringIncludes } from "@std/assert";
@@ -23,7 +23,7 @@ ${template}
   );
 }
 
-Deno.test("codefactory_create - should create file with new marker format", async () => {
+Deno.test("codefactory_create - should create file with JSDoc metadata", async () => {
   const tempFactories = await Deno.makeTempDir();
   const tempOutput = await Deno.makeTempDir();
 
@@ -46,11 +46,12 @@ Deno.test("codefactory_create - should create file with new marker format", asyn
     assertExists(result.content);
     assertEquals(result.content[0].type, "text");
 
-    // Verify file was created with new marker format
+    // Verify file was created with JSDoc metadata format
     const content = await Deno.readTextFile(`${tempOutput}/hello.ts`);
-    assertStringIncludes(content, '// @codefactory:start factory="test_factory"');
+    assertStringIncludes(content, '/**');
+    assertStringIncludes(content, ' * @codefactory test_factory');
     assertStringIncludes(content, "export const Hello = 'test';");
-    assertStringIncludes(content, "// @codefactory:end");
+    assertStringIncludes(content, ' */');
   } finally {
     await Deno.remove(tempFactories, { recursive: true });
     await Deno.remove(tempOutput, { recursive: true });
@@ -340,3 +341,393 @@ Deno.test("codefactory_create - should list available factories when no factory 
     await Deno.remove(tempFactories, { recursive: true });
   }
 });
+
+// Tests for natural language inference (helper functions)
+
+Deno.test("codefactory_create - should infer factory from description (web_component)", async () => {
+  const tempFactories = await Deno.makeTempDir();
+  const tempOutput = await Deno.makeTempDir();
+
+  try {
+    // Create web_component factory
+    await Deno.writeTextFile(
+      `${tempFactories}/web_component.hbs`,
+      `---
+name: web_component
+description: Creates a web component
+outputPath: src/components/{{componentName}}.ts
+params:
+  componentName:
+    type: string
+    required: true
+  tagName:
+    type: string
+    required: true
+  props:
+    type: array
+    required: false
+  signals:
+    type: array
+    required: false
+---
+export class {{componentName}} extends HTMLElement {
+  static get observedAttributes() { return [{{#each props}}'{{this}}'{{#unless @last}}, {{/unless}}{{/each}}]; }
+}
+customElements.define('{{tagName}}', {{componentName}});
+`,
+    );
+
+    // Change to temp output directory so generated files go there
+    const originalCwd = Deno.cwd();
+    Deno.chdir(tempOutput);
+
+    try {
+      const result = await createTool.execute({
+        description: "Create a Button web component",
+        factoriesPath: tempFactories,
+      });
+
+      assertEquals(result.isError, undefined);
+      const text = result.content[0].text || "";
+      assertStringIncludes(text, "✅");
+      assertStringIncludes(text, "web_component");
+      assertStringIncludes(text, "Button");
+      assertStringIncludes(text, "app-button");
+    } finally {
+      Deno.chdir(originalCwd);
+    }
+  } finally {
+    await Deno.remove(tempFactories, { recursive: true });
+    await Deno.remove(tempOutput, { recursive: true });
+  }
+});
+
+Deno.test("codefactory_create - should extract params from description", async () => {
+  const tempFactories = await Deno.makeTempDir();
+  const tempOutput = await Deno.makeTempDir();
+
+  try {
+    // Create web_component factory
+    await Deno.writeTextFile(
+      `${tempFactories}/web_component.hbs`,
+      `---
+name: web_component
+description: Creates a web component
+outputPath: src/components/{{componentName}}.ts
+params:
+  componentName:
+    type: string
+    required: true
+  tagName:
+    type: string
+    required: true
+  props:
+    type: array
+    required: false
+  signals:
+    type: array
+    required: false
+---
+Component: {{componentName}}
+Props: {{#each props}}{{this}}{{/each}}
+`,
+    );
+
+    const originalCwd = Deno.cwd();
+    Deno.chdir(tempOutput);
+
+    try {
+      const result = await createTool.execute({
+        description: "Create a Dialog web component with title and message props",
+        factoriesPath: tempFactories,
+      });
+
+      assertEquals(result.isError, undefined);
+      const text = result.content[0].text || "";
+      assertStringIncludes(text, "Dialog");
+      assertStringIncludes(text, "title: unknown");
+      assertStringIncludes(text, "message: unknown");
+    } finally {
+      Deno.chdir(originalCwd);
+    }
+  } finally {
+    await Deno.remove(tempFactories, { recursive: true });
+    await Deno.remove(tempOutput, { recursive: true });
+  }
+});
+
+Deno.test("codefactory_create - should generate output path from params", async () => {
+  const tempFactories = await Deno.makeTempDir();
+  const tempOutput = await Deno.makeTempDir();
+
+  try {
+    // Create web_component factory
+    await Deno.writeTextFile(
+      `${tempFactories}/web_component.hbs`,
+      `---
+name: web_component
+description: Creates a web component
+outputPath: src/components/{{componentName}}.ts
+params:
+  componentName:
+    type: string
+    required: true
+  tagName:
+    type: string
+    required: true
+  props:
+    type: array
+    required: false
+---
+Component {{componentName}}
+`,
+    );
+
+    // Change to temp output directory
+    const originalCwd = Deno.cwd();
+    Deno.chdir(tempOutput);
+
+    try {
+      const result = await createTool.execute({
+        description: "Create a Card web component",
+        factoriesPath: tempFactories,
+      });
+
+      assertEquals(result.isError, undefined);
+      const text = result.content[0].text || "";
+      
+      // Should generate path automatically
+      assertStringIncludes(text, "src/components/Card.ts");
+      
+      // Verify file was created
+      const content = await Deno.readTextFile("src/components/Card.ts");
+      assertStringIncludes(content, "Component Card");
+    } finally {
+      Deno.chdir(originalCwd);
+    }
+  } finally {
+    await Deno.remove(tempFactories, { recursive: true });
+    await Deno.remove(tempOutput, { recursive: true });
+  }
+});
+
+Deno.test("codefactory_create - should extract signals from description", async () => {
+  const tempFactories = await Deno.makeTempDir();
+  const tempOutput = await Deno.makeTempDir();
+
+  try {
+    await Deno.writeTextFile(
+      `${tempFactories}/web_component.hbs`,
+      `---
+name: web_component
+description: Creates a web component
+outputPath: src/components/{{componentName}}.ts
+params:
+  componentName:
+    type: string
+    required: true
+  tagName:
+    type: string
+    required: true
+  signals:
+    type: array
+    required: false
+---
+Signals: {{#each signals}}{{name}}{{/each}}
+`,
+    );
+
+    const originalCwd = Deno.cwd();
+    Deno.chdir(tempOutput);
+
+    try {
+      const result = await createTool.execute({
+        description: "Create a Counter web component with count signal",
+        factoriesPath: tempFactories,
+      });
+
+      assertEquals(result.isError, undefined);
+      const text = result.content[0].text || "";
+      assertStringIncludes(text, "count");
+    } finally {
+      Deno.chdir(originalCwd);
+    }
+  } finally {
+    await Deno.remove(tempFactories, { recursive: true });
+    await Deno.remove(tempOutput, { recursive: true });
+  }
+});
+
+Deno.test("codefactory_create - should infer factory name from quoted string", async () => {
+  const tempFactories = await Deno.makeTempDir();
+  const tempOutput = await Deno.makeTempDir();
+
+  try {
+    await createTestFactory(
+      tempFactories,
+      "my_custom_factory",
+      "Custom: {{name}}"
+    );
+
+    const result = await createTool.execute({
+      description: "Use 'my_custom_factory' to create something",
+      params: { name: "Test" },
+      outputPath: `${tempOutput}/test.ts`,
+      factoriesPath: tempFactories,
+    });
+
+    assertEquals(result.isError, undefined);
+    const text = result.content[0].text || "";
+    assertStringIncludes(text, "my_custom_factory");
+  } finally {
+    await Deno.remove(tempFactories, { recursive: true });
+    await Deno.remove(tempOutput, { recursive: true });
+  }
+});
+
+Deno.test("codefactory_create - should handle unrecognized description", async () => {
+  const tempFactories = await Deno.makeTempDir();
+  const tempOutput = await Deno.makeTempDir();
+
+  try {
+    // Create a simple custom factory
+    await createTestFactory(
+      tempFactories,
+      "simple_test",
+      "Output: {{name}}"
+    );
+
+    const originalCwd = Deno.cwd();
+    Deno.chdir(tempOutput);
+
+    try {
+      // Use description that doesn't match any pattern
+      // Should fall back to first factory, but that's the built-in "factory"
+      // which requires different params than what we're providing
+      const result = await createTool.execute({
+        description: "xyz random unmatched description",
+        factoriesPath: tempFactories,
+      });
+
+      // The fallback will pick "factory" (built-in) which requires name/description/template
+      // So this should error with missing parameters
+      assertEquals(result.isError, true);
+      const text = result.content[0].text || "";
+      assertStringIncludes(text, "Missing required parameters");
+    } finally {
+      Deno.chdir(originalCwd);
+    }
+  } finally {
+    await Deno.remove(tempFactories, { recursive: true });
+    await Deno.remove(tempOutput, { recursive: true });
+  }
+});
+
+Deno.test("codefactory_create - should infer 'react' keyword", async () => {
+  const tempFactories = await Deno.makeTempDir();
+  const tempOutput = await Deno.makeTempDir();
+
+  try {
+    // Create both web_component (would match "component") and react_component
+    await Deno.writeTextFile(
+      `${tempFactories}/web_component.hbs`,
+      `---
+name: web_component
+description: Creates a web component
+outputPath: src/components/{{componentName}}.ts
+params:
+  componentName:
+    type: string
+    required: true
+  tagName:
+    type: string
+    required: true
+---
+export class {{componentName}} extends HTMLElement {}
+`,
+    );
+
+    // Create react_component factory  
+    await Deno.writeTextFile(
+      `${tempFactories}/react_component.hbs`,
+      `---
+name: react_component
+description: Creates a React component
+outputPath: src/components/{{componentName}}.tsx
+params:
+  componentName:
+    type: string
+    required: true
+---
+export function {{componentName}}() { return <div>React</div>; }
+`,
+    );
+
+    const originalCwd = Deno.cwd();
+    Deno.chdir(tempOutput);
+
+    try {
+      const result = await createTool.execute({
+        description: "Create a react Button",
+        factoriesPath: tempFactories,
+      });
+
+      if (result.isError) {
+        console.log("React test ERROR:", result.content[0].text);
+      }
+
+      assertEquals(result.isError, undefined);
+      const text = result.content[0].text || "";
+      assertStringIncludes(text, "react_component");
+    } finally {
+      Deno.chdir(originalCwd);
+    }
+  } finally {
+    await Deno.remove(tempFactories, { recursive: true });
+    await Deno.remove(tempOutput, { recursive: true });
+  }
+});
+
+Deno.test("codefactory_create - should infer 'function' keyword", async () => {
+  const tempFactories = await Deno.makeTempDir();
+  const tempOutput = await Deno.makeTempDir();
+
+  try {
+    // Create typescript_function factory
+    await Deno.writeTextFile(
+      `${tempFactories}/typescript_function.hbs`,
+      `---
+name: typescript_function
+description: Creates a TypeScript function
+outputPath: src/{{name}}.ts
+params:
+  name:
+    type: string
+    required: true
+---
+export function {{name}}() { return true; }
+`,
+    );
+
+    const originalCwd = Deno.cwd();
+    Deno.chdir(tempOutput);
+
+    try {
+      const result = await createTool.execute({
+        description: "Create a function called myHelper",
+        params: { name: "myHelper" },
+        factoriesPath: tempFactories,
+      });
+
+      assertEquals(result.isError, undefined);
+      const text = result.content[0].text || "";
+      assertStringIncludes(text, "typescript_function");
+    } finally {
+      Deno.chdir(originalCwd);
+    }
+  } finally {
+    await Deno.remove(tempFactories, { recursive: true });
+    await Deno.remove(tempOutput, { recursive: true });
+  }
+});
+

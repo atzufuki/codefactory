@@ -15,25 +15,25 @@ async function getTestProjectDir(): Promise<string> {
   return path.trim();
 }
 
-Deno.test("E2E Phase 3: Edit code and sync", async () => {
+Deno.test("E2E Phase 3: Edit metadata and sync", async () => {
   const testProjectDir = await getTestProjectDir();
   const factoriesPath = join(testProjectDir, "factories");
   const filePath = join(testProjectDir, "src/greet.ts");
   
-  console.log("\n✏️  Editing generated code...");
+  console.log("\n✏️  Editing metadata...");
   
   // Read current content
   const originalContent = await Deno.readTextFile(filePath);
   
-  // Simulate user editing the code (change function name and message)
+  // Simulate user editing the metadata (change function name and message)
   const editedContent = originalContent
-    .replace("function greet(", "function sayHello(")
-    .replace("Welcome", "Greetings");
+    .replace("functionName: greet", "functionName: sayHello")
+    .replace("message: Welcome", "message: Greetings");
   
   await Deno.writeTextFile(filePath, editedContent);
-  console.log("✓ Code edited (changed function name and message)");
+  console.log("✓ Metadata edited (changed functionName and message params)");
   
-  // Sync to extract changes and regenerate
+  // Sync to regenerate code with new params
   console.log("\n🔄 Syncing file...");
   
   const syncResult = await syncTool.execute({
@@ -53,27 +53,27 @@ Deno.test("E2E Phase 3: Edit code and sync", async () => {
     "Should confirm sync"
   );
   
-  // Verify file still contains edited changes
+  // Verify file contains regenerated code with new params
   const syncedContent = await Deno.readTextFile(filePath);
   
   assertStringIncludes(
     syncedContent,
     "sayHello",
-    "Should preserve edited function name"
+    "Should have new function name from metadata"
   );
   
   assertStringIncludes(
     syncedContent,
     "Greetings",
-    "Should preserve edited message"
+    "Should have new message from metadata"
   );
   
   assertStringIncludes(
     syncedContent,
-    '// @codefactory:start factory="greeter"',
-    "Should still have markers"
+    '@codefactory greeter',
+    "Should still have JSDoc metadata"
   );
   
-  console.log("✅ Code edited and synced successfully");
-  console.log("   Parameters extracted: functionName=sayHello, message=Greetings");
+  console.log("✅ Metadata edited and code regenerated successfully");
+  console.log("   New params: functionName=sayHello, message=Greetings");
 });

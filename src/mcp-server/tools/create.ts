@@ -22,11 +22,11 @@ function inferFactory(description: string, availableFactories: string[]): string
     }
   }
   
-  // Default heuristics
-  if (lower.includes("component") || lower.includes("web component")) return "web_component";
+  // Default heuristics - check specific patterns before generic ones
   if (lower.includes("react")) return "react_component";
   if (lower.includes("function")) return "typescript_function";
   if (lower.includes("factory")) return "factory";
+  if (lower.includes("component") || lower.includes("web component")) return "web_component";
   
   // Default to first available factory
   return availableFactories[0] ?? "unknown";

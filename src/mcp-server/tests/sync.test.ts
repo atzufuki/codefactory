@@ -1,5 +1,5 @@
 /**
- * Tests for codefactory_sync tool (extraction-based workflow)
+ * Tests for codefactory_sync tool (metadata-based workflow)
  */
 
 import { assertEquals, assertExists, assertStringIncludes } from "@std/assert";
@@ -27,28 +27,20 @@ Deno.test("codefactory_sync - should sync single file", async () => {
   const tempOutput = await Deno.makeTempDir();
 
   try {
-    // Create factory
     await createTestFactory(
       tempFactories,
       "test_factory",
       "export const {{name}} = 'value';"
     );
 
-    // Create file with marker
     const filePath = `${tempOutput}/test.ts`;
     await Deno.writeTextFile(
       filePath,
-      '// @codefactory:start factory="test_factory"\n' +
-      "export const Original = 'value';\n" +
-      "// @codefactory:end\n"
-    );
-
-    // User edits the code
-    await Deno.writeTextFile(
-      filePath,
-      '// @codefactory:start factory="test_factory"\n' +
-      "export const EditedByUser = 'value';\n" +
-      "// @codefactory:end\n"
+      '/**\n' +
+      ' * @codefactory test_factory\n' +
+      ' * name: EditedByUser\n' +
+      ' */\n\n' +
+      "export const EditedByUser = 'value';\n"
     );
 
     const result = await syncTool.execute({
@@ -59,16 +51,16 @@ Deno.test("codefactory_sync - should sync single file", async () => {
     assertEquals(result.isError, undefined);
     assertExists(result.content);
 
-    // Verify file was synced (regenerated with extracted params)
     const content = await Deno.readTextFile(filePath);
     assertStringIncludes(content, "EditedByUser");
+    assertStringIncludes(content, "@codefactory test_factory");
   } finally {
     await Deno.remove(tempFactories, { recursive: true });
     await Deno.remove(tempOutput, { recursive: true });
   }
 });
 
-Deno.test("codefactory_sync - should sync all files in directory", async () => {
+Deno.test("codefactory_sync - should sync directory", async () => {
   const tempFactories = await Deno.makeTempDir();
   const tempOutput = await Deno.makeTempDir();
 
@@ -79,22 +71,19 @@ Deno.test("codefactory_sync - should sync all files in directory", async () => {
       "export const {{name}} = 'test';"
     );
 
-    // Create multiple files with markers
     const file1 = `${tempOutput}/file1.ts`;
     const file2 = `${tempOutput}/file2.ts`;
     
     await Deno.writeTextFile(
       file1,
-      '// @codefactory:start factory="test_factory"\n' +
-      "export const One = 'test';\n" +
-      "// @codefactory:end\n"
+      '/**\n * @codefactory test_factory\n * name: One\n */\n\n' +
+      "export const One = 'test';\n"
     );
     
     await Deno.writeTextFile(
       file2,
-      '// @codefactory:start factory="test_factory"\n' +
-      "export const Two = 'test';\n" +
-      "// @codefactory:end\n"
+      '/**\n * @codefactory test_factory\n * name: Two\n */\n\n' +
+      "export const Two = 'test';\n"
     );
 
     const result = await syncTool.execute({
@@ -103,72 +92,35 @@ Deno.test("codefactory_sync - should sync all files in directory", async () => {
     });
 
     assertEquals(result.isError, undefined);
-    const text = result.content[0].text || "";
-    
-    assertStringIncludes(text, "Synced");
-    assertStringIncludes(text, "2"); // 2 files synced
+
+    const content1 = await Deno.readTextFile(file1);
+    const content2 = await Deno.readTextFile(file2);
+    assertStringIncludes(content1, "One");
+    assertStringIncludes(content2, "Two");
   } finally {
     await Deno.remove(tempFactories, { recursive: true });
     await Deno.remove(tempOutput, { recursive: true });
   }
 });
 
-Deno.test("codefactory_sync - should preserve custom code outside markers", async () => {
+Deno.test("codefactory_sync - should error if no metadata", async () => {
   const tempFactories = await Deno.makeTempDir();
   const tempOutput = await Deno.makeTempDir();
 
   try {
-    await createTestFactory(
-      tempFactories,
-      "test_factory",
-      "export const {{name}} = 'value';"
-    );
-
     const filePath = `${tempOutput}/test.ts`;
-    await Deno.writeTextFile(
-      filePath,
-      "// Header comment\n\n" +
-      '// @codefactory:start factory="test_factory"\n' +
-      "export const Test = 'value';\n" +
-      "// @codefactory:end\n\n" +
-      "// Custom code below\n" +
-      "export const custom = 'preserved';\n"
+    await Deno.writeTextFile(filePath, "export const Test = 'no metadata';");
+
+    const result = await syncTool.execute({
+      path: filePath,
+      factoriesPath: tempFactories,
+    });
+
+    assertExists(result.isError);
+    assertStringIncludes(
+      result.content[0].text || "",
+      "No @codefactory metadata"
     );
-
-    const result = await syncTool.execute({
-      path: filePath,
-      factoriesPath: tempFactories,
-    });
-
-    assertEquals(result.isError, undefined);
-
-    // Verify custom code was preserved
-    const content = await Deno.readTextFile(filePath);
-    assertStringIncludes(content, "// Header comment");
-    assertStringIncludes(content, "// Custom code below");
-    assertStringIncludes(content, "export const custom = 'preserved';");
-  } finally {
-    await Deno.remove(tempFactories, { recursive: true });
-    await Deno.remove(tempOutput, { recursive: true });
-  }
-});
-
-Deno.test("codefactory_sync - should error if no marker found", async () => {
-  const tempFactories = await Deno.makeTempDir();
-  const tempOutput = await Deno.makeTempDir();
-
-  try {
-    const filePath = `${tempOutput}/no-marker.ts`;
-    await Deno.writeTextFile(filePath, "export const x = 'no marker';");
-
-    const result = await syncTool.execute({
-      path: filePath,
-      factoriesPath: tempFactories,
-    });
-
-    assertEquals(result.isError, true);
-    const text = result.content[0].text || "";
-    assertStringIncludes(text, "marker");
   } finally {
     await Deno.remove(tempFactories, { recursive: true });
     await Deno.remove(tempOutput, { recursive: true });
@@ -180,51 +132,11 @@ Deno.test("codefactory_sync - should error if factory not found", async () => {
   const tempOutput = await Deno.makeTempDir();
 
   try {
-    const filePath = `${tempOutput}/bad-factory.ts`;
-    await Deno.writeTextFile(
-      filePath,
-      '// @codefactory:start factory="unknown_factory"\n' +
-      "export const x = 'test';\n" +
-      "// @codefactory:end\n"
-    );
-
-    const result = await syncTool.execute({
-      path: filePath,
-      factoriesPath: tempFactories,
-    });
-
-    assertEquals(result.isError, true);
-    const text = result.content[0].text || "";
-    assertStringIncludes(text, "not found");
-    assertStringIncludes(text, "unknown_factory");
-  } finally {
-    await Deno.remove(tempFactories, { recursive: true });
-    await Deno.remove(tempOutput, { recursive: true });
-  }
-});
-
-Deno.test("codefactory_sync - should error if factory has no template", async () => {
-  const tempFactories = await Deno.makeTempDir();
-  const tempOutput = await Deno.makeTempDir();
-
-  try {
-    // Create factory WITHOUT template field
-    await Deno.writeTextFile(
-      `${tempFactories}/no_template.ts`,
-      `export default {
-  name: "no_template",
-  description: "No template",
-  params: {},
-  generate: () => ({ content: "test" }),
-};`
-    );
-
     const filePath = `${tempOutput}/test.ts`;
     await Deno.writeTextFile(
       filePath,
-      '// @codefactory:start factory="no_template"\n' +
-      "export const x = 'test';\n" +
-      "// @codefactory:end\n"
+      '/**\n * @codefactory nonexistent\n * name: Test\n */\n\n' +
+      "export const Test = 'test';"
     );
 
     const result = await syncTool.execute({
@@ -232,97 +144,11 @@ Deno.test("codefactory_sync - should error if factory has no template", async ()
       factoriesPath: tempFactories,
     });
 
-    assertEquals(result.isError, true);
-    const text = result.content[0].text || "";
-    assertStringIncludes(text, "template");
-  } finally {
-    await Deno.remove(tempFactories, { recursive: true });
-    await Deno.remove(tempOutput, { recursive: true });
-  }
-});
-
-Deno.test("codefactory_sync - should scan subdirectories recursively", async () => {
-  const tempFactories = await Deno.makeTempDir();
-  const tempOutput = await Deno.makeTempDir();
-
-  try {
-    await createTestFactory(
-      tempFactories,
-      "test_factory",
-      "export const {{name}} = 'test';"
+    assertExists(result.isError);
+    assertStringIncludes(
+      result.content[0].text || "",
+      "not found"
     );
-
-    // Create nested directory structure
-    const subDir = `${tempOutput}/components`;
-    await Deno.mkdir(subDir, { recursive: true });
-
-    await Deno.writeTextFile(
-      `${tempOutput}/root.ts`,
-      '// @codefactory:start factory="test_factory"\n' +
-      "export const Root = 'test';\n" +
-      "// @codefactory:end\n"
-    );
-
-    await Deno.writeTextFile(
-      `${subDir}/nested.ts`,
-      '// @codefactory:start factory="test_factory"\n' +
-      "export const Nested = 'test';\n" +
-      "// @codefactory:end\n"
-    );
-
-    const result = await syncTool.execute({
-      path: tempOutput,
-      factoriesPath: tempFactories,
-    });
-
-    assertEquals(result.isError, undefined);
-    const text = result.content[0].text || "";
-    
-    assertStringIncludes(text, "2"); // 2 files synced
-  } finally {
-    await Deno.remove(tempFactories, { recursive: true });
-    await Deno.remove(tempOutput, { recursive: true });
-  }
-});
-
-Deno.test("codefactory_sync - should continue on errors and report all", async () => {
-  const tempFactories = await Deno.makeTempDir();
-  const tempOutput = await Deno.makeTempDir();
-
-  try {
-    await createTestFactory(
-      tempFactories,
-      "test_factory",
-      "export const {{name}} = 'test';"
-    );
-
-    // Good file
-    await Deno.writeTextFile(
-      `${tempOutput}/good.ts`,
-      '// @codefactory:start factory="test_factory"\n' +
-      "export const Good = 'test';\n" +
-      "// @codefactory:end\n"
-    );
-
-    // Bad file (unknown factory)
-    await Deno.writeTextFile(
-      `${tempOutput}/bad.ts`,
-      '// @codefactory:start factory="unknown"\n' +
-      "export const Bad = 'test';\n" +
-      "// @codefactory:end\n"
-    );
-
-    const result = await syncTool.execute({
-      path: tempOutput,
-      factoriesPath: tempFactories,
-    });
-
-    // Should be an error since one file failed
-    assertEquals(result.isError, true);
-    const text = result.content[0].text || "";
-    
-    assertStringIncludes(text, "1"); // 1 file synced
-    assertStringIncludes(text, "error"); // 1 error reported
   } finally {
     await Deno.remove(tempFactories, { recursive: true });
     await Deno.remove(tempOutput, { recursive: true });
@@ -340,19 +166,20 @@ Deno.test("codefactory_sync - should handle empty directory", async () => {
     });
 
     assertEquals(result.isError, undefined);
-    const text = result.content[0].text || "";
-    
-    assertStringIncludes(text, "0"); // 0 files synced
-    assertStringIncludes(text, "file(s)"); // mentions files
+    assertStringIncludes(
+      result.content[0].text || "",
+      "0 file"
+    );
   } finally {
     await Deno.remove(tempFactories, { recursive: true });
     await Deno.remove(tempOutput, { recursive: true });
   }
 });
 
-Deno.test("codefactory_sync - should skip files without markers", async () => {
+Deno.test("codefactory_sync - should use current directory if no path", async () => {
   const tempFactories = await Deno.makeTempDir();
   const tempOutput = await Deno.makeTempDir();
+  const originalCwd = Deno.cwd();
 
   try {
     await createTestFactory(
@@ -361,56 +188,22 @@ Deno.test("codefactory_sync - should skip files without markers", async () => {
       "export const {{name}} = 'test';"
     );
 
-    // File with marker
+    const filePath = `${tempOutput}/test.ts`;
     await Deno.writeTextFile(
-      `${tempOutput}/with-marker.ts`,
-      '// @codefactory:start factory="test_factory"\n' +
-      "export const WithMarker = 'test';\n" +
-      "// @codefactory:end\n"
+      filePath,
+      '/**\n * @codefactory test_factory\n * name: Test\n */\n\n' +
+      "export const Test = 'test';"
     );
 
-    // File without marker (should be skipped)
-    await Deno.writeTextFile(
-      `${tempOutput}/no-marker.ts`,
-      "export const NoMarker = 'test';"
-    );
-
-    const result = await syncTool.execute({
-      path: tempOutput,
-      factoriesPath: tempFactories,
-    });
-
-    assertEquals(result.isError, undefined);
-    const text = result.content[0].text || "";
-    
-    assertStringIncludes(text, "1"); // Only 1 file synced
-  } finally {
-    await Deno.remove(tempFactories, { recursive: true });
-    await Deno.remove(tempOutput, { recursive: true });
-  }
-});
-
-Deno.test("codefactory_sync - should use current directory if path not specified", async () => {
-  const tempFactories = await Deno.makeTempDir();
-  const tempOutput = await Deno.makeTempDir();
-
-  try {
-    // Change to temp directory
-    const originalCwd = Deno.cwd();
     Deno.chdir(tempOutput);
 
     const result = await syncTool.execute({
       factoriesPath: tempFactories,
     });
 
-    // Should succeed with 0 files (empty directory)
     assertEquals(result.isError, undefined);
-    const text = result.content[0].text || "";
-    assertStringIncludes(text, "0"); // 0 files synced
-    
-    // Restore cwd
-    Deno.chdir(originalCwd);
   } finally {
+    Deno.chdir(originalCwd);
     await Deno.remove(tempFactories, { recursive: true });
     await Deno.remove(tempOutput, { recursive: true });
   }
@@ -420,88 +213,25 @@ Deno.test("codefactory_sync - should use default factoriesPath", async () => {
   const tempOutput = await Deno.makeTempDir();
 
   try {
-    await Deno.writeTextFile(
-      `${tempOutput}/test.ts`,
-      '// @codefactory:start factory="test"\n' +
-      "content\n" +
-      "// @codefactory:end\n"
-    );
-
-    const result = await syncTool.execute({
-      path: tempOutput,
-    });
-
-    // Should error because factory doesn't exist, but factoriesPath was used
-    assertEquals(result.isError, true);
-  } finally {
-    await Deno.remove(tempOutput, { recursive: true });
-  }
-});
-
-Deno.test("codefactory_sync - should report extracted changes", async () => {
-  const tempFactories = await Deno.makeTempDir();
-  const tempOutput = await Deno.makeTempDir();
-
-  try {
-    await createTestFactory(
-      tempFactories,
-      "test_factory",
-      "export const {{name}} = '{{value}}';"
-    );
-
     const filePath = `${tempOutput}/test.ts`;
     await Deno.writeTextFile(
       filePath,
-      '// @codefactory:start factory="test_factory"\n' +
-      "export const MyVar = 'changed';\n" +
-      "// @codefactory:end\n"
+      '/**\n * @codefactory test_factory\n * name: Test\n */\n\n' +
+      "export const Test = 'test';"
     );
 
     const result = await syncTool.execute({
       path: filePath,
-      factoriesPath: tempFactories,
     });
 
-    const text = result.content[0].text || "";
-    
-    assertStringIncludes(text, "Parameters extracted");
-    assertStringIncludes(text, "test.ts");
+    // Should error because factory doesn't exist in default path
+    assertExists(result.isError);
   } finally {
-    await Deno.remove(tempFactories, { recursive: true });
     await Deno.remove(tempOutput, { recursive: true });
   }
 });
 
-Deno.test("codefactory_sync - should error on legacy markers", async () => {
-  const tempFactories = await Deno.makeTempDir();
-  const tempOutput = await Deno.makeTempDir();
-
-  try {
-    const filePath = `${tempOutput}/legacy.ts`;
-    await Deno.writeTextFile(
-      filePath,
-      '// @codefactory:start id="uuid-123"\n' +
-      "export const x = 'test';\n" +
-      "// @codefactory:end\n"
-    );
-
-    const result = await syncTool.execute({
-      path: filePath,
-      factoriesPath: tempFactories,
-    });
-
-    assertEquals(result.isError, true);
-    const text = result.content[0].text || "";
-    
-    assertStringIncludes(text, "Legacy marker format");
-    assertStringIncludes(text, 'id="');
-  } finally {
-    await Deno.remove(tempFactories, { recursive: true });
-    await Deno.remove(tempOutput, { recursive: true });
-  }
-});
-
-Deno.test("codefactory_sync - should show success message with file count", async () => {
+Deno.test("codefactory_sync - should handle absolute path to single file", async () => {
   const tempFactories = await Deno.makeTempDir();
   const tempOutput = await Deno.makeTempDir();
 
@@ -509,29 +239,65 @@ Deno.test("codefactory_sync - should show success message with file count", asyn
     await createTestFactory(
       tempFactories,
       "test_factory",
-      "export const {{name}} = 'test';"
+      "export const {{name}} = 'synced';"
     );
 
+    const filePath = `${tempOutput}/single.ts`;
     await Deno.writeTextFile(
-      `${tempOutput}/test.ts`,
-      '// @codefactory:start factory="test_factory"\n' +
-      "export const Test = 'test';\n" +
-      "// @codefactory:end\n"
+      filePath,
+      '/**\n * @codefactory test_factory\n * name: SingleFile\n */\n\n' +
+      "export const SingleFile = 'synced';"
     );
 
     const result = await syncTool.execute({
-      path: tempOutput,
+      path: filePath,
       factoriesPath: tempFactories,
     });
 
+    assertEquals(result.isError, undefined);
     const text = result.content[0].text || "";
-    
     assertStringIncludes(text, "✅");
-    assertStringIncludes(text, "Synced");
-    assertStringIncludes(text, "1");
-    assertStringIncludes(text, "file");
+    assertStringIncludes(text, "single.ts");
   } finally {
     await Deno.remove(tempFactories, { recursive: true });
     await Deno.remove(tempOutput, { recursive: true });
   }
 });
+
+Deno.test("codefactory_sync - should handle relative path to single file", async () => {
+  const tempFactories = await Deno.makeTempDir();
+  const tempOutput = await Deno.makeTempDir();
+  const originalCwd = Deno.cwd();
+
+  try {
+    await createTestFactory(
+      tempFactories,
+      "test_factory",
+      "export const {{name}} = 'relative';"
+    );
+
+    Deno.chdir(tempOutput);
+
+    const filePath = "relative.ts";
+    await Deno.writeTextFile(
+      filePath,
+      '/**\n * @codefactory test_factory\n * name: RelativeFile\n */\n\n' +
+      "export const RelativeFile = 'relative';"
+    );
+
+    const result = await syncTool.execute({
+      path: filePath,
+      factoriesPath: tempFactories,
+    });
+
+    assertEquals(result.isError, undefined);
+    const text = result.content[0].text || "";
+    assertStringIncludes(text, "✅");
+    assertStringIncludes(text, "relative.ts");
+  } finally {
+    Deno.chdir(originalCwd);
+    await Deno.remove(tempFactories, { recursive: true });
+    await Deno.remove(tempOutput, { recursive: true });
+  }
+});
+

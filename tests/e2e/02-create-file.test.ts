@@ -81,17 +81,23 @@ export function {{functionName}}(name: string): string {
   
   const fileContent = await Deno.readTextFile(outputPath);
   
-  // Verify new marker format
+  // Verify JSDoc metadata format
   assertStringIncludes(
     fileContent,
-    '// @codefactory:start factory="greeter"',
-    "File should have new marker format"
+    '/**',
+    "File should have JSDoc metadata block"
   );
   
   assertStringIncludes(
     fileContent,
-    "// @codefactory:end",
-    "File should have end marker"
+    ' * @codefactory greeter',
+    "File should have @codefactory annotation with factory name"
+  );
+  
+  assertStringIncludes(
+    fileContent,
+    ' */',
+    "File should have JSDoc end"
   );
   
   // Verify generated code
@@ -107,5 +113,5 @@ export function {{functionName}}(name: string): string {
     "Should have custom message"
   );
   
-  console.log("✅ File created successfully with extraction markers");
+  console.log("✅ File created successfully with JSDoc metadata");
 });
