@@ -364,10 +364,10 @@ params:
     type: string
     required: true
   props:
-    type: array
+    type: string[]
     required: false
   signals:
-    type: array
+    type: string[]
     required: false
 ---
 export class {{componentName}} extends HTMLElement {
@@ -422,10 +422,10 @@ params:
     type: string
     required: true
   props:
-    type: array
+    type: string[]
     required: false
   signals:
-    type: array
+    type: string[]
     required: false
 ---
 Component: {{componentName}}
@@ -476,7 +476,7 @@ params:
     type: string
     required: true
   props:
-    type: array
+    type: string[]
     required: false
 ---
 Component {{componentName}}
@@ -530,7 +530,7 @@ params:
     type: string
     required: true
   signals:
-    type: array
+    type: string[]
     required: false
 ---
 Signals: {{#each signals}}{{name}}{{/each}}
