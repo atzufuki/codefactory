@@ -1,19 +1,20 @@
 {
   "workspace": [
     "./src/codefactory",
-    "./src/create",
-    "./src/create/template",
     "./src/mcp-server",
+    "./src/cli",
     "./tests"
   ],
   "tasks": {
-    "check": "deno check src/codefactory/mod.ts && deno check src/mcp-server/server.ts",
+    "check": "deno check src/codefactory/mod.ts && deno check src/mcp-server/server.ts && deno check src/cli/main.ts",
     "test": "deno test --allow-read --allow-write --allow-env --allow-run --coverage=coverage",
     "coverage": "deno coverage coverage",
     "fmt": "deno fmt",
     "lint": "deno lint",
     "mcp": "cd src/mcp-server && deno task dev",
-    "publish:check": "cd src/codefactory && deno publish --dry-run && cd ../mcp-server && deno publish --dry-run && cd ../create && deno publish --dry-run"
+    "publish:check": "cd src/codefactory && deno publish --dry-run && cd ../mcp-server && deno publish --dry-run && cd ../cli && deno publish --dry-run",
+    "build:cli": "deno compile --allow-read --allow-write --allow-env --allow-run --output=dist/codefactory src/cli/main.ts",
+    "build:all": "deno task build:cli"
   },
   "imports": {
     "@std/fs": "jsr:@std/fs@^1.0.19"

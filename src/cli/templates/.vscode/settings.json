@@ -1,0 +1,19 @@
+{
+  "github.copilot.chat.instructions": [
+    {
+      "file": ".github/copilot-instructions.md"
+    }
+  ],
+  "github.copilot.chat.commands": [
+    {
+      "name": "codefactory.create",
+      "description": "Create a file from a factory template",
+      "file": ".github/prompts/codefactory.create.prompt.md"
+    },
+    {
+      "name": "codefactory.sync",
+      "description": "Sync edited files with their factories",
+      "file": ".github/prompts/codefactory.sync.prompt.md"
+    }
+  ]
+}

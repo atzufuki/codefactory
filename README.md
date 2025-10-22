@@ -40,14 +40,45 @@ Your code = Your truth. Always in sync with factory templates.
 
 ## Quick Start
 
-### 1. Bootstrap Project
+### 1. Install CLI (Standalone Binary)
 
 ```bash
-deno run --allow-read --allow-write jsr:@codefactory/create my-project
-cd my-project
+# Build from source
+deno task build:cli
+
+# Or download pre-built binary (coming soon)
+# curl -fsSL https://codefactory.dev/install.sh | sh
 ```
 
-### 2. Use with GitHub Copilot
+### 2. Initialize Project
+
+```bash
+codefactory init
+# Creates factories/ directory with example templates
+```
+
+### 3. Use the CLI
+
+```bash
+# List available factories
+codefactory list
+
+# Create a file from a factory
+codefactory create example_component \
+  --params '{"componentName":"Button","hasProps":true}' \
+  --output src/Button.ts
+
+# Edit the generated file freely, then sync
+codefactory sync src/Button.ts
+
+# Or sync entire directory
+codefactory sync src/
+
+# Validate all factories
+codefactory validate
+```
+
+### 4. OR Use with GitHub Copilot (AI Assistant)
 
 **Create files from factories:**
 ```
@@ -70,7 +101,32 @@ Done! The system keeps your edits while maintaining factory structure.
 
 ## Usage Modes
 
-### With GitHub Copilot (Recommended)
+### CLI (Standalone Binary)
+
+**Manual Control:**
+```bash
+# Initialize project
+codefactory init
+
+# List factories
+codefactory list
+
+# Create from factory
+codefactory create <factory-name> \
+  --params '{"key":"value"}' \
+  --output <path>
+
+# Sync changes
+codefactory sync <file-or-directory>
+
+# Validate templates
+codefactory validate
+
+# Start MCP server for AI assistants
+codefactory mcp
+```
+
+### With GitHub Copilot (AI Assistant)
 
 **Natural Language:**
 ```
@@ -97,14 +153,14 @@ Factory templates ensure consistent structure. Same factory + same parameters = 
 ### ⚡ Fast
 No AI inference during sync. Pure template execution and parameter extraction in milliseconds.
 
-### 📝 Marker-Based
-Generated code wrapped in markers. Custom code outside markers is always preserved during sync.
+### 📝 Metadata-Based
+Generated code includes JSDoc metadata header. System uses metadata to track factory and parameters.
 
 ### 🔄 Bidirectional Sync
-Template → Code → Template. Edit code freely, system extracts changes and maintains factory structure.
+Template → Code → Template. Edit code freely, system extracts changes and regenerates with new params.
 
 ### 🏗️ Code as Source of Truth
-Your edits are automatically extracted and preserved.
+Your edits are automatically extracted and used to regenerate the file.
 
 ## How It Works
 
@@ -114,33 +170,46 @@ Your edits are automatically extracted and preserved.
 1. CREATE                    2. EDIT                     3. SYNC
    ↓                            ↓                           ↓
 Factory template          You edit freely          System extracts changes
-generates structure       - Rename functions       - Reads your code
-with markers              - Add features           - Extracts parameters
-                          - Modify logic           - Regenerates structure
-                          - Add custom code        - Preserves customizations
+generates code            - Rename functions       - Reads your code
+with metadata             - Add features           - Extracts parameters
+                          - Modify logic           - Regenerates entire file
+                          - Add custom code        - Uses extracted params
 ```
 
 ### Example
 
 **Generated file:**
 ```typescript
-// @codefactory:start factory="react_component"
+/**
+ * @codefactory react_component
+ * componentName: Button
+ * props:
+ *   - label
+ *   - onClick
+ */
+
 export function Button(props: ButtonProps) {
   return <button onClick={props.onClick}>{props.label}</button>;
 }
-// @codefactory:end
 ```
 
 **You edit it:**
 ```typescript
-// @codefactory:start factory="react_component"
+/**
+ * @codefactory react_component
+ * componentName: PrimaryButton
+ * props:
+ *   - label
+ *   - onClick
+ *   - disabled
+ */
+
 export function PrimaryButton(props: ButtonProps) {
   console.log('Clicked!');  // Your addition
   return <button disabled={props.disabled}>{props.label}</button>;
 }
-// @codefactory:end
 
-// Your custom code - always preserved
+// Your custom code - regenerated with extracted params
 export const SecondaryButton = styled(PrimaryButton);
 ```
 
@@ -148,7 +217,7 @@ export const SecondaryButton = styled(PrimaryButton);
 - Function name "PrimaryButton" extracted ✓
 - Your console.log preserved ✓
 - disabled prop extracted ✓
-- Custom code outside markers untouched ✓
+- All code regenerated with new params ✓
 - Factory structure maintained ✓
 
 ## Use Cases
@@ -175,13 +244,14 @@ Your edits are the source of truth. No config files to maintain.
 
 ## Project Status
 
-✨ **Production Ready** - Extraction-based system with 99 tests passing:
+✨ **Production Ready** - Metadata-based system with 113 tests passing:
 
 - ✅ Factory system with auto-registration
-- ✅ Extraction-based workflow (code as source of truth)
+- ✅ Metadata-based workflow (code as source of truth)
 - ✅ Automatic parameter extraction from code
 - ✅ Bidirectional sync (Template ↔ Code)
-- ✅ Marker-based safe regeneration
+- ✅ JSDoc metadata for factory tracking
+- ✅ **CLI interface with standalone binary**
 - ✅ MCP Server for AI assistant integration
 - ✅ GitHub Copilot integration (slash commands + natural language)
 - ✅ Template system with Handlebars + frontmatter

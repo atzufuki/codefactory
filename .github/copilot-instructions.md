@@ -2,9 +2,9 @@
 
 ## Project Overview
 
-**Purpose:** Extraction-based code generation library for Deno 2 + TypeScript
+**Purpose:** Metadata-based code generation library for Deno 2 + TypeScript
 
-**Key Concept:** Your code is the source of truth. Edit freely, system extracts changes and maintains factory structure.
+**Key Concept:** Your code is the source of truth. JSDoc metadata tracks factory info. Edit freely, system extracts changes and regenerates files.
 
 ## Architecture
 
@@ -18,14 +18,15 @@
 - Loads Handlebars templates with YAML frontmatter
 - Compiles templates into executable factories
 
-**Extractor** (`src/codefactory/extractor.ts`)
-- Analyzes code to extract parameters
-- Reverse-engineers template variables from source
-
 **Producer** (`src/codefactory/producer.ts`)
 - Creates files from factories (`createFile`)
 - Syncs edited files with factories (`syncFile`, `syncAll`)
-- Manages marker-based regeneration
+- Manages metadata-based regeneration
+
+**Metadata** (`src/codefactory/metadata.ts`)
+- Extracts JSDoc metadata from files
+- Generates JSDoc metadata blocks
+- Tracks factory name and parameters
 
 **MCP Server** (`src/mcp-server/`)
 - Exposes `codefactory_create` and `codefactory_sync` tools
@@ -43,9 +44,14 @@ producer.createFile("react_component", {
 
 Generates:
 ```typescript
-// @codefactory:start factory="react_component"
+/**
+ * @codefactory react_component
+ * componentName: Button
+ * props:
+ *   - label: string
+ */
+
 export function Button(props: ButtonProps) { ... }
-// @codefactory:end
 ```
 
 ### 2. Edit
@@ -53,7 +59,7 @@ User edits the code directly:
 - Rename functions
 - Add properties
 - Change logic
-- Add custom code outside markers
+- Add custom code anywhere
 
 ### 3. Sync
 ```typescript
@@ -64,8 +70,8 @@ producer.syncAll("src/components");
 
 System:
 1. Extracts parameters from edited code
-2. Regenerates factory section with extracted params
-3. Preserves custom code outside markers
+2. Regenerates entire file with extracted params
+3. Metadata updated automatically
 
 ## Factory Templates
 
@@ -99,7 +105,7 @@ export function {{componentName}}(props: {{componentName}}Props) {
 
 **codefactory_create**
 - Input: factory name, parameters, output path
-- Output: Generated file with markers
+- Output: Generated file with JSDoc metadata
 - Used by: GitHub Copilot, Claude Desktop
 
 **codefactory_sync**
@@ -107,22 +113,20 @@ export function {{componentName}}(props: {{componentName}}Props) {
 - Output: Synced files with extracted changes
 - Used by: GitHub Copilot, Claude Desktop
 
-## Markers
+## Metadata Format
 
-**Factory-managed code:**
+**JSDoc metadata block:**
 ```typescript
-// @codefactory:start factory="factory_name"
-// ... regenerated on sync ...
-// @codefactory:end
+/**
+ * @codefactory factory_name
+ * param1: value1
+ * param2: value2
+ */
+
+// Generated code here
 ```
 
-**Custom code (preserved):**
-```typescript
-// @codefactory:end
-
-// Everything here is never touched
-export const MyButton = styled(Button);
-```
+The metadata tracks which factory to use and current parameter values. Entire file is regenerated on sync.
 
 ## Development
 
@@ -134,13 +138,11 @@ deno task lint          # Linting
 deno task fmt           # Format code
 ```
 
-**Coverage:** 91.9% line coverage on extractor
-
 ## Key Design Principles
 
 1. **Code as Source of Truth** - Edit code directly, not config files
 2. **Automatic Extraction** - System understands your changes
-3. **Marker-Based Safety** - Only regenerate marked sections
+3. **Metadata-Based Tracking** - JSDoc metadata identifies factory
 4. **Factory Consistency** - Templates ensure uniform structure
 5. **Bidirectional Sync** - Template ↔ Code ↔ Template
 
@@ -152,9 +154,9 @@ src/
 │   ├── factory.ts           # Factory class
 │   ├── registry.ts          # Factory discovery
 │   ├── template-loader.ts   # .hbs loader
-│   ├── extractor.ts         # Parameter extraction
-│   ├── producer.ts          # Code generation
-│   ├── frontmatter.ts       # YAML/JSON parser
+  ├── producer.ts          # Code generation
+  ├── metadata.ts          # JSDoc metadata handling
+  ├── frontmatter.ts       # YAML/JSON parser
 │   └── tests/               # Unit tests (67)
 ├── mcp-server/              # MCP integration
 │   ├── server.ts            # MCP server
@@ -179,21 +181,21 @@ tests/
 **When user requests code generation:**
 
 1. Use `/codefactory.create` or `codefactory_create` MCP tool
-2. Generate file with factory markers
+2. Generate file with JSDoc metadata
 3. User edits code freely
 4. Use `/codefactory.sync` or `codefactory_sync` to extract changes
-5. System maintains factory structure + user edits
+5. System regenerates file with extracted parameters
 
 **DO:**
 - Encourage editing code directly
 - Use sync after user edits
-- Add custom code outside markers
-- Explain marker boundaries
+- Include JSDoc @codefactory metadata
+- Explain metadata format
 
 **DON'T:**
-- Generate code without markers
-- Modify base template structure inside markers
-- Touch custom code outside markers
+- Generate code without metadata
+- Remove the @codefactory JSDoc block
+- Touch the metadata manually (system manages it)
 
 ## Production Status
 
@@ -204,4 +206,4 @@ tests/
 - GitHub Copilot slash commands
 - Template system with Handlebars
 
-��� Next: JSR publication
+��� Next: JSR publication

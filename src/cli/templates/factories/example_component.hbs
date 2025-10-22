@@ -1,0 +1,35 @@
+---
+name: example_component
+description: Creates a TypeScript component with optional props
+outputPath: src/{{componentName}}.ts
+params:
+  componentName:
+    type: string
+    required: true
+    description: Name of the component
+  hasProps:
+    type: boolean
+    default: false
+    description: Whether component has props interface
+examples:
+  - componentName: Button
+    hasProps: true
+  - componentName: Icon
+    hasProps: false
+---
+{{#if hasProps}}
+/**
+ * Props for {{componentName}} component
+ */
+export interface {{componentName}}Props {
+  // Add your props here
+}
+
+{{/if}}
+/**
+ * {{componentName}} component
+ */
+export function {{componentName}}({{#if hasProps}}props: {{componentName}}Props{{/if}}) {
+  // Implementation
+  return null;
+}
