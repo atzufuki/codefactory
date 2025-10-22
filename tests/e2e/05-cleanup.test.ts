@@ -1,5 +1,5 @@
 /**
- * E2E Test Phase 4: Cleanup
+ * E2E Test Phase 5: Cleanup
  * 
  * Cleans up test project.
  */
@@ -12,7 +12,7 @@ async function getTestProjectDir(): Promise<string> {
   return path.trim();
 }
 
-Deno.test("E2E Phase 4: Cleanup test project", async () => {
+Deno.test("E2E Phase 5: Cleanup test project", async () => {
   const testProjectDir = await getTestProjectDir();
   
   console.log("\n🧹 Cleaning up test project...");

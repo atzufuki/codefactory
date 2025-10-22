@@ -1,8 +1,8 @@
 /**
- * E2E Test Phase 3: Edit and Sync
+ * E2E Test Phase 4: Edit and Sync
  * 
  * Tests manual code editing and extraction-based sync.
- * Depends on: 02-create-file.test.ts
+ * Depends on: 03-create-file.test.ts
  */
 
 import { assertEquals, assertStringIncludes } from "@std/assert";
@@ -15,7 +15,7 @@ async function getTestProjectDir(): Promise<string> {
   return path.trim();
 }
 
-Deno.test("E2E Phase 3: Edit metadata and sync", async () => {
+Deno.test("E2E Phase 4: Edit metadata and sync", async () => {
   const testProjectDir = await getTestProjectDir();
   const factoriesPath = join(testProjectDir, "factories");
   const filePath = join(testProjectDir, "src/greet.ts");

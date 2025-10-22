@@ -45,11 +45,14 @@ export class TemplateLoader {
   static async loadTemplate(templatePath: string): Promise<LoadedTemplate> {
     let content = await Deno.readTextFile(templatePath);
     
-    // Strip codefactory markers if present (both Handlebars and regular comments)
-    // Note: Markers can be before, after, or around the frontmatter
-    // Match entire lines containing markers (including line endings)
+    // Strip codefactory markers if present (both old and new formats)
+    // Old format: // @codefactory:start and // @codefactory:end
     content = content.replace(/^.*@codefactory:start.*$(\r?\n)?/gm, "");
     content = content.replace(/^.*@codefactory:end.*$(\r?\n)?/gm, "");
+    
+    // New format: JSDoc-style metadata block /** @codefactory factory ... */
+    // This regex matches the entire JSDoc block including all lines
+    content = content.replace(/\/\*\*[\s\S]*?@codefactory[\s\S]*?\*\/(\r?\n)?/g, "");
     
     // Remove any leading/trailing whitespace left by marker removal
     content = content.trimStart();

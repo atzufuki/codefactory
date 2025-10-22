@@ -1,8 +1,9 @@
 /**
- * E2E Test Phase 2: Create File with Factory
+ * E2E Test Phase 3: Create File with Factory
  * 
- * Tests using MCP create tool to generate a new file.
- * Depends on: 01-bootstrap.test.ts
+ * Tests using MCP create tool to generate a new file using the 'greeter' factory
+ * created in Phase 2.
+ * Depends on: 01-bootstrap.test.ts, 02-create-factory.test.ts
  */
 
 import { assertEquals, assertStringIncludes } from "@std/assert";
@@ -16,36 +17,14 @@ async function getTestProjectDir(): Promise<string> {
   return path.trim();
 }
 
-Deno.test("E2E Phase 2: Create file using factory", async () => {
+Deno.test("E2E Phase 3: Create file using greeter factory", async () => {
   const testProjectDir = await getTestProjectDir();
   const factoriesPath = join(testProjectDir, "factories");
   
-  console.log("\n📝 Creating file with factory...");
+  console.log("\n📝 Creating file with 'greeter' factory from Phase 2...");
   
-  // First, create a simple test factory
-  const testFactoryPath = join(factoriesPath, "greeter.hbs");
-  await Deno.writeTextFile(
-    testFactoryPath,
-    `---
-name: greeter
-description: Creates a greeting function
-params:
-  functionName:
-    type: string
-    required: true
-  message:
-    type: string
-    required: true
----
-export function {{functionName}}(name: string): string {
-  return \`{{message}}, \${name}!\`;
-}
-`
-  );
-  
-  console.log("✓ Test factory created");
-  
-  // Create a file using the factory via MCP tool
+  // The 'greeter' factory was created in Phase 2 by the meta-factory
+  // Now we use it to create a file via MCP tool
   const outputPath = join(testProjectDir, "src/greet.ts");
   const createResult = await createTool.execute({
     factory: "greeter",
@@ -113,5 +92,5 @@ export function {{functionName}}(name: string): string {
     "Should have custom message"
   );
   
-  console.log("✅ File created successfully with JSDoc metadata");
+  console.log("✅ File created successfully with JSDoc metadata using meta-factory-created greeter factory");
 });
