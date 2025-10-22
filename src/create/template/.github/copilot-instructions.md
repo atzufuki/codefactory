@@ -72,19 +72,31 @@ export const MyButton = styled(Button);
 
 ## Factory Templates
 
-Located in `factories/*.hbs` with Handlebars syntax:
+Located in `factories/*.hbs` with Handlebars syntax and **strict parameter validation**:
 
 ```handlebars
 ---
 name: web_component
 description: Creates a web component
+params:
+  componentName:
+    type: string
+    description: Component class name
+  propNames:
+    type: string[]
+    description: Array of prop names only
+  propTypes:
+    type: string[]
+    description: Array of prop types only
 ---
 class {{componentName}} extends HTMLElement {
-{{#each props}}
-  {{this}};
+{{#each propNames}}
+  {{this}}: {{lookup ../propTypes @index}};
 {{/each}}
 }
 ```
+
+**Key principle**: Parameters must be primitive data (string, number, boolean, arrays of primitives), never code syntax like `"label: string"`. Separate name and type into different arrays.
 
 ## Benefits
 
@@ -95,4 +107,4 @@ class {{componentName}} extends HTMLElement {
 
 ---
 
-**Built with Deno í¶• and CodeFactory í¿­**
+**Built with Deno ï¿½ï¿½ï¿½ and CodeFactory ï¿½ï¿½ï¿½**

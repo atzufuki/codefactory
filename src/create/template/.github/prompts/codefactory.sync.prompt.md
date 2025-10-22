@@ -97,7 +97,7 @@ The sync command uses template analysis to extract parameters:
 
 ```typescript
 // Template pattern:
-{{this.name}} = signal<{{this.type}}>({{this.default}});
+{{this}} = signal<{{lookup ../signalTypes @index}}>({{lookup ../signalDefaults @index}});
 
 // Source code:
 count = signal<number>(0);
@@ -105,12 +105,16 @@ isOpen = signal<boolean>(false);
 userId = signal<string>("");
 
 // Extracted params:
-signals: [
-  { name: "count", type: "number", default: "0" },
-  { name: "isOpen", type: "boolean", default: "false" },
-  { name: "userId", type: "string", default: '""' }
-]
+signalNames: ["count", "isOpen", "userId"]
+signalTypes: ["number", "boolean", "string"]
+signalDefaults: ["0", "false", '""']
 ```
+
+**Note**: Parameters are stored as separate primitive arrays, NOT as structured objects or code strings. This ensures:
+- ✅ No code injection possible
+- ✅ Clear data boundaries
+- ✅ Easy to validate and extract
+- ✅ AI-friendly format
 
 ## Response Format
 
@@ -120,11 +124,11 @@ signals: [
 
 📝 Changes detected:
   - src/components/Button.ts
-    ↳ Added signal: isDisabled (boolean)
+    ↳ Added signal: isDisabled (boolean, default: false)
     ↳ Changed tagName: app-button → my-button
   
   - src/components/Card.ts
-    ↳ Added prop: elevation (number)
+    ↳ Added prop: elevation (type: number)
   
   - src/components/Modal.ts
     ↳ No changes detected

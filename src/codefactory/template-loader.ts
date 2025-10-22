@@ -6,6 +6,7 @@
 
 import { parseFrontmatter } from "./frontmatter.ts";
 import type { FactoryDefinition, ParamDefinition } from "./types.ts";
+import { validateFactoryParamsWithWarnings } from "./validator.ts";
 import Handlebars from "handlebars";
 
 /**
@@ -90,6 +91,13 @@ export class TemplateLoader {
     frontmatter: TemplateFrontmatter,
     template: string
   ): FactoryDefinition {
+    // Validate parameters before creating factory
+    // Skip validation for the meta-factory since it generates other factories
+    // and legitimately needs code abstraction parameters like "template"
+    if (frontmatter.params && frontmatter.name !== "factory") {
+      validateFactoryParamsWithWarnings(frontmatter.params);
+    }
+    
     // Compile the Handlebars template once
     // Use noEscape: true to prevent HTML encoding in code generation
     // (e.g., "() => void" should not become "() &#x3D;&gt; void")

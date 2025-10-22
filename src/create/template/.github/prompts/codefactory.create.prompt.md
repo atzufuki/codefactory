@@ -28,9 +28,12 @@ This command should call the `codefactory_create` MCP tool with parsed parameter
     "factory": "web_component",
     "params": {
       "componentName": "Button",
-      "props": ["label: string", "onClick?: () => void"],
-      "signals": [],
-      "tagName": "app-button"
+      "tagName": "app-button",
+      "propNames": ["label", "onClick"],
+      "propTypes": ["string", "() => void"],
+      "signalNames": [],
+      "signalTypes": [],
+      "signalDefaults": []
     },
     "outputPath": "src/components/Button.ts"
   }
@@ -98,38 +101,46 @@ Inferred:
   factory: "web_component"
   params:
     componentName: "Counter"
-    signals: [{ name: "count", type: "number", default: "0" }]
-    props: []
     tagName: "app-counter"
+    propNames: []
+    propTypes: []
+    signalNames: ["count"]
+    signalTypes: ["number"]
+    signalDefaults: ["0"]
   outputPath: "src/components/Counter.ts"
 ```
 
-### Example 2: React Component
+### Example 2: Web Component with Props
 ```
-User: /codefactory.create "UserCard component with user prop and onEdit callback"
+User: /codefactory.create "Button component with label and disabled props"
 
 Inferred:
-  factory: "react_component"
+  factory: "web_component"
   params:
-    componentName: "UserCard"
-    props: [
-      "user: User",
-      "onEdit?: (user: User) => void"
-    ]
-  outputPath: "src/components/UserCard.tsx"
+    componentName: "Button"
+    tagName: "app-button"
+    propNames: ["label", "disabled"]
+    propTypes: ["string", "boolean"]
+    signalNames: []
+    signalTypes: []
+    signalDefaults: []
+  outputPath: "src/components/Button.ts"
 ```
 
 ### Example 3: Explicit Parameters
 ```
-User: /codefactory.create web_component componentName="Modal" signals="isOpen:boolean:false"
+User: /codefactory.create web_component componentName="Modal" signalNames="isOpen" signalTypes="boolean" signalDefaults="false"
 
 Direct mapping:
   factory: "web_component"
   params:
     componentName: "Modal"
-    signals: [{ name: "isOpen", type: "boolean", default: "false" }]
-    props: []
     tagName: "app-modal"
+    propNames: []
+    propTypes: []
+    signalNames: ["isOpen"]
+    signalTypes: ["boolean"]
+    signalDefaults: ["false"]
   outputPath: "src/components/Modal.ts"
 ```
 
@@ -193,9 +204,12 @@ After successful creation:
 Factory: web_component
 Parameters:
   componentName: "Button"
-  props: ["label: string", "onClick?: () => void"]
-  signals: []
   tagName: "app-button"
+  propNames: ["label", "onClick"]
+  propTypes: ["string", "() => void"]
+  signalNames: []
+  signalTypes: []
+  signalDefaults: []
 
 📝 You can now:
   1. Edit the file directly (add signals, change props)

@@ -1,6 +1,6 @@
 ---
 name: factory
-description: Creates a new template-based factory definition. This meta-factory allows you to define factories using simple templates with {{variable}} placeholders.
+description: Creates a new template-based factory definition with strict parameter validation. Parameters must be primitive data, not code syntax. Use separate arrays for names and types.
 params:
   name:
     type: string
@@ -23,28 +23,57 @@ params:
     description: Object mapping parameter names to their descriptions. Template variables are auto-detected.
     required: false
 examples:
-  - name: typescript_function
-    description: Creates a TypeScript function
+  - name: typescript_getter
+    description: Creates a TypeScript getter function with optional validation
     template: |
-      export function {{functionName}}({{params}}): {{returnType}} {
-        {{body}}
+      export function get{{propertyName}}(): {{returnType}} {
+        {{#if validateInput}}
+        if (!this._{{propertyName}}) {
+          throw new Error("{{propertyName}} not initialized");
+        }
+        {{/if}}
+        return this._{{propertyName}};
       }
-    outputPath: src/{{functionName}}.ts
+    outputPath: src/getters/get{{propertyName}}.ts
     paramDescriptions:
-      functionName: Name of the function
-      params: Function parameters
-      returnType: Return type
-      body: Function body
-  - name: react_component
-    description: Creates a React functional component
+      propertyName: Name of the property (e.g., 'userName')
+      returnType: Return type (e.g., 'string', 'number', 'User')
+      validateInput: Whether to add null-check validation
+  - name: web_component
+    description: Creates a web component with proper parameter separation
     template: |
-      export function {{componentName}}(props: {{componentName}}Props) {
-        return <div>{{content}}</div>;
+      class {{componentName}} extends HTMLElement {
+      {{#each propNames}}
+        {{this}}: {{lookup ../propTypes @index}};
+      {{/each}}
+      
+      {{#each signalNames}}
+        {{this}} = signal<{{lookup ../signalTypes @index}}>({{lookup ../signalDefaults @index}});
+      {{/each}}
       }
-    outputPath: src/components/{{componentName}}.tsx
+      {{componentName}}.define('{{tagName}}');
+    outputPath: src/components/{{componentName}}.ts
     paramDescriptions:
-      componentName: Name of the component
-      content: JSX content
+      componentName: Name of the component class
+      tagName: Custom element tag name
+      propNames: Array of prop names only (use separate arrays)
+      propTypes: Array of prop types only (separate from names)
+      signalNames: Array of signal names only
+      signalTypes: Array of signal types only
+      signalDefaults: Array of signal defaults only
+  - name: interface_definition
+    description: Creates a TypeScript interface with separated field definitions
+    template: |
+      export interface {{interfaceName}} {
+      {{#each fieldNames}}
+        {{this}}: {{lookup ../fieldTypes @index}};
+      {{/each}}
+      }
+    outputPath: src/types/{{interfaceName}}.ts
+    paramDescriptions:
+      interfaceName: Name of the interface
+      fieldNames: Array of field names only (e.g., ["id", "name"])
+      fieldTypes: Array of field types only (e.g., ["string", "string"])
 ---
 ---
 name: {{name}}
