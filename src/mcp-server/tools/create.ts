@@ -130,7 +130,7 @@ function generateOutputPath(factory: string, params: Record<string, unknown>): s
   } else if (factory === "react_component" && params.componentName) {
     return `src/components/${params.componentName}.tsx`;
   } else if (factory === "factory" && params.name) {
-    return `factories/${params.name}.hbs`;
+    return `factories/${params.name}.codefactory`;
   }
   
   return `src/${factory}-output.ts`;

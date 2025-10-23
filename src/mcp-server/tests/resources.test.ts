@@ -6,7 +6,7 @@ import { assertEquals, assertExists } from "@std/assert";
 import { loadRegistry } from "../utils/factory-registry.ts";
 
 Deno.test("Factory catalog - should list all available factories", async () => {
-  const registry = await loadRegistry(undefined, "*.hbs");
+  const registry = await loadRegistry(undefined, "*.codefactory");
   const catalog = registry.getCatalog();
 
   assertExists(catalog);
@@ -22,7 +22,7 @@ Deno.test("Factory catalog - should list all available factories", async () => {
 });
 
 Deno.test("Factory catalog - should include parameter details", async () => {
-  const registry = await loadRegistry(undefined, "*.hbs");
+  const registry = await loadRegistry(undefined, "*.codefactory");
   const factory = registry.get("factory");
 
   assertExists(factory);
@@ -47,7 +47,7 @@ Deno.test("Factory catalog - should include parameter details", async () => {
 });
 
 Deno.test("Factory catalog - should include examples", async () => {
-  const registry = await loadRegistry(undefined, "*.hbs");
+  const registry = await loadRegistry(undefined, "*.codefactory");
   const factory = registry.get("factory");
 
   assertExists(factory);
@@ -66,7 +66,7 @@ Deno.test("Factory catalog - should include examples", async () => {
 });
 
 Deno.test("Factory catalog - getCatalog returns full metadata", async () => {
-  const registry = await loadRegistry(undefined, "*.hbs");
+  const registry = await loadRegistry(undefined, "*.codefactory");
   const catalog = registry.getCatalog();
 
   for (const factoryMeta of catalog) {
@@ -107,7 +107,7 @@ Deno.test("Factory resource URI validation - should reject invalid URIs", () => 
 });
 
 Deno.test("Factory parameters - should format correctly for AI", async () => {
-  const registry = await loadRegistry(undefined, "*.hbs");
+  const registry = await loadRegistry(undefined, "*.codefactory");
   const catalog = registry.getCatalog();
 
   for (const factoryMeta of catalog) {

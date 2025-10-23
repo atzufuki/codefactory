@@ -17,7 +17,7 @@ Deno.test("initCommand - creates factory directory and files", async () => {
     assertEquals(stat.isDirectory, true);
     
     // Check that example template was created
-    const examplePath = join(factoriesDir, "example_component.hbs");
+    const examplePath = join(factoriesDir, "example_component.codefactory");
     const exampleStat = await Deno.stat(examplePath);
     assertEquals(exampleStat.isFile, true);
     

@@ -8,16 +8,16 @@ import { syncTool } from "../tools/sync.ts";
 // Helper to create a test factory
 async function createTestFactory(dir: string, name: string, template: string) {
   await Deno.writeTextFile(
-    `${dir}/${name}.hbs`,
-    `---
-name: ${name}
+    `${dir}/${name}.codefactory`,
+    `name: ${name}
 description: Test factory ${name}
 params:
   name:
     type: string
     required: true
----
-${template}
+
+template: |
+  ${template}
 `,
   );
 }

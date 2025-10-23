@@ -24,9 +24,9 @@ export async function syncCommand(args: Args): Promise<number> {
       const fileName = targetPath.split(/[/\\]/).pop() || "";
       
       // Check if it's a factory template
-      if (fileName.endsWith('.hbs') || fileName.endsWith('.template')) {
+      if (fileName.endsWith('.codefactory')) {
         // Factory file - sync all files using this factory
-        const factoryName = fileName.replace(/\.(hbs|template)$/, "");
+        const factoryName = fileName.replace(/\.codefactory$/, "");
         console.log(`\n🏭 Factory detected: ${factoryName}`);
         console.log(`🔍 Finding files that use this factory...\n`);
         

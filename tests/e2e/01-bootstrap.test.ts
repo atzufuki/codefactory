@@ -49,7 +49,7 @@ Deno.test("E2E Phase 1: Bootstrap project (metadata-based)", async () => {
       "README.md",
       ".gitignore",
       ".codefactory.json",
-      "factories/example_component.hbs",
+      "factories/example_component.codefactory",
       ".vscode/settings.json",
       ".github/copilot-instructions.md",
       ".github/prompts/codefactory.create.prompt.md",

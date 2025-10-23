@@ -1,0 +1,82 @@
+{
+  "$schema": "https://raw.githubusercontent.com/martinring/tmlanguage/master/tmlanguage.json",
+  "name": "CodeFactory Template",
+  "scopeName": "source.codefactory",
+  "patterns": [
+    {
+      "include": "#yaml-with-template-field"
+    }
+  ],
+  "repository": {
+    "yaml-with-template-field": {
+      "patterns": [
+        {
+          "include": "#template-field"
+        },
+        {
+          "include": "source.yaml"
+        }
+      ]
+    },
+    "template-field": {
+      "name": "meta.template-field.codefactory",
+      "begin": "^(template):\\s*(\\|)\\s*$",
+      "end": "^(?=\\S)",
+      "beginCaptures": {
+        "1": { "name": "entity.name.tag.yaml" },
+        "2": { "name": "keyword.operator.literal.yaml" }
+      },
+      "patterns": [
+        {
+          "include": "#handlebars-comment"
+        },
+        {
+          "include": "#handlebars-tag"
+        },
+        {
+          "include": "source.ts"
+        }
+      ]
+    },
+    "handlebars-comment": {
+      "name": "comment.block.handlebars",
+      "begin": "(\\{\\{!--)",
+      "end": "(--\\}\\})",
+      "beginCaptures": {
+        "1": { "name": "punctuation.definition.comment.begin.handlebars" }
+      },
+      "endCaptures": {
+        "1": { "name": "punctuation.definition.comment.end.handlebars" }
+      }
+    },
+    "handlebars-tag": {
+      "name": "meta.embedded.block.handlebars",
+      "begin": "(\\{\\{)",
+      "end": "(\\}\\})",
+      "beginCaptures": {
+        "1": { "name": "punctuation.section.embedded.begin.handlebars" }
+      },
+      "endCaptures": {
+        "1": { "name": "punctuation.section.embedded.end.handlebars" }
+      },
+      "patterns": [
+        {
+          "name": "keyword.control.handlebars",
+          "match": "\\#(if|unless|each|with|lookup|log)\\b"
+        },
+        {
+          "name": "keyword.control.handlebars",
+          "match": "/"
+        },
+        {
+          "name": "keyword.operator.handlebars",
+          "match": "\\.\\.?|this"
+        },
+        {
+          "name": "entity.name.tag.handlebars",
+          "match": "[a-zA-Z_][a-zA-Z0-9_\\.-]*"
+        }
+      ]
+    }
+  }
+}

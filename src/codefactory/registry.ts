@@ -7,7 +7,7 @@ import type { FactoryDefinition } from "./types.ts";
 import { TemplateLoader } from "./template-loader.ts";
 
 export interface AutoRegisterOptions {
-  /** Glob pattern to match files (default: "*.{ts,hbs,template}") */
+  /** Glob pattern to match files (default: "*.{ts,codefactory}") */
   pattern?: string;
   /** Files to exclude (default: ["index.ts"]) */
   exclude?: string[];
@@ -90,7 +90,7 @@ export class FactoryRegistry {
     options: AutoRegisterOptions = {}
   ): Promise<void> {
     const {
-      pattern = "*.{ts,hbs,template}",
+      pattern = "*.{ts,codefactory}",
       exclude = ["index.ts"],
       recursive = false,
     } = options;
@@ -128,7 +128,7 @@ export class FactoryRegistry {
       : builtInsUrl.pathname;
     
     const factories = await TemplateLoader.loadDirectory(builtInsPath, {
-      extensions: [".hbs", ".template"],
+      extensions: [".codefactory"],
       recursive: false,
     });
     
@@ -180,14 +180,14 @@ export class FactoryRegistry {
   }
 
   /**
-   * Load all factory exports from a TypeScript file or template file
+   * Load all factory exports from a TypeScript file or .codefactory template file
    */
   private async loadFactoriesFromFile(
     filePath: string
   ): Promise<FactoryDefinition[]> {
     try {
-      // Check if it's a template file (.hbs or .template)
-      if (filePath.endsWith('.hbs') || filePath.endsWith('.template')) {
+      // Check if it's a .codefactory template file
+      if (filePath.endsWith('.codefactory')) {
         const factory = await TemplateLoader.loadFactory(filePath);
         return [factory];
       }

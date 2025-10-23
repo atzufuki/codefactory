@@ -1,4 +1,3 @@
----
 name: factory
 description: Creates a new template-based factory definition with strict parameter validation. Parameters must be primitive data, not code syntax. Use separate arrays for names and types.
 params:
@@ -22,6 +21,7 @@ params:
     type: Record<string, string>
     description: Object mapping parameter names to their descriptions. Template variables are auto-detected.
     required: false
+outputPath: factories/{{name}}.codefactory
 examples:
   - name: typescript_getter
     description: Creates a TypeScript getter function with optional validation
@@ -74,21 +74,22 @@ examples:
       interfaceName: Name of the interface
       fieldNames: Array of field names only (e.g., ["id", "name"])
       fieldTypes: Array of field types only (e.g., ["string", "string"])
----
----
-name: {{name}}
-description: {{description}}
-{{#if outputPath}}
-outputPath: {{{outputPath}}}
-{{/if}}
-{{#if params}}
-params:
-{{#each params}}
-  {{@key}}:
-    type: string
-    description: {{{this.description}}}
-    required: {{this.required}}
-{{/each}}
-{{/if}}
----
-{{{template}}}
+
+template: |
+  name: {{name}}
+  description: {{description}}
+  {{#if outputPath}}
+  outputPath: {{{outputPath}}}
+  {{/if}}
+  {{#if params}}
+  params:
+  {{#each params}}
+    {{@key}}:
+      type: string
+      description: {{{this.description}}}
+      required: {{this.required}}
+  {{/each}}
+  {{/if}}
+  
+  template: |
+    {{{template}}}

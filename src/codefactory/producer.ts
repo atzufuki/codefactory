@@ -64,9 +64,9 @@ export class Producer {
     // Execute factory
     const result = await factory.execute(params);
 
-    // Factory templates (.hbs, .template) should NOT get metadata
+    // Factory templates (.codefactory) should NOT get metadata
     // They are templates themselves, not generated code
-    const isTemplate = outputPath.endsWith('.hbs') || outputPath.endsWith('.template');
+    const isTemplate = outputPath.endsWith('.codefactory');
     
     const fileContent = isTemplate
       ? result.content.trim() + '\n'

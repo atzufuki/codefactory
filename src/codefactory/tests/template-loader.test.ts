@@ -10,8 +10,8 @@ import Handlebars from "handlebars";
 const __dirname = dirname(fromFileUrl(import.meta.url));
 const fixturesDir = join(__dirname, "fixtures");
 
-Deno.test("TemplateLoader.loadTemplate - YAML frontmatter", async () => {
-  const templatePath = join(fixturesDir, "test-factory.template");
+Deno.test("TemplateLoader.loadTemplate - YAML format", async () => {
+  const templatePath = join(fixturesDir, "test-factory.codefactory");
   const { frontmatter, template } = await TemplateLoader.loadTemplate(templatePath);
 
   assertEquals(frontmatter.name, "test_factory");
@@ -21,8 +21,8 @@ Deno.test("TemplateLoader.loadTemplate - YAML frontmatter", async () => {
   assertEquals(template.trim(), 'export const {{name}} = "{{value}}";');
 });
 
-Deno.test("TemplateLoader.loadTemplate - JSON frontmatter", async () => {
-  const templatePath = join(fixturesDir, "json-factory.hbs");
+Deno.test("TemplateLoader.loadTemplate - with params and examples", async () => {
+  const templatePath = join(fixturesDir, "json-factory.codefactory");
   const { frontmatter } = await TemplateLoader.loadTemplate(templatePath);
 
   assertEquals(frontmatter.name, "json_factory");
@@ -31,7 +31,7 @@ Deno.test("TemplateLoader.loadTemplate - JSON frontmatter", async () => {
 });
 
 Deno.test("TemplateLoader.loadTemplate - with outputPath", async () => {
-  const templatePath = join(fixturesDir, "output-path.template");
+  const templatePath = join(fixturesDir, "output-path.codefactory");
   const { frontmatter } = await TemplateLoader.loadTemplate(templatePath);
 
   assertEquals(frontmatter.name, "factory_with_output");
@@ -39,7 +39,7 @@ Deno.test("TemplateLoader.loadTemplate - with outputPath", async () => {
 });
 
 Deno.test("TemplateLoader.loadTemplate - missing name throws error", async () => {
-  const templatePath = join(fixturesDir, "no-frontmatter.template");
+  const templatePath = join(fixturesDir, "no-frontmatter.codefactory");
 
   await assertRejects(
     () => TemplateLoader.loadTemplate(templatePath),
@@ -49,7 +49,7 @@ Deno.test("TemplateLoader.loadTemplate - missing name throws error", async () =>
 });
 
 Deno.test("TemplateLoader.toFactoryDefinition - creates valid factory", async () => {
-  const templatePath = join(fixturesDir, "test-factory.template");
+  const templatePath = join(fixturesDir, "test-factory.codefactory");
   const { frontmatter, template } = await TemplateLoader.loadTemplate(templatePath);
 
   const factory = TemplateLoader.toFactoryDefinition(frontmatter, template);
@@ -60,7 +60,7 @@ Deno.test("TemplateLoader.toFactoryDefinition - creates valid factory", async ()
 });
 
 Deno.test("TemplateLoader.toFactoryDefinition - generate() renders template", async () => {
-  const templatePath = join(fixturesDir, "test-factory.template");
+  const templatePath = join(fixturesDir, "test-factory.codefactory");
   const { frontmatter, template } = await TemplateLoader.loadTemplate(templatePath);
 
   const factory = TemplateLoader.toFactoryDefinition(frontmatter, template);
@@ -70,7 +70,7 @@ Deno.test("TemplateLoader.toFactoryDefinition - generate() renders template", as
 });
 
 Deno.test("TemplateLoader.toFactoryDefinition - with outputPath", async () => {
-  const templatePath = join(fixturesDir, "output-path.template");
+  const templatePath = join(fixturesDir, "output-path.codefactory");
   const { frontmatter, template } = await TemplateLoader.loadTemplate(templatePath);
 
   const factory = TemplateLoader.toFactoryDefinition(frontmatter, template);
@@ -102,11 +102,11 @@ Deno.test("Handlebars template rendering - multiple occurrences", () => {
   assertEquals(result, "5 + 5 = 10");
 });
 
-Deno.test("TemplateLoader.loadDirectory - loads all templates", async () => {
+Deno.test("TemplateLoader.loadDirectory - loads all .codefactory templates", async () => {
   const factories = await TemplateLoader.loadDirectory(fixturesDir);
 
-  // Should load test-factory.template, json-factory.hbs, output-path.template
-  // Should NOT load no-frontmatter.template (missing required fields)
+  // Should load test-factory.codefactory, json-factory.codefactory, output-path.codefactory
+  // Should NOT load no-frontmatter.codefactory (missing required fields)
   assertEquals(factories.length >= 3, true);
   
   const factoryNames = factories.map(f => f.name);
@@ -117,12 +117,11 @@ Deno.test("TemplateLoader.loadDirectory - loads all templates", async () => {
 
 Deno.test("TemplateLoader.loadDirectory - filters by extension", async () => {
   const factories = await TemplateLoader.loadDirectory(fixturesDir, {
-    extensions: [".hbs"],
+    extensions: [".codefactory"],
   });
 
-  // Should only load json-factory.hbs
-  assertEquals(factories.length, 1);
-  assertEquals(factories[0].name, "json_factory");
+  // Should load all .codefactory files
+  assertEquals(factories.length >= 3, true);
 });
 
 Deno.test("TemplateLoader.loadDirectory - non-existent directory returns empty", async () => {
@@ -131,7 +130,7 @@ Deno.test("TemplateLoader.loadDirectory - non-existent directory returns empty",
 });
 
 Deno.test("TemplateLoader.loadFactory - convenience method", async () => {
-  const templatePath = join(fixturesDir, "test-factory.template");
+  const templatePath = join(fixturesDir, "test-factory.codefactory");
   const factory = await TemplateLoader.loadFactory(templatePath);
 
   assertEquals(factory.name, "test_factory");

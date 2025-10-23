@@ -1,7 +1,7 @@
 {
   "name": "codefactory",
   "displayName": "CodeFactory",
-  "description": "Extraction-based code generation with smart sync. Includes syntax highlighting for template files with YAML/JSON frontmatter and Handlebars templating.",
+  "description": "Extraction-based code generation with smart sync. Includes syntax highlighting for .codefactory template files with YAML and Handlebars templating.",
   "version": "0.1.0",
   "publisher": "codefactory",
   "engines": {
@@ -43,23 +43,23 @@
     ],
     "languages": [
       {
-        "id": "multi-language-template",
-        "aliases": ["Multi-Language Template", "Template"],
-        "extensions": [".hbs", ".handlebars", ".template"],
+        "id": "codefactory",
+        "aliases": ["CodeFactory Template", "Factory"],
+        "extensions": [".codefactory"],
         "configuration": "./language-configuration.json"
       }
     ],
     "grammars": [
       {
-        "language": "multi-language-template",
-        "scopeName": "source.multi-language-template",
-        "path": "./syntaxes/multi-language-template.tmLanguage.json"
+        "language": "codefactory",
+        "scopeName": "source.codefactory",
+        "path": "./syntaxes/codefactory.tmLanguage.json"
       },
       {
         "scopeName": "source.handlebars.injection",
         "path": "./syntaxes/handlebars.injection.json",
         "injectTo": [
-          "source.multi-language-template",
+          "source.codefactory",
           "source.ts",
           "source.yaml"
         ]

@@ -8,17 +8,17 @@ import { createTool } from "../tools/create.ts";
 // Helper to create a test factory
 async function createTestFactory(dir: string, name: string, template: string) {
   await Deno.writeTextFile(
-    `${dir}/${name}.hbs`,
-    `---
-name: ${name}
+    `${dir}/${name}.codefactory`,
+    `name: ${name}
 description: Test factory ${name}
 outputPath: src/{{name}}.ts
 params:
   name:
     type: string
     required: true
----
-${template}
+
+template: |
+  ${template}
 `,
   );
 }
@@ -210,9 +210,8 @@ Deno.test("codefactory_create - should pass all params to factory", async () => 
   try {
     // Factory with multiple parameters
     await Deno.writeTextFile(
-      `${tempFactories}/multi_param.hbs`,
-      `---
-name: multi_param
+      `${tempFactories}/multi_param.codefactory`,
+      `name: multi_param
 description: Multiple parameters
 params:
   name:
@@ -224,8 +223,9 @@ params:
   type:
     type: string
     required: false
----
-export const {{name}}: {{type}} = {{value}};
+
+template: |
+  export const {{name}}: {{type}} = {{value}};
 `
     );
 
@@ -351,9 +351,8 @@ Deno.test("codefactory_create - should infer factory from description (web_compo
   try {
     // Create web_component factory
     await Deno.writeTextFile(
-      `${tempFactories}/web_component.hbs`,
-      `---
-name: web_component
+      `${tempFactories}/web_component.codefactory`,
+      `name: web_component
 description: Creates a web component
 outputPath: src/components/{{componentName}}.ts
 params:
@@ -369,11 +368,12 @@ params:
   signals:
     type: string[]
     required: false
----
-export class {{componentName}} extends HTMLElement {
-  static get observedAttributes() { return [{{#each props}}'{{this}}'{{#unless @last}}, {{/unless}}{{/each}}]; }
-}
-customElements.define('{{tagName}}', {{componentName}});
+
+template: |
+  export class {{componentName}} extends HTMLElement {
+    static get observedAttributes() { return [{{#each props}}'{{this}}'{{#unless @last}}, {{/unless}}{{/each}}]; }
+  }
+  customElements.define('{{tagName}}', {{componentName}});
 `,
     );
 
@@ -409,9 +409,8 @@ Deno.test("codefactory_create - should extract params from description", async (
   try {
     // Create web_component factory
     await Deno.writeTextFile(
-      `${tempFactories}/web_component.hbs`,
-      `---
-name: web_component
+      `${tempFactories}/web_component.codefactory`,
+      `name: web_component
 description: Creates a web component
 outputPath: src/components/{{componentName}}.ts
 params:
@@ -427,9 +426,10 @@ params:
   signals:
     type: string[]
     required: false
----
-Component: {{componentName}}
-Props: {{#each props}}{{this}}{{/each}}
+
+template: |
+  Component: {{componentName}}
+  Props: {{#each props}}{{this}}{{/each}}
 `,
     );
 
@@ -463,9 +463,8 @@ Deno.test("codefactory_create - should generate output path from params", async 
   try {
     // Create web_component factory
     await Deno.writeTextFile(
-      `${tempFactories}/web_component.hbs`,
-      `---
-name: web_component
+      `${tempFactories}/web_component.codefactory`,
+      `name: web_component
 description: Creates a web component
 outputPath: src/components/{{componentName}}.ts
 params:
@@ -478,8 +477,10 @@ params:
   props:
     type: string[]
     required: false
----
-Component {{componentName}}
+
+template: |
+  Component {{componentName}}
+
 `,
     );
 
@@ -517,9 +518,8 @@ Deno.test("codefactory_create - should extract signals from description", async 
 
   try {
     await Deno.writeTextFile(
-      `${tempFactories}/web_component.hbs`,
-      `---
-name: web_component
+      `${tempFactories}/web_component.codefactory`,
+      `name: web_component
 description: Creates a web component
 outputPath: src/components/{{componentName}}.ts
 params:
@@ -532,8 +532,10 @@ params:
   signals:
     type: string[]
     required: false
----
-Signals: {{#each signals}}{{name}}{{/each}}
+
+template: |
+  Signals: {{#each signals}}{{name}}{{/each}}
+
 `,
     );
 
@@ -630,9 +632,8 @@ Deno.test("codefactory_create - should infer 'react' keyword", async () => {
   try {
     // Create both web_component (would match "component") and react_component
     await Deno.writeTextFile(
-      `${tempFactories}/web_component.hbs`,
-      `---
-name: web_component
+      `${tempFactories}/web_component.codefactory`,
+      `name: web_component
 description: Creates a web component
 outputPath: src/components/{{componentName}}.ts
 params:
@@ -642,24 +643,27 @@ params:
   tagName:
     type: string
     required: true
----
-export class {{componentName}} extends HTMLElement {}
+
+template: |
+  export class {{componentName}} extends HTMLElement {}
+
 `,
     );
 
     // Create react_component factory  
     await Deno.writeTextFile(
-      `${tempFactories}/react_component.hbs`,
-      `---
-name: react_component
+      `${tempFactories}/react_component.codefactory`,
+      `name: react_component
 description: Creates a React component
 outputPath: src/components/{{componentName}}.tsx
 params:
   componentName:
     type: string
     required: true
----
-export function {{componentName}}() { return <div>React</div>; }
+
+template: |
+  export function {{componentName}}() { return <div>React</div>; }
+
 `,
     );
 
@@ -695,17 +699,18 @@ Deno.test("codefactory_create - should infer 'function' keyword", async () => {
   try {
     // Create typescript_function factory
     await Deno.writeTextFile(
-      `${tempFactories}/typescript_function.hbs`,
-      `---
-name: typescript_function
+      `${tempFactories}/typescript_function.codefactory`,
+      `name: typescript_function
 description: Creates a TypeScript function
 outputPath: src/{{name}}.ts
 params:
   name:
     type: string
     required: true
----
-export function {{name}}() { return true; }
+
+template: |
+  export function {{name}}() { return true; }
+
 `,
     );
 

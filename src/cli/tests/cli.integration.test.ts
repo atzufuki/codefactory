@@ -56,7 +56,7 @@ Deno.test("CLI - init command creates project structure", async () => {
     const stat = await Deno.stat(factoriesDir);
     assertEquals(stat.isDirectory, true);
     
-    const examplePath = join(factoriesDir, "example_component.hbs");
+    const examplePath = join(factoriesDir, "example_component.codefactory");
     const exampleStat = await Deno.stat(examplePath);
     assertEquals(exampleStat.isFile, true);
   } finally {
