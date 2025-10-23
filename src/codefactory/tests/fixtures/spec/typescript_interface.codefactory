@@ -1,0 +1,40 @@
+name: typescript_interface
+description: Creates a TypeScript interface with properties
+spec: TypeScript interface generator for testing syntax highlighting
+language: typescript
+outputPath: {{interfaceName}}.ts
+params:
+  interfaceName:
+    type: string
+    description: Name of the TypeScript interface
+    required: true
+  properties:
+    type: string[]
+    description: List of property definitions
+    required: false
+template: |
+  /**
+   * {{interfaceName}} interface
+   */
+  
+  export interface {{interfaceName}} {
+    {{#each properties}}
+    {{this}};
+    {{/each}}
+  }
+  
+  export class {{interfaceName}}Impl implements {{interfaceName}} {
+    constructor(data: Partial<{{interfaceName}}>) {
+      Object.assign(this, data);
+    }
+    
+    async validate(): Promise<boolean> {
+      return true;
+    }
+  }
+  
+  export type {{interfaceName}}Array = {{interfaceName}}[];
+  
+  export const create{{interfaceName}} = (data: {{interfaceName}}): {{interfaceName}} => {
+    return new {{interfaceName}}Impl(data);
+  };

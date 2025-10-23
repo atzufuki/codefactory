@@ -24,9 +24,11 @@ One command that does the right thing based on what you're editing:
 ### Syntax Highlighting
 
 Full syntax highlighting for CodeFactory template files (`.codefactory`) with:
-- YAML structure
-- Handlebars templating in template field
-- Embedded code (TypeScript, Python, etc.)
+- **YAML frontmatter** - Full YAML syntax highlighting for metadata
+- **Handlebars templating** - `{{variables}}`, `{{#if}}`, `{{#each}}`, etc.
+- **Multi-language templates** - Automatic syntax highlighting for:
+  - TypeScript/JavaScript
+  - More planned...
 
 ## Requirements
 
@@ -43,15 +45,6 @@ Full syntax highlighting for CodeFactory template files (`.codefactory`) with:
 ## Extension Settings
 
 This extension activates automatically when a `.codefactory.json` file is detected in the workspace.
-
-## Release Notes
-
-### 0.1.0
-
-Initial release with:
-- Context-aware syncing (one command does it all)
-- Template syntax highlighting
-- Automatic factory detection
 
 ## License
 

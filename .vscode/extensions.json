@@ -1,6 +1,7 @@
 {
     "recommendations": [
         "andrejunges.handlebars",
-        "hoodiecollin.es6-string-typescript"
+        "hoodiecollin.es6-string-typescript",
+        "codefactory.codefactory"
     ]
 }

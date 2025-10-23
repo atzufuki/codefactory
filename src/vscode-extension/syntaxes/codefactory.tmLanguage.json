@@ -2,79 +2,366 @@
   "$schema": "https://raw.githubusercontent.com/martinring/tmlanguage/master/tmlanguage.json",
   "name": "CodeFactory Template",
   "scopeName": "source.codefactory",
+  "fileTypes": ["codefactory"],
   "patterns": [
     {
-      "include": "#yaml-with-template-field"
+      "include": "#template-with-language-marker"
+    },
+    {
+      "include": "#yaml-fields"
     }
   ],
   "repository": {
-    "yaml-with-template-field": {
+    "yaml-fields": {
       "patterns": [
         {
-          "include": "#template-field"
+          "match": "^\\s*([a-zA-Z_][a-zA-Z0-9_]*):\\s*(.+)$",
+          "captures": {
+            "1": { "name": "entity.name.tag.yaml" },
+            "2": { "name": "string.unquoted.plain.out.yaml" }
+          }
         },
         {
-          "include": "source.yaml"
+          "name": "entity.name.tag.yaml",
+          "match": "^\\s*([a-zA-Z_][a-zA-Z0-9_]*):\\s*$"
+        },
+        {
+          "name": "string.unquoted.plain.out.yaml",
+          "match": "^\\s+(?!-\\s)(?![a-zA-Z_][a-zA-Z0-9_]*:).+"
+        },
+        {
+          "name": "punctuation.definition.entry.yaml",
+          "match": "^\\s*-\\s+"
+        },
+        {
+          "match": "^\\s+-\\s+(url|title):\\s*(.+)$",
+          "captures": {
+            "1": { "name": "entity.name.tag.yaml" },
+            "2": { "name": "string.unquoted.plain.out.yaml" }
+          }
+        },
+        {
+          "name": "constant.language.yaml",
+          "match": "\\b(true|false|null)\\b"
         }
       ]
     },
-    "template-field": {
-      "name": "meta.template-field.codefactory",
-      "begin": "^(template):\\s*(\\|)\\s*$",
-      "end": "^(?=\\S)",
+    "template-with-language-marker": {
+      "begin": "^template:\\s*\\|",
+      "end": "^(?=\\S)|\\z",
       "beginCaptures": {
-        "1": { "name": "entity.name.tag.yaml" },
-        "2": { "name": "keyword.operator.literal.yaml" }
+        "0": { "name": "entity.name.tag.yaml" }
       },
       "patterns": [
         {
-          "include": "#handlebars-comment"
+          "name": "comment.line.language-marker",
+          "match": "^\\s*#\\s*language:.*$"
         },
         {
-          "include": "#handlebars-tag"
+          "include": "#handlebars"
         },
         {
-          "include": "source.ts"
+          "include": "#typescript-keywords"
         }
       ]
     },
-    "handlebars-comment": {
-      "name": "comment.block.handlebars",
-      "begin": "(\\{\\{!--)",
-      "end": "(--\\}\\})",
-      "beginCaptures": {
-        "1": { "name": "punctuation.definition.comment.begin.handlebars" }
-      },
-      "endCaptures": {
-        "1": { "name": "punctuation.definition.comment.end.handlebars" }
-      }
-    },
-    "handlebars-tag": {
-      "name": "meta.embedded.block.handlebars",
-      "begin": "(\\{\\{)",
-      "end": "(\\}\\})",
-      "beginCaptures": {
-        "1": { "name": "punctuation.section.embedded.begin.handlebars" }
-      },
-      "endCaptures": {
-        "1": { "name": "punctuation.section.embedded.end.handlebars" }
-      },
+    "typescript-keywords": {
       "patterns": [
         {
-          "name": "keyword.control.handlebars",
-          "match": "\\#(if|unless|each|with|lookup|log)\\b"
+          "name": "comment.block.documentation.ts",
+          "begin": "/\\*\\*(?!/)",
+          "end": "\\*/",
+          "patterns": [
+            {
+              "name": "storage.type.class.jsdoc",
+              "match": "(?x)\n(@)(?:abstract|access|alias|arg|argument|async|augments|author|borrows|callback|\n    class|classdesc|code|config|const|constant|constructor|constructs|copyright|\n    default|defaultvalue|define|deprecated|desc|description|enum|event|example|\n    exports?|extends|external|file|fileoverview|fires|func|function|global|host|\n    ignore|implements|inherit[Dd]oc|inner|instance|interface|kind|lends|license|\n    listens|member|memberof!?|method|mixes|mixins?|module|name|namespace|nocollapse|\n    nosideeffects|override|overview|package|param|private|prop|property|protected|\n    public|readonly|record|requires?|returns?|see|since|static|struct|submodule|\n    summary|suppress|template|this|throws|todo|tutorial|type|typedef|unrestricted|\n    var|variation|version|virtual|yields?|generator|jsx|jsxFrag|jsxImportSource|\n    jsxRuntime)\\b"
+            }
+          ]
         },
         {
-          "name": "keyword.control.handlebars",
-          "match": "/"
+          "name": "comment.line.double-slash.ts",
+          "match": "//.*$"
         },
         {
-          "name": "keyword.operator.handlebars",
-          "match": "\\.\\.?|this"
+          "name": "comment.block.ts",
+          "begin": "/\\*",
+          "end": "\\*/"
         },
         {
-          "name": "entity.name.tag.handlebars",
-          "match": "[a-zA-Z_][a-zA-Z0-9_\\.-]*"
+          "name": "storage.type.class.ts",
+          "match": "\\b(class)\\b"
+        },
+        {
+          "name": "storage.type.interface.ts",
+          "match": "\\b(interface)\\b"
+        },
+        {
+          "name": "storage.type.type.ts",
+          "match": "\\b(type)\\b"
+        },
+        {
+          "name": "storage.type.function.ts",
+          "match": "\\b(function)\\b"
+        },
+        {
+          "name": "storage.type.ts",
+          "match": "\\b(const|let|var)\\b"
+        },
+        {
+          "name": "keyword.control.flow.ts",
+          "match": "\\b(return|if|else|for|while|do|switch|case|break|continue|throw|try|catch|finally)\\b"
+        },
+        {
+          "name": "keyword.control.import.ts",
+          "match": "\\b(import|export|from|as|default)\\b"
+        },
+        {
+          "name": "keyword.control.ts",
+          "match": "\\b(async|await|yield|new|delete|typeof|instanceof|in|of|void)\\b"
+        },
+        {
+          "name": "storage.modifier.ts",
+          "match": "\\b(public|private|protected|readonly|static|abstract|declare|override)\\b"
+        },
+        {
+          "name": "keyword.operator.expression.extends.ts",
+          "match": "\\b(extends)\\b"
+        },
+        {
+          "name": "keyword.operator.expression.implements.ts",
+          "match": "\\b(implements)\\b"
+        },
+        {
+          "name": "variable.language.this.ts",
+          "match": "\\b(this)\\b"
+        },
+        {
+          "name": "variable.language.super.ts",
+          "match": "\\b(super)\\b"
+        },
+        {
+          "name": "constant.language.boolean.true.ts",
+          "match": "\\b(true)\\b"
+        },
+        {
+          "name": "constant.language.boolean.false.ts",
+          "match": "\\b(false)\\b"
+        },
+        {
+          "name": "constant.language.null.ts",
+          "match": "\\b(null)\\b"
+        },
+        {
+          "name": "constant.language.undefined.ts",
+          "match": "\\b(undefined)\\b"
+        },
+        {
+          "name": "constant.language.nan.ts",
+          "match": "\\b(NaN)\\b"
+        },
+        {
+          "name": "constant.language.infinity.ts",
+          "match": "\\b(Infinity)\\b"
+        },
+        {
+          "name": "constant.numeric.decimal.ts",
+          "match": "\\b(?<!\\$)0(?:x|X)[0-9a-fA-F][0-9a-fA-F_]*n?\\b(?!\\$)|(?:\\b(?<!\\$)(?:(?:0(?:b|B)[01][01_]*n?)|(?:0(?:o|O)?[0-7][0-7_]*n?)|(?:[0-9][0-9_]*(?:\\.(?:[0-9][0-9_]*)?)?|\\.(?:[0-9][0-9_]*))(?:[eE][+-]?[0-9][0-9_]*)?n?)\\b(?!\\$))"
+        },
+        {
+          "name": "support.type.primitive.ts",
+          "match": "\\b(string|number|boolean|symbol|bigint|any|void|never|unknown|object)\\b"
+        },
+        {
+          "name": "support.class.builtin.ts",
+          "match": "\\b(Array|Object|Function|String|Number|Boolean|Date|RegExp|Error|Promise|Map|Set|WeakMap|WeakSet|Symbol|Proxy|Reflect|JSON|Math|console|window|document|HTMLElement|Element|Node|Event|EventTarget)\\b"
+        },
+        {
+          "match": "\\b(get|set)\\s+([a-zA-Z_$][\\w$]*)\\s*\\(",
+          "captures": {
+            "1": { "name": "storage.type.property.ts" },
+            "2": { "name": "entity.name.function.ts" }
+          }
+        },
+        {
+          "match": "\\b(constructor)\\s*\\(",
+          "captures": {
+            "1": { "name": "storage.type.ts" }
+          }
+        },
+        {
+          "match": "\\b(class|interface)\\s+([A-Z][\\w$]*)",
+          "captures": {
+            "1": { "name": "storage.type.ts" },
+            "2": { "name": "entity.name.type.class.ts" }
+          }
+        },
+        {
+          "match": "\\b(type)\\s+([A-Z][\\w$]*)",
+          "captures": {
+            "1": { "name": "storage.type.type.ts" },
+            "2": { "name": "entity.name.type.alias.ts" }
+          }
+        },
+        {
+          "match": "\\b(function|async(?:\\s+function)?)\\s+([a-zA-Z_$][\\w$]*)\\s*\\(",
+          "captures": {
+            "1": { "name": "storage.type.function.ts" },
+            "2": { "name": "entity.name.function.ts" }
+          }
+        },
+        {
+          "match": "\\b([a-zA-Z_$][\\w$]*)\\s*(?=\\()",
+          "captures": {
+            "1": { "name": "entity.name.function.ts" }
+          }
+        },
+        {
+          "match": "\\b(private|public|protected|readonly)\\s+([a-zA-Z_$][\\w$]*)",
+          "captures": {
+            "1": { "name": "storage.modifier.ts" },
+            "2": { "name": "variable.object.property.ts" }
+          }
+        },
+        {
+          "name": "entity.name.type.ts",
+          "match": "\\b[A-Z][\\w$]*\\b"
+        },
+        {
+          "name": "keyword.operator.comparison.ts",
+          "match": "===|!==|==|!=|<=|>="
+        },
+        {
+          "name": "keyword.operator.relational.ts",
+          "match": "<|>"
+        },
+        {
+          "name": "keyword.operator.logical.ts",
+          "match": "\\!|&&|\\|\\|"
+        },
+        {
+          "name": "keyword.operator.arithmetic.ts",
+          "match": "\\+\\+|--|\\*\\*|\\+|\\-|\\*|/|%"
+        },
+        {
+          "name": "keyword.operator.assignment.ts",
+          "match": "=(?!=)"
+        },
+        {
+          "name": "keyword.operator.type.annotation.ts",
+          "match": ":"
+        },
+        {
+          "name": "keyword.operator.optional.ts",
+          "match": "\\?"
+        },
+        {
+          "name": "keyword.operator.rest.ts",
+          "match": "\\.\\.\\."
+        },
+        {
+          "name": "keyword.operator.arrow.ts",
+          "match": "=>"
+        },
+        {
+          "name": "string.quoted.double.ts",
+          "begin": "\"",
+          "end": "\"",
+          "patterns": [
+            {
+              "name": "constant.character.escape.ts",
+              "match": "\\\\(x[0-9A-Fa-f]{2}|u[0-9A-Fa-f]{4}|u\\{[0-9A-Fa-f]+\\}|[0-2][0-7]{0,2}|3[0-6][0-7]?|37[0-7]?|[4-7][0-7]?|.|$)"
+            }
+          ]
+        },
+        {
+          "name": "string.quoted.single.ts",
+          "begin": "'",
+          "end": "'",
+          "patterns": [
+            {
+              "name": "constant.character.escape.ts",
+              "match": "\\\\(x[0-9A-Fa-f]{2}|u[0-9A-Fa-f]{4}|u\\{[0-9A-Fa-f]+\\}|[0-2][0-7]{0,2}|3[0-6][0-7]?|37[0-7]?|[4-7][0-7]?|.|$)"
+            }
+          ]
+        },
+        {
+          "name": "string.template.ts",
+          "begin": "`",
+          "end": "`",
+          "patterns": [
+            {
+              "name": "meta.template.expression.ts",
+              "begin": "\\$\\{",
+              "end": "\\}",
+              "beginCaptures": {
+                "0": { "name": "punctuation.definition.template-expression.begin.ts" }
+              },
+              "endCaptures": {
+                "0": { "name": "punctuation.definition.template-expression.end.ts" }
+              },
+              "patterns": [
+                {
+                  "include": "#typescript-keywords"
+                }
+              ]
+            },
+            {
+              "name": "constant.character.escape.ts",
+              "match": "\\\\(x[0-9A-Fa-f]{2}|u[0-9A-Fa-f]{4}|u\\{[0-9A-Fa-f]+\\}|[0-2][0-7]{0,2}|3[0-6][0-7]?|37[0-7]?|[4-7][0-7]?|.|$)"
+            },
+            {
+              "include": "#embedded-css"
+            },
+            {
+              "include": "#embedded-html"
+            }
+          ]
+        }
+      ]
+    },
+    "embedded-css": {
+      "patterns": [
+        {
+          "name": "entity.name.tag.css",
+          "match": "\\b(button|style|display|font-family|inline-block|:host)\\b"
+        },
+        {
+          "name": "punctuation.definition.entity.css",
+          "match": "[{}:;]"
+        },
+        {
+          "name": "support.constant.property-value.css",
+          "match": "\\b(inline-block|system-ui|sans-serif)\\b"
+        }
+      ]
+    },
+    "embedded-html": {
+      "patterns": [
+        {
+          "name": "entity.name.tag.html",
+          "match": "</?\\w+[^>]*>"
+        }
+      ]
+    },
+    "handlebars": {
+      "patterns": [
+        {
+          "name": "meta.embedded.block.handlebars",
+          "begin": "\\{\\{",
+          "end": "\\}\\}",
+          "captures": {
+            "0": { "name": "punctuation.definition.tag.handlebars" }
+          },
+          "patterns": [
+            {
+              "name": "keyword.control.handlebars",
+              "match": "[#/](if|each|with|unless|else)"
+            },
+            {
+              "name": "variable.other.handlebars",
+              "match": "\\b[a-zA-Z_][a-zA-Z0-9_]*\\b"
+            }
+          ]
         }
       ]
     }
