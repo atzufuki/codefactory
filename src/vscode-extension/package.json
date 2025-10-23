@@ -1,8 +1,8 @@
 {
   "name": "codefactory",
   "displayName": "CodeFactory",
-  "description": "Extraction-based code generation with smart sync. Includes syntax highlighting for .codefactory template files with YAML and Handlebars templating.",
-  "version": "0.1.0",
+  "description": "Extraction-based code generation with smart sync. Includes syntax highlighting for .codefactory template files with YAML frontmatter, Handlebars templating, and multi-language template support (TypeScript, Python, Rust, Go, Java, C#, C++, HTML, CSS, etc.).",
+  "version": "0.1.1",
   "publisher": "codefactory",
   "engines": {
     "vscode": "^1.80.0"

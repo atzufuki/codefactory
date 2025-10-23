@@ -16,6 +16,44 @@ export type AllowedParamType =
   | `enum:${string}`; // Limited set of options, e.g.: "enum:left|center|right"
 
 /**
+ * File reference in spec field
+ */
+export interface SpecFileReference {
+  /** Relative or absolute path to spec file */
+  path: string;
+  /** Optional description of what this file specifies */
+  description?: string;
+}
+
+/**
+ * Web URL reference in spec field
+ */
+export interface SpecUrlReference {
+  /** URL to external specification or documentation */
+  url: string;
+  /** Title or description of the reference */
+  title: string;
+}
+
+/**
+ * Specification field structure
+ * 
+ * Can be either:
+ * 1. Simple string (inline spec)
+ * 2. Full object with description, files, references, and AI guidance
+ */
+export type SpecField = string | {
+  /** Inline specification description */
+  description?: string;
+  /** File references to local spec documents */
+  files?: SpecFileReference[];
+  /** Web URL references to external documentation */
+  references?: SpecUrlReference[];
+  /** Guidance for AI when using this factory */
+  aiGuidance?: string;
+};
+
+/**
  * Parameters that can be passed to a factory
  */
 export type FactoryParams = Record<string, unknown>;
@@ -46,6 +84,8 @@ export interface FactoryDefinition {
   params: Record<string, ParamDefinition>;
   /** Example usages */
   examples?: Array<Record<string, unknown>>;
+  /** Specification field with inline spec, file references, and web links */
+  spec?: SpecField;
   /** The generator function */
   generate: (params: FactoryParams) => FactoryResult | Promise<FactoryResult>;
   /** Optional template string (for extraction-based sync) */

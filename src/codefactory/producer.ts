@@ -68,9 +68,15 @@ export class Producer {
     // They are templates themselves, not generated code
     const isTemplate = outputPath.endsWith('.codefactory');
     
+    // Extract spec from params if provided (instance-specific spec)
+    const spec = typeof params.spec === 'string' ? params.spec : undefined;
+    
+    // Remove spec from params before generating (it's metadata, not a param)
+    const { spec: _spec, ...paramsWithoutSpec } = params;
+    
     const fileContent = isTemplate
       ? result.content.trim() + '\n'
-      : generateFile(factoryName, params, result.content);
+      : generateFile(factoryName, paramsWithoutSpec, result.content, spec);
 
     // Ensure directory exists
     await Deno.mkdir(dirname(outputPath), { recursive: true });
@@ -144,8 +150,13 @@ export class Producer {
     // Regenerate with metadata params
     const result = await factory.execute(metadata.params);
 
-    // Generate new file content with metadata
-    const newContent = generateFile(metadata.factoryName, metadata.params, result.content);
+    // Generate new file content with metadata (preserve spec from metadata)
+    const newContent = generateFile(
+      metadata.factoryName,
+      metadata.params,
+      result.content,
+      metadata.spec
+    );
 
     await Deno.writeTextFile(filePath, newContent);
   }

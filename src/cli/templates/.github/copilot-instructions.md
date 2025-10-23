@@ -33,9 +33,11 @@ Generated code has JSDoc metadata at the top:
 
 ## When User Requests Code Generation
 
-1. **Check if factory exists**: Use `/codefactory.create` with natural description
-2. **Let system infer**: AI infers factory name and params from description
-3. **Metadata required**: Always include JSDoc @codefactory metadata
+1. **Check spec first**: Look for `spec` field in factory metadata
+2. **Check if factory exists**: Use `/codefactory.create` with natural description
+3. **Let system infer**: AI infers factory name and params from description
+4. **Instance spec**: If user provides design doc/spec URL, pass it as `spec` parameter
+5. **Metadata required**: Always include JSDoc @codefactory metadata
 
 ## When User Edits Generated Code
 
@@ -53,7 +55,13 @@ Generated code has JSDoc metadata at the top:
 
 ## Examples
 
-### Create
+### Create with Spec
+```
+User: "Create a Button following https://myapp.com/specs/primary-button.md"
+You: /codefactory.create factory="example_component" componentName="Button" spec="https://myapp.com/specs/primary-button.md"
+```
+
+### Create without Spec
 ```
 User: "Create a Button component"
 You: /codefactory.create factory="example_component" componentName="Button" hasProps=true

@@ -30,12 +30,14 @@ export class Factory {
     description: string;
     params: Record<string, unknown>;
     examples: Record<string, unknown>[] | undefined;
+    spec: import("./types.ts").SpecField | undefined;
   } {
     return {
       name: this.definition.name,
       description: this.definition.description,
       params: this.definition.params,
       examples: this.definition.examples,
+      spec: this.definition.spec,
     };
   }
 

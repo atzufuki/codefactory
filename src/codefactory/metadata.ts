@@ -28,6 +28,7 @@ import { parse as parseYAML, stringify as stringifyYAML } from "@std/yaml";
 export interface MetadataBlock {
   factoryName: string;
   params: Record<string, unknown>;
+  spec?: string; // Instance-specific spec (URL or file path)
   startLine: number;
   endLine: number;
 }
@@ -95,11 +96,18 @@ export function extractMetadata(source: string): MetadataBlock | null {
   if (jsonMatch) {
     // JSON format
     try {
-      const params = JSON.parse(jsonMatch[1]);
+      const parsed = JSON.parse(jsonMatch[1]) as Record<string, unknown>;
+      
+      // Extract spec field separately if present
+      const spec = typeof parsed.spec === 'string' ? parsed.spec : undefined;
+      
+      // Remove spec from params (it's metadata, not a generation param)
+      const { spec: _spec, ...params } = parsed;
       
       return {
         factoryName,
         params,
+        spec,
         startLine: blockStart,
         endLine: blockEnd,
       };
@@ -128,11 +136,18 @@ export function extractMetadata(source: string): MetadataBlock | null {
   const yamlContent = paramLines.join('\n');
   
   try {
-    const params = parseYAML(yamlContent) as Record<string, unknown>;
+    const parsed = parseYAML(yamlContent) as Record<string, unknown>;
+    
+    // Extract spec field separately if present
+    const spec = typeof parsed.spec === 'string' ? parsed.spec : undefined;
+    
+    // Remove spec from params (it's metadata, not a generation param)
+    const { spec: _spec, ...params } = parsed;
     
     return {
       factoryName,
       params: params || {},
+      spec,
       startLine: blockStart,
       endLine: blockEnd,
     };
@@ -174,9 +189,15 @@ export function extractMetadata(source: string): MetadataBlock | null {
  */
 export function generateMetadata(
   factoryName: string,
-  params: Record<string, unknown>
+  params: Record<string, unknown>,
+  spec?: string
 ): string {
   const lines = [`/**`, ` * @codefactory ${factoryName}`];
+  
+  // Add spec field first if present (before other params)
+  if (spec) {
+    lines.push(` * spec: ${spec}`);
+  }
   
   // Convert params to YAML if there are any
   if (Object.keys(params).length > 0) {
@@ -219,9 +240,10 @@ export function generateMetadata(
 export function generateFile(
   factoryName: string,
   params: Record<string, unknown>,
-  generatedCode: string
+  generatedCode: string,
+  spec?: string
 ): string {
-  const metadata = generateMetadata(factoryName, params);
+  const metadata = generateMetadata(factoryName, params, spec);
   
   // Ensure code doesn't have leading newlines
   const code = generatedCode.trim();
@@ -242,7 +264,8 @@ export function generateFile(
  */
 export function updateMetadata(
   source: string,
-  params: Record<string, unknown>
+  params: Record<string, unknown>,
+  spec?: string
 ): string {
   const metadata = extractMetadata(source);
   
@@ -250,8 +273,12 @@ export function updateMetadata(
     throw new Error('No @codefactory metadata found in source file');
   }
   
-  // Generate new metadata block
-  const newMetadataBlock = generateMetadata(metadata.factoryName, params);
+  // Generate new metadata block (preserve existing spec if not provided)
+  const newMetadataBlock = generateMetadata(
+    metadata.factoryName,
+    params,
+    spec !== undefined ? spec : metadata.spec
+  );
   
   // Replace old metadata block with new one
   const before = source.substring(0, metadata.startLine);
