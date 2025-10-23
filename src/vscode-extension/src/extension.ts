@@ -9,7 +9,7 @@ export function activate(context: vscode.ExtensionContext) {
   console.log('CodeFactory extension activated');
 
   // Sync command - context-aware syncing
-  // If a file is active, sync that file (or all files using that factory if it's a .hbs/.template)
+  // If a file is active, sync that file (or all files using that factory if it's a .codefactory file)
   // If no file is active, sync the entire src/ directory
   const syncCommand = vscode.commands.registerCommand('codefactory.sync', async () => {
     const editor = vscode.window.activeTextEditor;

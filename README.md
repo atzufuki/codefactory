@@ -2,7 +2,7 @@
 
 > A meta-factory for deterministic AI code generation
 
-[![Test Status](https://img.shields.io/badge/tests-113%20passing-brightgreen)](./src/codefactory/tests/)
+[![Test Status](https://img.shields.io/badge/tests-134%20passing-brightgreen)](./src/codefactory/tests/)
 [![Deno 2](https://img.shields.io/badge/deno-2.0-blue)](https://deno.com)
 [![MCP Compatible](https://img.shields.io/badge/MCP-compatible-purple)](./docs/mcp-setup.md)
 
@@ -244,7 +244,7 @@ Your edits are the source of truth. No config files to maintain.
 
 ## Project Status
 
-✨ **Production Ready** - Metadata-based system with 113 tests passing:
+✨ **Production Ready** - Metadata-based system with 134 tests passing:
 
 - ✅ Factory system with auto-registration
 - ✅ Metadata-based workflow (code as source of truth)
@@ -254,7 +254,8 @@ Your edits are the source of truth. No config files to maintain.
 - ✅ **CLI interface with standalone binary**
 - ✅ MCP Server for AI assistant integration
 - ✅ GitHub Copilot integration (slash commands + natural language)
-- ✅ Template system with Handlebars + frontmatter
+- ✅ Template system with Handlebars + YAML (.codefactory format)
+- ✅ VS Code extension with syntax highlighting
 - 📦 **Next**: JSR publication
 
 ## Documentation

@@ -36,23 +36,21 @@ export async function createRegistry(): Promise<FactoryRegistry> {
   const factoriesDirName = config?.factoriesDir || "factories";
   const factoriesDir = join(Deno.cwd(), factoriesDirName);
   
-  try {
-    // Check if factories directory exists
-    const stat = await Deno.stat(factoriesDir);
-    if (stat.isDirectory) {
-      const factoriesUrl = new URL(`file:///${factoriesDir.replace(/\\/g, "/")}`);
-      await registry.autoRegister(factoriesUrl.href, {
-        pattern: "*.{hbs,template}",
-        exclude: [],
-        recursive: false,
-      });
-    }
-  } catch (error) {
-    if (!(error instanceof Deno.errors.NotFound)) {
-      throw error;
-    }
-    // Directory doesn't exist - return registry with only core factories
-  }
-  
-  return registry;
+    try {
+      // Check if factories directory exists
+      const stat = await Deno.stat(factoriesDir);
+      if (stat.isDirectory) {
+        const factoriesUrl = new URL(`file:///${factoriesDir.replace(/\\/g, "/")}`);
+        await registry.autoRegister(factoriesUrl.href, {
+          pattern: "*.codefactory",
+          exclude: [],
+          recursive: false,
+        });
+      }
+    } catch (error) {
+      if (!(error instanceof Deno.errors.NotFound)) {
+        throw error;
+      }
+      // Directory doesn't exist - return registry with only core factories
+    }  return registry;
 }

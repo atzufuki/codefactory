@@ -1,30 +1,37 @@
 /**
- * Template loader for factory definitions with frontmatter
+ * Template loader for factory definitions
  * 
- * Loads template files with embedded metadata and converts them to FactoryDefinition objects.
+ * Loads .codefactory files (YAML format) and converts them to FactoryDefinition objects.
  */
 
-import { parseFrontmatter } from "./frontmatter.ts";
+import { parse as parseYAML } from "@std/yaml";
 import type { FactoryDefinition, ParamDefinition } from "./types.ts";
 import { validateFactoryParamsWithWarnings } from "./validator.ts";
 import Handlebars from "handlebars";
 
 /**
- * Frontmatter metadata for a factory template
+ * Factory file metadata (.codefactory YAML format)
  */
-export interface TemplateFrontmatter {
+export interface FactoryFileData {
   name: string;
   description: string;
   params?: Record<string, ParamDefinition>;
   examples?: Array<Record<string, unknown>>;
   outputPath?: string;
+  template: string;
 }
 
 /**
  * Result of loading a template file
  */
 export interface LoadedTemplate {
-  frontmatter: TemplateFrontmatter;
+  frontmatter: {
+    name: string;
+    description: string;
+    params?: Record<string, ParamDefinition>;
+    examples?: Array<Record<string, unknown>>;
+    outputPath?: string;
+  };
   template: string;
 }
 
@@ -33,48 +40,53 @@ export interface LoadedTemplate {
  */
 export class TemplateLoader {
   /**
-   * Load a single template file and parse its frontmatter
+   * Load a single .codefactory file and parse its YAML content
    * 
-   * @param templatePath - Absolute path to the template file
-   * @returns Parsed frontmatter and template body
+   * @param templatePath - Absolute path to the .codefactory file
+   * @returns Parsed metadata and template content
    * 
    * @example
    * ```ts
-   * const { frontmatter, template } = await TemplateLoader.loadTemplate("./factory.hbs");
+   * const { frontmatter, template } = await TemplateLoader.loadTemplate("./factory.codefactory");
    * ```
    */
   static async loadTemplate(templatePath: string): Promise<LoadedTemplate> {
-    let content = await Deno.readTextFile(templatePath);
+    const content = await Deno.readTextFile(templatePath);
     
-    // Strip JSDoc metadata block if present in template
-    // Templates shouldn't have metadata blocks, but clean them if they do
-    // This regex matches: /** ... @codefactory ... */
-    content = content.replace(/\/\*\*[\s\S]*?@codefactory[\s\S]*?\*\/(\r?\n)?/g, "");
-    
-    // Remove any leading/trailing whitespace left by cleanup
-    content = content.trimStart();
-    
-    const { frontmatter, body } = parseFrontmatter<TemplateFrontmatter>(content);
+    // Parse as pure YAML
+    let data: FactoryFileData;
+    try {
+      data = parseYAML(content) as FactoryFileData;
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      throw new Error(`Failed to parse YAML in ${templatePath}: ${message}`);
+    }
 
     // Validate required fields
-    if (!frontmatter.name) {
+    if (!data.name) {
       throw new Error(`Template at ${templatePath} missing required field: name`);
     }
-    if (!frontmatter.description) {
+    if (!data.description) {
       throw new Error(`Template at ${templatePath} missing required field: description`);
     }
+    if (!data.template) {
+      throw new Error(`Template at ${templatePath} missing required field: template`);
+    }
+
+    // Extract template and return frontmatter separately
+    const { template, ...frontmatter } = data;
 
     return {
       frontmatter,
-      template: body,
+      template,
     };
   }
 
   /**
    * Convert a loaded template into a FactoryDefinition
    * 
-   * @param frontmatter - Template metadata
-   * @param template - Template body
+   * @param frontmatter - Factory metadata (name, description, params, etc.)
+   * @param template - Template content (code to generate)
    * @returns Factory definition ready to be registered
    * 
    * @example
@@ -84,7 +96,7 @@ export class TemplateLoader {
    * ```
    */
   static toFactoryDefinition(
-    frontmatter: TemplateFrontmatter,
+    frontmatter: LoadedTemplate["frontmatter"],
     template: string
   ): FactoryDefinition {
     // Validate parameters before creating factory
@@ -139,7 +151,7 @@ export class TemplateLoader {
     options: LoadDirectoryOptions = {}
   ): Promise<FactoryDefinition[]> {
     const {
-      extensions = [".hbs", ".template"],
+      extensions = [".codefactory"],
       recursive = false,
     } = options;
 
@@ -200,7 +212,7 @@ export class TemplateLoader {
  * Options for loading templates from a directory
  */
 export interface LoadDirectoryOptions {
-  /** File extensions to consider as templates (default: [".hbs", ".template"]) */
+  /** File extensions to consider as templates (default: [".codefactory"]) */
   extensions?: string[];
   /** Whether to recursively search subdirectories (default: false) */
   recursive?: boolean;

@@ -14,6 +14,6 @@ export { TemplateLoader } from "./template-loader.ts";
 export { parseFrontmatter, hasFrontmatter, extractFrontmatter } from "./frontmatter.ts";
 export { Producer } from "./producer.ts";
 export type { FactoryDefinition, FactoryParams, FactoryResult } from "./types.ts";
-export type { TemplateFrontmatter, LoadedTemplate, LoadDirectoryOptions } from "./template-loader.ts";
+export type {  LoadedTemplate, LoadDirectoryOptions } from "./template-loader.ts";
 export type { ParseResult } from "./frontmatter.ts";
 export type { BuildResult, BuildError, BuildPreview } from "./producer.ts";

@@ -19,7 +19,7 @@ export const syncTool: MCPTool = {
 
 Behavior depends on the path:
 - Source file (.ts, .tsx, etc.) with @codefactory metadata: Syncs only that file
-- Factory template (.hbs, .template): Syncs all files using that factory
+- Factory template (.codefactory): Syncs all files using that factory
 - Directory: Syncs all files with @codefactory metadata in directory
 - No path: Syncs current working directory
 
@@ -59,12 +59,12 @@ This is the recommended way to sync - it automatically determines the right acti
         const stat = await Deno.stat(resolvedPath);
         
         if (stat.isFile) {
-          const fileName = resolvedPath.split(/[/\\]/).pop() || "";
+          const fileName = targetPath.split(/[/\\]/).pop() || "";
           
-          // Check if it's a factory template
-          if (fileName.endsWith('.hbs') || fileName.endsWith('.template')) {
+          // Check if it's a factory template file
+          if (fileName.endsWith('.codefactory')) {
             // Factory file - sync all files using this factory
-            const factoryName = fileName.replace(/\.(hbs|template)$/, "");
+            const factoryName = fileName.replace(/\.codefactory$/, "");
             result = await syncByFactory(producer, resolvedPath, factoryName);
           } else {
             // Source file - sync just this file

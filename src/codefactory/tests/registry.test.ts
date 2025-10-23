@@ -42,7 +42,7 @@ Deno.test("FactoryRegistry - autoRegister", async (t) => {
     // - test-single.ts (1 factory)
     // - multiple-factories.ts (2 factories)
     // - my-factory.factory.ts (1 factory)
-    // - test-template.hbs (1 factory)
+    // - test-template.codefactory (1 factory)
     // Should exclude: index.ts, invalid-factory.ts (not a valid factory)
     assertEquals(factories.length, 5);
   });
@@ -163,12 +163,12 @@ Deno.test("FactoryRegistry - autoRegister", async (t) => {
     assertEquals(factories.length >= 4, true);
   });
 
-  await t.step("should load .hbs template files", async () => {
+  await t.step("should load .codefactory template files", async () => {
     const registry = new FactoryRegistry();
     
     await registry.autoRegister(
       new URL("./fixtures/auto-register/", import.meta.url).href,
-      { pattern: "*.hbs" }
+      { pattern: "*.codefactory" }
     );
     
     const factories = registry.list();

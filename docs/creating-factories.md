@@ -10,14 +10,14 @@ Factories are Handlebars templates that generate code. Create them manually or l
 
 ### 1. Create a Factory Manually
 
-Create a `.hbs` file in your `factories/` directory:
+Create a `.codefactory` file in your `factories/` directory:
 
-**factories/typescript_function.hbs:**
-```handlebars
----
+**factories/typescript_function.codefactory:**
+```yaml
 name: typescript_function
 description: Creates a TypeScript function
 outputPath: src/{{functionName}}.ts
+
 params:
   functionName:
     type: string
@@ -28,10 +28,11 @@ params:
   returnType:
     type: string
     required: false
----
-export function {{functionName}}({{#each parameters}}{{this}}{{#unless @last}}, {{/unless}}{{/each}}){{#if returnType}}: {{returnType}}{{/if}} {
-  // TODO: Implement function
-}
+
+template: |
+  export function {{functionName}}({{#each parameters}}{{this}}{{#unless @last}}, {{/unless}}{{/each}}){{#if returnType}}: {{returnType}}{{/if}} {
+    // TODO: Implement function
+  }
 ```
 
 ### 2. Use Your Factory
@@ -51,12 +52,12 @@ export function {{functionName}}({{#each parameters}}{{this}}{{#unless @last}}, 
 
 **Create the factory file:**
 
-**factories/react_component.hbs:**
-```handlebars
----
+**factories/react_component.codefactory:**
+```yaml
 name: react_component
 description: Creates a React functional component
 outputPath: src/components/{{componentName}}.tsx
+
 params:
   componentName:
     type: string
@@ -66,16 +67,17 @@ params:
     type: array
     description: Component props
     required: false
----
-export interface {{componentName}}Props {
-  {{#each props}}
-  {{this}};
-  {{/each}}
-}
 
-export function {{componentName}}(props: {{componentName}}Props) {
-  return <div>Hello from {{componentName}}</div>;
-}
+template: |
+  export interface {{componentName}}Props {
+    {{#each props}}
+    {{this}};
+    {{/each}}
+  }
+
+  export function {{componentName}}(props: {{componentName}}Props) {
+    return <div>Hello from {{componentName}}</div>;
+  }
 ```
 
 **Use the factory:**
@@ -90,48 +92,42 @@ Result: `src/components/UserCard.tsx` created!
 
 ## How Factories Work
 
-Factories are **Handlebars templates** with **frontmatter metadata**.
+Factories are **YAML files** with **Handlebars templates**.
 
-**Template Structure:**
-1. **Frontmatter** (YAML between `---`): Defines name, params, output path
-2. **Template Body** (Handlebars): Generates the actual code
+**File Structure (.codefactory):**
+1. **YAML Metadata**: Defines name, params, output path
+2. **template:** field (with `|` literal block): Contains the Handlebars template
 
 **Automatic Discovery:**
-- Place `.hbs` files in `factories/` directory
-- System auto-discovers and registers them
+- Place `.codefactory` files anywhere in your workspace
+- System auto-discovers with `**/*.codefactory` glob pattern
 - No manual registration needed!
 
 ### What Gets Generated
 
-When you use a factory, the template generates code with markers:
+When you use a factory, the system generates code with JSDoc metadata:
 
-```handlebars
----
-name: react_component
-description: Creates a React functional component
-outputPath: src/components/{{componentName}}.tsx
-params:
-  componentName:
-    type: string
-    description: Name of the component
-    required: true
-  props:
-    type: array
-    description: Component props
-    required: false
----
-export interface {{componentName}}Props {
-  {{#each props}}
-  {{this}};
-  {{/each}}
+```typescript
+/**
+ * @codefactory react_component
+ * componentName: UserCard
+ * props:
+ *   - name: string
+ *   - email: string
+ */
+export interface UserCardProps {
+  name: string;
+  email: string;
 }
 
-export function {{componentName}}(props: {{componentName}}Props) {
+export function UserCard(props: UserCardProps) {
   return <div>Component content here</div>;
 }
 ```
 
-**This template is automatically discovered and registered!** No imports or configuration needed.
+**Note:** The JSDoc metadata comment is **automatically added** by the Producer when creating files. Your factory templates should only contain the actual code to generate, not the metadata comment.
+
+**Your `.codefactory` files are automatically discovered!** No imports or configuration needed.
 
 ## Template Syntax Quick Reference
 
@@ -168,9 +164,10 @@ For full syntax, see [Handlebars documentation](https://handlebarsjs.com/).
 
 For factories to work with the extraction system, they must:
 
-1. **Be `.hbs` files** - Handlebars template format
-2. **Have frontmatter** - YAML metadata between `---`
-3. **Use supported patterns** - Simple variables, loops (no complex conditionals)
+1. **Be `.codefactory` files** - YAML format with template field
+2. **Have required fields** - `name`, `description`, and `template`
+3. **Use Handlebars syntax** - In the `template:` field (literal block with `|`)
+4. **Use supported patterns** - Simple variables, loops, conditionals
 
 For complex generation logic, write the template to generate a simple structure, then edit the code manually.
 

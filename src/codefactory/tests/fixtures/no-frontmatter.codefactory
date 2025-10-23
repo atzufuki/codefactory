@@ -1,0 +1,5 @@
+# This file intentionally has no name/description to test validation
+template: |
+  This file has no frontmatter
+  Just plain template content
+  With {{variables}}

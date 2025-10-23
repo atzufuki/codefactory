@@ -34,7 +34,7 @@ Deno.test("E2E Phase 2: Create factory using meta-factory", async () => {
     outputPath: "src/{{functionName}}.ts"
   };
   
-  const greeterFactoryPath = join(factoriesDir, "greeter.hbs");
+  const greeterFactoryPath = join(factoriesDir, "greeter.codefactory");
   await producer.createFile("factory", greeterFactoryParams, greeterFactoryPath);
   
   const factoryExists = await exists(greeterFactoryPath);
