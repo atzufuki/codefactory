@@ -8,53 +8,63 @@
 
 ## The Problem
 
-When AI assistants write code directly, they're *probabilistic* - the same request produces different results each time. Projects become inconsistent, hard to maintain, and impossible to regenerate.
+When AI assistants write code directly, they're *probabilistic* - the same request produces different results each time. Projects become inconsistent and hard to maintain.
 
 ## The Solution
 
-**AI Code Factory** uses an **extraction-based approach** where **your code is the source of truth**:
+**AI Code Factory** makes AI code generation *deterministic* through **factory templates**:
+1. **Spec** → Define what you need (component, endpoint, model)
+2. **Factory** → AI creates a factory template matching the spec
+3. **Generate** → AI provides parameters, factory produces consistent code
+4. **Sync** → Regenerates files from templates when you edit the template or the params
 
-1. **Create** (with AI): Generate file from factory template
-2. **Edit** (manual): Modify generated code as needed
-3. **Sync** (automatic): Extract changes and regenerate from template
+**Flow:** Spec (what) → Factory (how) → Parameters (details) → Code (result)
 
-Think of it as: Factories generate consistent code structures, you edit them freely, and the system keeps everything in sync.
+### Traditional AI (Probabilistic)
 
-### Traditional AI
-```
-You: "Create a Button component"
-AI: *writes code directly, slightly different each time*
-You: "Create another Button component"
-AI: *writes different code, inconsistent structure*
-```
+AI writes code **directly** with full language capabilities:
+- Has complete control over the generated file
+- Can use any language feature or pattern
+- Different results every time
+- No structural guarantees
 
-### AI Code Factory
-```
-You: "Create a Button component"
-System: Generates from factory template with markers
-You: *Edit the code directly - change names, add features*
-System: Extracts your changes, regenerates maintaining structure
-```
+### AI Code Factory (Deterministic)
 
-Your code = Your truth. Always in sync with factory templates.
+AI modifies **factory templates only**, code generation happens through defined interface:
+- AI edits template structure (constrained changes)
+- Code generation follows template's defined interface
+- No AI coding source files directly
+- Narrower error margin through controlled generation
 
 ## Quick Start
 
 ### 1. Install CLI (Standalone Binary)
 
-```bash
-# Build from source
-deno task build:cli
+Download pre-built binary (not working yet, coming soon):
 
-# Or download pre-built binary (coming soon)
-# curl -fsSL https://codefactory.dev/install.sh | sh
+```bash
+curl -fsSL https://codefactory.dev/install.sh | sh
+```
+
+Or build and install from source:
+
+```bash
+deno task build:all
+deno task install:all
 ```
 
 ### 2. Initialize Project
 
+Initialize a new project:
+
+```bash
+codefactory init my-project
+```
+
+Or inside an existing project:
+
 ```bash
 codefactory init
-# Creates factories/ directory with example templates
 ```
 
 ### 3. Use the CLI
@@ -162,64 +172,6 @@ Template → Code → Template. Edit code freely, system extracts changes and re
 ### 🏗️ Code as Source of Truth
 Your edits are automatically extracted and used to regenerate the file.
 
-## How It Works
-
-### The Workflow
-
-```
-1. CREATE                    2. EDIT                     3. SYNC
-   ↓                            ↓                           ↓
-Factory template          You edit freely          System extracts changes
-generates code            - Rename functions       - Reads your code
-with metadata             - Add features           - Extracts parameters
-                          - Modify logic           - Regenerates entire file
-                          - Add custom code        - Uses extracted params
-```
-
-### Example
-
-**Generated file:**
-```typescript
-/**
- * @codefactory react_component
- * componentName: Button
- * props:
- *   - label
- *   - onClick
- */
-
-export function Button(props: ButtonProps) {
-  return <button onClick={props.onClick}>{props.label}</button>;
-}
-```
-
-**You edit it:**
-```typescript
-/**
- * @codefactory react_component
- * componentName: PrimaryButton
- * props:
- *   - label
- *   - onClick
- *   - disabled
- */
-
-export function PrimaryButton(props: ButtonProps) {
-  console.log('Clicked!');  // Your addition
-  return <button disabled={props.disabled}>{props.label}</button>;
-}
-
-// Your custom code - regenerated with extracted params
-export const SecondaryButton = styled(PrimaryButton);
-```
-
-**After sync:**
-- Function name "PrimaryButton" extracted ✓
-- Your console.log preserved ✓
-- disabled prop extracted ✓
-- All code regenerated with new params ✓
-- Factory structure maintained ✓
-
 ## Use Cases
 
 - **Component Libraries** - Consistent patterns across components
@@ -241,22 +193,6 @@ Template → Code → Template. Edit freely, system extracts and maintains struc
 
 ### 🏗️ Code as Truth
 Your edits are the source of truth. No config files to maintain.
-
-## Project Status
-
-✨ **Production Ready** - Metadata-based system with 134 tests passing:
-
-- ✅ Factory system with auto-registration
-- ✅ Metadata-based workflow (code as source of truth)
-- ✅ Automatic parameter extraction from code
-- ✅ Bidirectional sync (Template ↔ Code)
-- ✅ JSDoc metadata for factory tracking
-- ✅ **CLI interface with standalone binary**
-- ✅ MCP Server for AI assistant integration
-- ✅ GitHub Copilot integration (slash commands + natural language)
-- ✅ Template system with Handlebars + YAML (.codefactory format)
-- ✅ VS Code extension with syntax highlighting
-- 📦 **Next**: JSR publication
 
 ## Documentation
 
