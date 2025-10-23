@@ -22,7 +22,7 @@
     "install": "deno task build:cli && cp dist/codefactory.exe /c/Windows/System32/codefactory.exe",
     "install:local": "deno task build:cli && mkdir -p ~/bin && cp dist/codefactory.exe ~/bin/codefactory.exe && echo 'Add ~/bin to PATH if not already there'",
     "install:extension": "bash -c 'deno task build:extension && rm -rf ~/.vscode/extensions/codefactory && ln -sf /c/Users/Atzu/Code/codefactory/src/vscode-extension ~/.vscode/extensions/codefactory && echo \"✅ Extension installed. Reload VS Code to activate.\"'",
-    "install:all": "deno task install:local && deno task install:extension"
+    "install:all": "deno task install:local && deno task install:extension&& deno task package:extension && deno task install:extension-vsix"
   },
   "imports": {
     "@std/fs": "jsr:@std/fs@^1.0.19"
