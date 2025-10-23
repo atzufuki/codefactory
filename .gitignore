@@ -6,3 +6,11 @@ coverage/
 
 # Build output
 dist/
+
+# VS Code extension
+src/vscode-extension/node_modules/
+src/vscode-extension/out/
+src/vscode-extension/*.vsix
+
+# Test projects
+test-project/
