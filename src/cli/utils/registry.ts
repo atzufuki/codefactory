@@ -23,12 +23,15 @@ async function loadConfig(): Promise<CodefactoryConfig | null> {
 
 /**
  * Create and configure a registry instance
- * Looks for factories in the configured factories directory
+ * Looks for factories in the configured factories directory and embedded core factories
  */
 export async function createRegistry(): Promise<FactoryRegistry> {
   const registry = new FactoryRegistry();
   
-  // Load configuration
+  // Load built-in core factories (from src/codefactory/factories)
+  await registry.registerBuiltIns();
+  
+  // Then load configuration and project-specific factories
   const config = await loadConfig();
   const factoriesDirName = config?.factoriesDir || "factories";
   const factoriesDir = join(Deno.cwd(), factoriesDirName);
@@ -48,7 +51,7 @@ export async function createRegistry(): Promise<FactoryRegistry> {
     if (!(error instanceof Deno.errors.NotFound)) {
       throw error;
     }
-    // Directory doesn't exist - return empty registry
+    // Directory doesn't exist - return registry with only core factories
   }
   
   return registry;

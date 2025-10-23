@@ -75,20 +75,40 @@ System:
 
 ## Factory Templates
 
-Located in `factories/*.hbs` with frontmatter:
+Located in `factories/*.hbs` with YAML frontmatter:
 
 ```handlebars
 ---
 name: react_component
 description: Creates a React component
 outputPath: src/components/{{componentName}}.tsx
+params:
+  componentName:
+    type: string
+    description: Name of the component
+    required: true
+  props:
+    type: array
+    description: List of props
+    required: false
 ---
+/**
+ * @codefactory react_component
+ * componentName: {{componentName}}
+ * props: {{props}}
+ */
+
 export function {{componentName}}(props: {{componentName}}Props) {
 {{#each props}}
   {{this}};
 {{/each}}
 }
 ```
+
+**Important:** 
+- Factory templates use YAML frontmatter (between `---` markers)
+- Generated code includes JSDoc `@codefactory` metadata
+- The factory template itself does NOT have JSDoc metadata at the top
 
 ## GitHub Copilot Integration
 

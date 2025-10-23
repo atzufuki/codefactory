@@ -98,8 +98,8 @@ export class FactoryRegistry {
     // Ensure baseUrl ends with / for directory URLs
     const normalizedBaseUrl = baseUrl.endsWith("/") ? baseUrl : `${baseUrl}/`;
     const basePath = new URL(".", normalizedBaseUrl).pathname;
-    // Normalize Windows paths
-    const normalizedPath = basePath.replace(/^\/([A-Z]:)/, "$1");
+    // Normalize Windows paths (handle both uppercase and lowercase drive letters)
+    const normalizedPath = basePath.replace(/^\/([a-zA-Z]:)/, "$1");
     
     const factories = await this.discoverFactories(normalizedPath, {
       pattern,
@@ -124,7 +124,7 @@ export class FactoryRegistry {
   async registerBuiltIns(): Promise<void> {
     const builtInsUrl = new URL("./factories/", import.meta.url);
     const builtInsPath = builtInsUrl.protocol === "file:"
-      ? builtInsUrl.pathname.replace(/^\/([A-Z]:)/, "$1") // Fix Windows paths
+      ? builtInsUrl.pathname.replace(/^\/([a-zA-Z]:)/, "$1") // Fix Windows paths (case-insensitive)
       : builtInsUrl.pathname;
     
     const factories = await TemplateLoader.loadDirectory(builtInsPath, {

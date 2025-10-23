@@ -60,11 +60,12 @@ export async function getFactoriesDir(customPath?: string): Promise<string> {
 export async function loadRegistry(customPath?: string, pattern?: string): Promise<FactoryRegistry> {
   const registry = new FactoryRegistry();
   
-  // Load built-in factories
+  // Load built-in factories (includes core factories from src/codefactory/factories)
   await registry.registerBuiltIns();
   
   // Load user factories from directory
   const factoriesDir = await getFactoriesDir(customPath);
+  
   try {
     // Convert to file:// URL, handling both relative and absolute paths
     let dirUrl: string;
@@ -81,9 +82,9 @@ export async function loadRegistry(customPath?: string, pattern?: string): Promi
     // Use custom pattern or default
     const options = pattern ? { pattern } : undefined;
     await registry.autoRegister(dirUrl, options);
-  } catch (_error) {
-    // Factories directory might not exist yet, that's okay
-    // Suppress error in tests/production
+  } catch (error) {
+    // Log error but don't fail - factories directory might not exist yet
+    console.error(`Note: Could not load user factories from ${factoriesDir}:`, error instanceof Error ? error.message : String(error));
   }
   
   return registry;

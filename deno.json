@@ -13,8 +13,10 @@
     "lint": "deno lint",
     "mcp": "cd src/mcp-server && deno task dev",
     "publish:check": "cd src/codefactory && deno publish --dry-run && cd ../mcp-server && deno publish --dry-run && cd ../cli && deno publish --dry-run",
-    "build:cli": "deno compile --allow-read --allow-write --allow-env --allow-run --output=dist/codefactory src/cli/main.ts",
-    "build:all": "deno task build:cli"
+    "build:cli": "deno compile --include src/cli/templates --include src/mcp-server --include src/codefactory/factories --allow-read --allow-write --allow-env --allow-run --output=dist/codefactory src/cli/main.ts",
+    "build:all": "deno task build:cli",
+    "install": "deno task build:cli && cp dist/codefactory.exe /c/Windows/System32/codefactory.exe",
+    "install:local": "deno task build:cli && mkdir -p ~/bin && cp dist/codefactory.exe ~/bin/codefactory.exe && echo 'Add ~/bin to PATH if not already there'"
   },
   "imports": {
     "@std/fs": "jsr:@std/fs@^1.0.19"

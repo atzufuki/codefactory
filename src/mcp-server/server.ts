@@ -161,7 +161,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
 });
 
 /**
- * Start the server
+ * Start the MCP server
  */
 async function main() {
   const transport = new StdioServerTransport();
@@ -169,9 +169,23 @@ async function main() {
   
   console.error("CodeFactory MCP Server running on stdio");
   console.error("Available tools:", tools.map((t) => t.name).join(", "));
+  console.error("Press Ctrl+C to stop");
+  
+  // Keep the server running - it will exit when stdin closes
+  await new Promise(() => {}); // Never resolves, keeps process alive
 }
 
-main().catch((error) => {
-  console.error("Fatal error:", error);
-  Deno.exit(1);
-});
+/**
+ * Export for programmatic use (e.g., from CLI)
+ */
+export async function runMcpServer() {
+  await main();
+}
+
+// Run if executed directly
+if (import.meta.main) {
+  main().catch((error) => {
+    console.error("Fatal error:", error);
+    Deno.exit(1);
+  });
+}
