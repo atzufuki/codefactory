@@ -34,7 +34,7 @@ export function activate(context: vscode.ExtensionContext) {
   context.subscriptions.push(syncCommand);
 }
 
-async function runCodefactorySync(targetPath: string): Promise<void> {
+async function runCodefactorySync(targetPath: string) {
   // Get workspace root for working directory
   const workspaceFolder = vscode.workspace.workspaceFolders?.[0];
   if (!workspaceFolder) {
@@ -44,7 +44,7 @@ async function runCodefactorySync(targetPath: string): Promise<void> {
   
   const command = `codefactory sync "${targetPath}"`;
   
-  return vscode.window.withProgress({
+  await vscode.window.withProgress({
     location: vscode.ProgressLocation.Notification,
     title: 'CodeFactory',
     cancellable: false
