@@ -2,6 +2,7 @@
   "version": "5",
   "specifiers": {
     "jsr:@std/assert@1": "1.0.15",
+    "jsr:@std/cli@1": "1.0.23",
     "jsr:@std/fs@1": "1.0.19",
     "jsr:@std/fs@^1.0.19": "1.0.19",
     "jsr:@std/internal@^1.0.10": "1.0.12",
@@ -9,7 +10,6 @@
     "jsr:@std/internal@^1.0.9": "1.0.12",
     "jsr:@std/path@1": "1.1.2",
     "jsr:@std/path@^1.1.1": "1.1.2",
-    "jsr:@std/path@^1.1.2": "1.1.2",
     "jsr:@std/yaml@1": "1.0.10",
     "npm:@modelcontextprotocol/sdk@0.5.0": "0.5.0",
     "npm:handlebars@^4.7.8": "4.7.8"
@@ -20,6 +20,9 @@
       "dependencies": [
         "jsr:@std/internal@^1.0.12"
       ]
+    },
+    "@std/cli@1.0.23": {
+      "integrity": "bf95b7a9425ba2af1ae5a6359daf58c508f2decf711a76ed2993cd352498ccca"
     },
     "@std/fs@1.0.19": {
       "integrity": "051968c2b1eae4d2ea9f79a08a3845740ef6af10356aff43d3e2ef11ed09fb06",
@@ -143,22 +146,20 @@
       "jsr:@std/fs@^1.0.19"
     ],
     "members": {
+      "src/cli": {
+        "dependencies": [
+          "jsr:@std/assert@1",
+          "jsr:@std/cli@1",
+          "jsr:@std/fs@1",
+          "jsr:@std/path@1"
+        ]
+      },
       "src/codefactory": {
         "dependencies": [
           "jsr:@std/assert@1",
           "jsr:@std/path@1",
           "jsr:@std/yaml@1",
           "npm:handlebars@^4.7.8"
-        ]
-      },
-      "src/create": {
-        "dependencies": [
-          "jsr:@std/path@^1.1.2"
-        ]
-      },
-      "src/create/template": {
-        "dependencies": [
-          "jsr:@codefactory/core@0.1"
         ]
       },
       "src/mcp-server": {

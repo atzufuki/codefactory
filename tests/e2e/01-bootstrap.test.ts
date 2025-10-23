@@ -1,28 +1,30 @@
 /**
  * E2E Test Phase 1: Project Bootstrap
  * 
- * Tests project creation with the create package.
+ * Tests project creation with CLI init command.
  */
 
 import { assertEquals, assertExists } from "@std/assert";
 import { exists } from "@std/fs";
 import { join } from "@std/path";
 
-Deno.test("E2E Phase 1: Bootstrap project (extraction-based)", async () => {
+Deno.test("E2E Phase 1: Bootstrap project (metadata-based)", async () => {
   const testProjectName = `test-project-${Date.now()}`;
   const tmpDir = join(Deno.cwd(), "tests", "e2e", ".tmp");
   await Deno.mkdir(tmpDir, { recursive: true });
   const testProjectDir = join(tmpDir, testProjectName);
   
   try {
-    console.log("\n📦 Bootstrapping project...");
+    console.log("\n📦 Bootstrapping project with CLI init...");
     
-    const createProcess = new Deno.Command("deno", {
+    const initProcess = new Deno.Command("deno", {
       args: [
         "run",
         "--allow-read",
         "--allow-write",
-        "src/create/mod.ts",
+        "--allow-env",
+        "src/cli/main.ts",
+        "init",
         testProjectDir,
       ],
       cwd: Deno.cwd(),
@@ -30,26 +32,25 @@ Deno.test("E2E Phase 1: Bootstrap project (extraction-based)", async () => {
       stderr: "piped",
     });
     
-    const createResult = await createProcess.output();
+    const initResult = await initProcess.output();
     
-    if (createResult.code !== 0) {
-      const stderr = new TextDecoder().decode(createResult.stderr);
-      console.error("Create failed:", stderr);
+    if (initResult.code !== 0) {
+      const stderr = new TextDecoder().decode(initResult.stderr);
+      console.error("Init failed:", stderr);
     }
     
-    assertEquals(createResult.code, 0, "Create command should succeed");
+    assertEquals(initResult.code, 0, "Init command should succeed");
     
     const projectExists = await exists(testProjectDir);
     assertEquals(projectExists, true, "Project directory should exist");
     
-    // Verify key files (extraction-based workflow)
+    // Verify key files (metadata-based workflow)
     const expectedFiles = [
-      "deno.json",
       "README.md",
-      "factories/index.ts",
-      "src/main.ts",
+      ".gitignore",
+      ".codefactory.json",
+      "factories/example_component.hbs",
       ".vscode/settings.json",
-      ".vscode/mcp.json",
       ".github/copilot-instructions.md",
       ".github/prompts/codefactory.create.prompt.md",
       ".github/prompts/codefactory.sync.prompt.md",
@@ -60,33 +61,21 @@ Deno.test("E2E Phase 1: Bootstrap project (extraction-based)", async () => {
       assertEquals(fileExists, true, `File ${file} should exist`);
     }
     
-    // Verify MCP configuration
-    const denoJson = JSON.parse(
-      await Deno.readTextFile(join(testProjectDir, "deno.json"))
+    // Verify .codefactory.json configuration
+    const config = JSON.parse(
+      await Deno.readTextFile(join(testProjectDir, ".codefactory.json"))
     );
-    assertExists(denoJson.tasks["mcp:dev"], "MCP dev task should exist");
+    assertExists(config.factoriesDir, "Config should have factoriesDir");
+    assertEquals(config.factoriesDir, "factories", "factoriesDir should be 'factories'");
     
-    const mcpConfig = JSON.parse(
-      await Deno.readTextFile(join(testProjectDir, ".vscode/mcp.json"))
-    );
-    assertExists(
-      mcpConfig.servers?.codefactory,
-      "VS Code should have MCP server configuration"
-    );
-    assertEquals(
-      mcpConfig.servers.codefactory.type,
-      "stdio",
-      "MCP server should use stdio transport"
-    );
-    
-    // Verify copilot-instructions.md mentions extraction workflow
+    // Verify copilot-instructions.md mentions metadata workflow
     const copilotInstructions = await Deno.readTextFile(
       join(testProjectDir, ".github/copilot-instructions.md")
     );
     assertEquals(
-      copilotInstructions.includes("extraction-based"),
+      copilotInstructions.includes("metadata"),
       true,
-      "Instructions should mention extraction-based workflow"
+      "Instructions should mention metadata-based workflow"
     );
     assertEquals(
       copilotInstructions.includes("source of truth"),
@@ -94,7 +83,7 @@ Deno.test("E2E Phase 1: Bootstrap project (extraction-based)", async () => {
       "Instructions should explain code as source of truth"
     );
     
-    console.log("✅ Project bootstrapped successfully (extraction-based)");
+    console.log("✅ Project bootstrapped successfully (metadata-based)");
     
     // Save project path for next tests
     await Deno.writeTextFile(

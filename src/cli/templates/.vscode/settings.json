@@ -1,0 +1,7 @@
+{
+  "files.associations": {
+    "*.hbs": "multi-language-template",
+    "*.handlebars": "multi-language-template",
+    "*.template": "multi-language-template"
+  }
+}

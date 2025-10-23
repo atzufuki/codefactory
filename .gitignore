@@ -1,30 +1,16 @@
-# Template directory - ignore everything except specific tracked files
-src/create/template/*
-!src/create/template/deno.json
-!src/create/template/.gitignore
-!src/create/template/README.md
-!src/create/template/factories/
-src/create/template/factories/*
-!src/create/template/factories/index.ts
-!src/create/template/src/
-src/create/template/src/*
-!src/create/template/src/main.ts
-!src/create/template/.github/
-src/create/template/.github/*
-!src/create/template/.github/copilot-instructions.md
-!src/create/template/.github/prompts/
-src/create/template/.github/prompts/*
-!src/create/template/.github/prompts/README.md
-!src/create/template/.github/prompts/codefactory.create.prompt.md
-!src/create/template/.github/prompts/codefactory.sync.prompt.md
-!src/create/template/.vscode/
-src/create/template/.vscode/*
-!src/create/template/.vscode/settings.json
-!src/create/template/.vscode/extensions.json
-!src/create/template/.vscode/mcp.json
-
 # E2E test temporary projects
 tests/e2e/.tmp/
 
 # Test coverage reports
 coverage/
+
+# Build output
+dist/
+
+# VS Code extension
+src/vscode-extension/node_modules/
+src/vscode-extension/out/
+src/vscode-extension/*.vsix
+
+# Test projects
+test-project/

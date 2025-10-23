@@ -1,0 +1,9 @@
+{
+    "servers": {
+        "codefactory": {
+            "type": "stdio",
+            "command": "codefactory",
+            "args": ["mcp"],
+        }
+    }
+}

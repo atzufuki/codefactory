@@ -10,10 +10,46 @@ import { FactoryRegistry } from "@codefactory/core";
 const DEFAULT_FACTORIES_DIR = "./factories";
 
 /**
- * Get factories directory from args, environment, or use default
+ * CodeFactory configuration structure
  */
-export function getFactoriesDir(customPath?: string): string {
-  return customPath ?? Deno.env.get("CODEFACTORY_FACTORIES_DIR") ?? DEFAULT_FACTORIES_DIR;
+interface CodefactoryConfig {
+  factoriesDir?: string;
+  defaultOutputDir?: string;
+}
+
+/**
+ * Load .codefactory.json configuration if it exists
+ */
+async function loadConfig(): Promise<CodefactoryConfig | null> {
+  try {
+    const configText = await Deno.readTextFile(".codefactory.json");
+    return JSON.parse(configText) as CodefactoryConfig;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Get factories directory from args, config file, environment, or use default
+ */
+export async function getFactoriesDir(customPath?: string): Promise<string> {
+  if (customPath) {
+    return customPath;
+  }
+  
+  // Try config file first
+  const config = await loadConfig();
+  if (config?.factoriesDir) {
+    return config.factoriesDir;
+  }
+  
+  // Fall back to environment variable (for backwards compatibility)
+  const envDir = Deno.env.get("CODEFACTORY_FACTORIES_DIR");
+  if (envDir) {
+    return envDir;
+  }
+  
+  return DEFAULT_FACTORIES_DIR;
 }
 
 /**
@@ -24,11 +60,12 @@ export function getFactoriesDir(customPath?: string): string {
 export async function loadRegistry(customPath?: string, pattern?: string): Promise<FactoryRegistry> {
   const registry = new FactoryRegistry();
   
-  // Load built-in factories
+  // Load built-in factories (includes core factories from src/codefactory/factories)
   await registry.registerBuiltIns();
   
   // Load user factories from directory
-  const factoriesDir = getFactoriesDir(customPath);
+  const factoriesDir = await getFactoriesDir(customPath);
+  
   try {
     // Convert to file:// URL, handling both relative and absolute paths
     let dirUrl: string;
@@ -45,9 +82,9 @@ export async function loadRegistry(customPath?: string, pattern?: string): Promi
     // Use custom pattern or default
     const options = pattern ? { pattern } : undefined;
     await registry.autoRegister(dirUrl, options);
-  } catch (_error) {
-    // Factories directory might not exist yet, that's okay
-    // Suppress error in tests/production
+  } catch (error) {
+    // Log error but don't fail - factories directory might not exist yet
+    console.error(`Note: Could not load user factories from ${factoriesDir}:`, error instanceof Error ? error.message : String(error));
   }
   
   return registry;

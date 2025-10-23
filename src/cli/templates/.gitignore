@@ -1,0 +1,29 @@
+# Dependencies
+node_modules/
+
+# Deno
+.deno/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.idea/
+
+# Env
+.env
+.env.local
+
+# Build
+dist/
+build/
+
+# Coverage
+coverage/
+.coverage/
+
+# Temp
+*.tmp
+*.temp
+.tmp/

@@ -46,16 +46,12 @@ export class TemplateLoader {
   static async loadTemplate(templatePath: string): Promise<LoadedTemplate> {
     let content = await Deno.readTextFile(templatePath);
     
-    // Strip codefactory markers if present (both old and new formats)
-    // Old format: // @codefactory:start and // @codefactory:end
-    content = content.replace(/^.*@codefactory:start.*$(\r?\n)?/gm, "");
-    content = content.replace(/^.*@codefactory:end.*$(\r?\n)?/gm, "");
-    
-    // New format: JSDoc-style metadata block /** @codefactory factory ... */
-    // This regex matches the entire JSDoc block including all lines
+    // Strip JSDoc metadata block if present in template
+    // Templates shouldn't have metadata blocks, but clean them if they do
+    // This regex matches: /** ... @codefactory ... */
     content = content.replace(/\/\*\*[\s\S]*?@codefactory[\s\S]*?\*\/(\r?\n)?/g, "");
     
-    // Remove any leading/trailing whitespace left by marker removal
+    // Remove any leading/trailing whitespace left by cleanup
     content = content.trimStart();
     
     const { frontmatter, body } = parseFrontmatter<TemplateFrontmatter>(content);

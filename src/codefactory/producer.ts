@@ -64,8 +64,13 @@ export class Producer {
     // Execute factory
     const result = await factory.execute(params);
 
-    // Generate file with JSDoc metadata
-    const fileContent = generateFile(factoryName, params, result.content);
+    // Factory templates (.hbs, .template) should NOT get metadata
+    // They are templates themselves, not generated code
+    const isTemplate = outputPath.endsWith('.hbs') || outputPath.endsWith('.template');
+    
+    const fileContent = isTemplate
+      ? result.content.trim() + '\n'
+      : generateFile(factoryName, params, result.content);
 
     // Ensure directory exists
     await Deno.mkdir(dirname(outputPath), { recursive: true });
