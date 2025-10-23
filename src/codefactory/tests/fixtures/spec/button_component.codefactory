@@ -1,0 +1,220 @@
+name: button_component
+description: Creates an interactive button web component with standard variants and states
+spec:
+  description: |
+    Implements button component following modern web component standards.
+    Supports multiple visual variants (primary, secondary, outline, text) and interaction states.
+  references:
+    - url: https://design.example.com/components/buttons
+      title: Design System - Button Guidelines
+    - url: https://www.w3.org/WAI/ARIA/apg/patterns/button/
+      title: WAI-ARIA Button Pattern
+  aiGuidance: |
+    When creating button instances:
+    1. Check if a specific spec URL is provided in the 'spec' parameter
+    2. Follow design system guidelines from references
+    3. Ensure proper accessibility (ARIA labels, keyboard support, focus indicators)
+    4. Use consistent interaction patterns across all variants
+    5. Instance spec should specify the specific button's purpose and context
+
+outputPath: src/components/{{componentName}}.ts
+
+params:
+  componentName:
+    type: string
+    description: Name of the button component class (e.g., 'SubmitButton')
+    required: true
+  variant:
+    type: enum:primary|secondary|outline|text
+    description: Visual variant of the button (default is 'primary')
+    required: false
+  hasIcon:
+    type: boolean
+    description: Whether the button includes an icon
+    required: false
+  spec:
+    type: string
+    description: Instance-specific specification (URL to design doc, Figma link, or local spec file)
+    required: false
+
+examples:
+  - componentName: SubmitButton
+    variant: primary
+    hasIcon: false
+    spec: https://myapp.com/specs/submit-button.md
+  - componentName: CancelButton
+    variant: secondary
+    hasIcon: true
+    spec: specs/buttons/cancel.md
+
+template: |
+  /**
+   * {{componentName}} - Interactive Button Component
+   * 
+   * Variant: {{variant}}{{#if hasIcon}} with icon{{/if}}
+   */
+  
+  export interface {{componentName}}Props {
+    variant?: 'primary' | 'secondary' | 'outline' | 'text';
+    disabled?: boolean;
+    {{#if hasIcon}}
+    icon?: string;
+    iconPosition?: 'start' | 'end';
+    {{/if}}
+    label: string;
+    onClick?: (event: Event) => void;
+    ariaLabel?: string;
+  }
+  
+  export class {{componentName}} extends HTMLElement {
+    private _variant: string = '{{variant}}';
+    private _disabled: boolean = false;
+    {{#if hasIcon}}
+    private _icon?: string;
+    private _iconPosition: 'start' | 'end' = 'start';
+    {{/if}}
+    
+    static get observedAttributes() {
+      return ['variant', 'disabled'{{#if hasIcon}}, 'icon', 'icon-position'{{/if}}];
+    }
+    
+    constructor() {
+      super();
+      this.attachShadow({ mode: 'open' });
+    }
+    
+    connectedCallback() {
+      this.render();
+      this.addEventListeners();
+    }
+    
+    private render() {
+      if (!this.shadowRoot) return;
+      
+      this.shadowRoot.innerHTML = `
+        <style>
+          :host {
+            display: inline-block;
+          }
+          
+          button {
+            font-family: system-ui, -apple-system, sans-serif;
+            font-size: 14px;
+            font-weight: 500;
+            padding: 10px 24px;
+            border-radius: 4px;
+            border: none;
+            cursor: pointer;
+            transition: all 0.2s ease;
+          }
+          
+          /* Variant: {{variant}} */
+          button.primary {
+            background-color: var(--color-primary, #0066cc);
+            color: white;
+          }
+          
+          button.primary:hover {
+            background-color: var(--color-primary-hover, #0052a3);
+          }
+          
+          button.secondary {
+            background-color: var(--color-secondary, #6c757d);
+            color: white;
+          }
+          
+          button.outline {
+            background-color: transparent;
+            border: 2px solid var(--color-primary, #0066cc);
+            color: var(--color-primary, #0066cc);
+          }
+          
+          button.text {
+            background-color: transparent;
+            color: var(--color-primary, #0066cc);
+            padding: 6px 12px;
+          }
+          
+          button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+          }
+          
+          button:focus-visible {
+            outline: 2px solid var(--color-focus, #0066cc);
+            outline-offset: 2px;
+          }
+          
+          {{#if hasIcon}}
+          .icon {
+            margin-{{iconPosition}}: 8px;
+            display: inline-flex;
+            align-items: center;
+          }
+          {{/if}}
+        </style>
+        
+        <button 
+          class="{{variant}}" 
+          aria-label="\${this.getAttribute('aria-label') || ''}"
+          tabindex="0"
+        >
+          {{#if hasIcon}}
+          <span class="icon">\${this._icon || ''}</span>
+          {{/if}}
+          <slot></slot>
+        </button>
+      `;
+    }
+    
+    private addEventListeners() {
+      const button = this.shadowRoot?.querySelector('button');
+      
+      button?.addEventListener('click', (e) => {
+        if (!this._disabled) {
+          this.dispatchEvent(new CustomEvent('button-click', { 
+            detail: e,
+            bubbles: true,
+            composed: true
+          }));
+        }
+      });
+      
+      // Keyboard support
+      button?.addEventListener('keydown', (e: KeyboardEvent) => {
+        if ((e.key === 'Enter' || e.key === ' ') && !this._disabled) {
+          e.preventDefault();
+          button.click();
+        }
+      });
+    }
+    
+    attributeChangedCallback(name: string, oldValue: string, newValue: string) {
+      if (oldValue === newValue) return;
+      
+      switch (name) {
+        case 'variant':
+          this._variant = newValue;
+          break;
+        case 'disabled':
+          this._disabled = newValue !== null;
+          break;
+        {{#if hasIcon}}
+        case 'icon':
+          this._icon = newValue;
+          break;
+        case 'icon-position':
+          this._iconPosition = newValue as 'start' | 'end';
+          break;
+        {{/if}}
+      }
+      
+      this.render();
+    }
+  }
+  
+  // Register the custom element
+  const tagName = '{{componentName}}'.toLowerCase().replace(/([A-Z])/g, '-$1').slice(1);
+  if (!customElements.get(tagName)) {
+    customElements.define(tagName, {{componentName}});
+  }

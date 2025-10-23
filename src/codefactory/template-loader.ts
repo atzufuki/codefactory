@@ -17,6 +17,7 @@ export interface FactoryFileData {
   description: string;
   params?: Record<string, ParamDefinition>;
   examples?: Array<Record<string, unknown>>;
+  spec?: import("./types.ts").SpecField;
   outputPath?: string;
   template: string;
 }
@@ -30,6 +31,7 @@ export interface LoadedTemplate {
     description: string;
     params?: Record<string, ParamDefinition>;
     examples?: Array<Record<string, unknown>>;
+    spec?: import("./types.ts").SpecField;
     outputPath?: string;
   };
   template: string;
@@ -116,6 +118,7 @@ export class TemplateLoader {
       description: frontmatter.description,
       params: frontmatter.params || {},
       examples: frontmatter.examples || [],
+      spec: frontmatter.spec, // Store spec field for AI context
       template: template, // Store raw template for extraction
       generate: (params) => {
         // Render using Handlebars for full syntax support

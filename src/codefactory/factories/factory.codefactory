@@ -1,5 +1,15 @@
 name: factory
 description: Creates a new template-based factory definition with strict parameter validation. Parameters must be primitive data, not code syntax. Use separate arrays for names and types.
+spec:
+  description: |
+    Meta-factory for creating new factory definitions.
+    Generates .codefactory files with YAML frontmatter and Handlebars templates.
+  aiGuidance: |
+    When creating factories:
+    1. Ask for spec field content (inline, file refs, or web URLs)
+    2. Include spec in the generated factory for AI context
+    3. Spec should describe WHAT to generate, not HOW
+    4. Encourage file references for complex specifications
 params:
   name:
     type: string
@@ -20,6 +30,10 @@ params:
   paramDescriptions:
     type: Record<string, string>
     description: Object mapping parameter names to their descriptions. Template variables are auto-detected.
+    required: false
+  spec:
+    type: string
+    description: Specification field - can be inline text, file path, or structured spec with references. This is the FIRST thing AI should consider when creating instances.
     required: false
 outputPath: factories/{{name}}.codefactory
 examples:
@@ -78,6 +92,9 @@ examples:
 template: |
   name: {{name}}
   description: {{description}}
+  {{#if spec}}
+  spec: {{{spec}}}
+  {{/if}}
   {{#if outputPath}}
   outputPath: {{{outputPath}}}
   {{/if}}
