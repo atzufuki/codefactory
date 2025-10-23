@@ -121,7 +121,7 @@ codefactory init
 # List factories
 codefactory list
 
-# Create from factory
+# Create from factory with manual parameters (see the usage with AI for generated parameters)
 codefactory create <factory-name> \
   --params '{"key":"value"}' \
   --output <path>
@@ -138,17 +138,12 @@ codefactory mcp
 
 ### With GitHub Copilot (AI Assistant)
 
-**Natural Language:**
 ```
-"Create a Button component"           → Generates from factory
-"I edited Button, sync the changes"   → Extracts and regenerates
-"Sync all components"                 → Syncs entire directory
-```
+/codefactory.create a 'factory' for web components
+> Generates a web component factory by using the built-in meta-factory with AI generated parameters.
 
-**Slash Commands:**
-```
-/codefactory.create factory="component" name="Button"
-/codefactory.sync "src/components"
+/codefactory.create a 'web_component' for a button
+> Generates a button component by using the 'web_component' factory with AI generated parameters.
 ```
 
 ### Direct API (Advanced)
